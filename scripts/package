@@ -2,4 +2,3 @@
 set -e
 
 $(dirname $0)/package-controller
-$(dirname $0)/package-kubectl
