@@ -1,6 +1,5 @@
 # System Upgrade Controller
 
-In your Kubernetes, upgrading your nodes.
 A ***S***ystem ***U***pgrade ***C***ontroller for ***K***ubernetes that doesn't S.U.C.K.
 
 ## Introduction
@@ -95,7 +94,7 @@ Also see [`manifests/system-upgrade-controller.yaml`](manifests/system-upgrade-c
 of the controller and the resources spawned by it.
 
 ## License
-Copyright (c) 2019 [Rancher Labs, Inc.](http://rancher.com)
+Copyright (c) 2019-2020 [Rancher Labs, Inc.](http://rancher.com)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
