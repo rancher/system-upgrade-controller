@@ -52,7 +52,7 @@ spec:
   drain:
     force: true
   upgrade:
-    image: dweomer/k3os
+    image: rancher/k3os
     command: [k3os, --debug]
     args:
       - upgrade
