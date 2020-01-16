@@ -10,4 +10,6 @@ else
     exec "$@"
 fi
 
-chown -R $DAPPER_UID:$DAPPER_GID .
+if [ -n "${DAPPER_UID}" ] && [ -n "${DAPPER_GID}" ]; then
+  chown -R ${DAPPER_UID}:${DAPPER_GID} .
+fi
