@@ -33,8 +33,9 @@ type PlanSpec struct {
 	Concurrency  int64                 `json:"concurrency,omitempty"`
 	NodeSelector *metav1.LabelSelector `json:"nodeSelector,omitempty"`
 
-	Channel string `json:"channel,omitempty"`
-	Version string `json:"version,omitempty"`
+	Channel string       `json:"channel,omitempty"`
+	Version string       `json:"version,omitempty"`
+	Secrets []SecretSpec `json:"secrets,omitempty"`
 
 	Upgrade *UpgradeSpec `json:"upgrade,omitempty"`
 	Cordon  bool         `json:"cordon,omitempty"`
@@ -45,6 +46,7 @@ type PlanSpec struct {
 type PlanStatus struct {
 	Conditions    []genericcondition.GenericCondition `json:"conditions,omitempty"`
 	LatestVersion string                              `json:"latestVersion,omitempty"`
+	LatestHash    string                              `json:"latestHash,omitempty"`
 	Applying      []string                            `json:"applying,omitempty"`
 }
 
@@ -61,4 +63,9 @@ type DrainSpec struct {
 	DeleteLocalData  *bool          `json:"deleteLocalData,omitempty"`
 	IgnoreDaemonSets *bool          `json:"ignoreDaemonSets,omitempty"`
 	Force            bool           `json:"force,omitempty"`
+}
+
+type SecretSpec struct {
+	Name string `json:"name,omitempty"`
+	Path string `json:"path,omitempty"`
 }
