@@ -2,6 +2,7 @@ package job
 
 import (
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -78,13 +79,13 @@ func NewUpgradeJob(plan *upgradeapiv1.Plan, serviceAccountName, nodeName, contro
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name.SafeConcatName(plan.Name, nodeName, plan.Status.LatestVersion),
+			Name:      name.SafeConcatName("upgrade", nodeName, "with", plan.Name, "at", plan.Status.LatestHash),
 			Namespace: plan.Namespace,
 			Labels: labels.Set{
 				upgradeapi.LabelController: controllerName,
 				upgradeapi.LabelNode:       nodeName,
 				upgradeapi.LabelPlan:       plan.Name,
-				labelPlanName:              plan.Status.LatestVersion,
+				labelPlanName:              plan.Status.LatestHash,
 			},
 		},
 		Spec: batchv1.JobSpec{
@@ -95,7 +96,7 @@ func NewUpgradeJob(plan *upgradeapiv1.Plan, serviceAccountName, nodeName, contro
 						upgradeapi.LabelController: controllerName,
 						upgradeapi.LabelNode:       nodeName,
 						upgradeapi.LabelPlan:       plan.Name,
-						labelPlanName:              plan.Status.LatestVersion,
+						labelPlanName:              plan.Status.LatestHash,
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -183,6 +184,9 @@ func NewUpgradeJob(plan *upgradeapiv1.Plan, serviceAccountName, nodeName, contro
 							Name:  "SYSTEM_UPGRADE_PLAN_NAME",
 							Value: plan.Name,
 						}, {
+							Name:  "SYSTEM_UPGRADE_PLAN_LATEST_HASH",
+							Value: plan.Status.LatestHash,
+						}, {
 							Name:  "SYSTEM_UPGRADE_PLAN_LATEST_VERSION",
 							Value: plan.Status.LatestVersion,
 						}, {
@@ -212,6 +216,30 @@ func NewUpgradeJob(plan *upgradeapiv1.Plan, serviceAccountName, nodeName, contro
 			},
 		},
 	}
+
+	for _, secret := range plan.Spec.Secrets {
+		secretVolumeName := name.SafeConcatName("secret", secret.Name)
+		secretVolumePath := secret.Path
+		if secretVolumePath == "" {
+			secretVolumePath = filepath.Join("/run/system-upgrade/secrets", secret.Name)
+		} else if secretVolumePath[0:1] != "/" {
+			secretVolumePath = filepath.Join("/run/system-upgrade/secrets", secretVolumePath)
+		}
+		job.Spec.Template.Spec.Volumes = append(job.Spec.Template.Spec.Volumes, corev1.Volume{
+			Name: secretVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: secret.Name,
+				},
+			},
+		})
+		job.Spec.Template.Spec.Containers[0].VolumeMounts = append(job.Spec.Template.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
+			Name:      secretVolumeName,
+			MountPath: secretVolumePath,
+			ReadOnly:  true,
+		})
+	}
+
 	cordon, drain := plan.Spec.Cordon, plan.Spec.Drain
 	if drain != nil {
 		args := []string{"drain", nodeName, "--pod-selector", `!` + upgradeapi.LabelController}

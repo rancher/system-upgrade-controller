@@ -1,8 +1,7 @@
 /.dapper
 /.cache
 /.trash-cache
+.idea/
 /bin
 /dist
 *.swp
-.idea
-tffy

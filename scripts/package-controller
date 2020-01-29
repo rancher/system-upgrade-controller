@@ -17,6 +17,10 @@ if echo $TAG | grep -q dirty; then
 fi
 
 IMAGE=${REPO}/system-upgrade-controller:${TAG}
-docker build -t ${IMAGE} -f ./package/Dockerfile .
-echo ${IMAGE} > ./dist/images
-echo Built ${IMAGE}
+docker image build -t ${IMAGE} -f ./package/Dockerfile .
+docker image tag ${IMAGE} ${REPO}/system-upgrade-controller:latest
+docker image save --output ./dist/images.tar \
+  ${REPO}/system-upgrade-controller:${TAG} \
+  ${REPO}/system-upgrade-controller:latest
+echo ${IMAGE} > ./dist/images.txt
+echo Built ${IMAGE} and ${REPO}/system-upgrade-controller:latest

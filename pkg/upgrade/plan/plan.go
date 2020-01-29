@@ -2,6 +2,7 @@ package plan
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"os"
@@ -69,6 +70,7 @@ func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespa
 	plans := upgradeFactory.Upgrade().V1().Plan()
 	jobs := batchFactory.Batch().V1().Job()
 	nodes := coreFactory.Core().V1().Node()
+	secrets := coreFactory.Core().V1().Secret()
 
 	// cluster id hack: see https://groups.google.com/forum/#!msg/kubernetes-sig-architecture/mVGobfD4TpY/nkdbkX1iBwAJ
 	systemNS, err := coreFactory.Core().V1().Namespace().Get(metav1.NamespaceSystem, metav1.GetOptions{})
@@ -76,24 +78,44 @@ func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespa
 		return err
 	}
 
+	// node events with labels that match a plan's selectors (potentially) trigger that plan
 	nodes.OnChange(ctx, controllerName, func(key string, obj *corev1.Node) (*corev1.Node, error) {
 		if obj == nil {
 			return obj, nil
 		}
-		if planList, err := plans.Cache().List(controllerNamespace, labels.Everything()); err != nil {
-			logrus.Error(err)
-		} else {
-			for _, plan := range planList {
-				if selector, err := metav1.LabelSelectorAsSelector(plan.Spec.NodeSelector); err != nil {
-					logrus.Error(err)
-				} else if selector.Matches(labels.Set(obj.Labels)) {
+		planList, err := plans.Cache().List(controllerNamespace, labels.Everything())
+		if err != nil {
+			return obj, err
+		}
+		for _, plan := range planList {
+			if selector, err := metav1.LabelSelectorAsSelector(plan.Spec.NodeSelector); err != nil {
+				return obj, err
+			} else if selector.Matches(labels.Set(obj.Labels)) {
+				plans.Enqueue(plan.Namespace, plan.Name)
+			}
+		}
+
+		return obj, nil
+	})
+
+	// secret events referred to by a plan (potentially) trigger that plan
+	secrets.OnChange(ctx, controllerName, func(key string, obj *corev1.Secret) (*corev1.Secret, error) {
+		planList, err := plans.Cache().List(controllerNamespace, labels.Everything())
+		if err != nil {
+			return obj, err
+		}
+		for _, plan := range planList {
+			for _, secret := range plan.Spec.Secrets {
+				if obj.Name == secret.Name {
 					plans.Enqueue(plan.Namespace, plan.Name)
+					continue
 				}
 			}
 		}
 		return obj, nil
 	})
 
+	// job events (successful completions) cause the node the job ran on to be labeled as per the plan
 	jobs.OnChange(ctx, controllerName, func(key string, obj *batchv1.Job) (*batchv1.Job, error) {
 		if obj == nil {
 			return obj, nil
@@ -121,18 +143,20 @@ func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespa
 		return obj, nil
 	})
 
+	// process plan events, mutating status accordingly
 	upgradectlv1.RegisterPlanStatusHandler(ctx, plans, "", controllerName,
 		func(obj *upgradeapiv1.Plan, status upgradeapiv1.PlanStatus) (upgradeapiv1.PlanStatus, error) {
+			secretsCache := secrets.Cache()
 			resolved := upgradeapiv1.PlanLatestResolved
 			resolved.CreateUnknownIfNotExists(obj)
 			if obj.Spec.Version == "" && obj.Spec.Channel == "" {
 				resolved.SetError(obj, "Error", fmt.Errorf("missing one of channel or version"))
-				return obj.Status, nil
+				return hashPlanLatest(secretsCache, obj)
 			}
 			if obj.Spec.Version != "" {
 				resolved.SetError(obj, "Version", nil)
 				obj.Status.LatestVersion = obj.Spec.Version
-				return obj.Status, nil
+				return hashPlanLatest(secretsCache, obj)
 			}
 			if resolved.IsTrue(obj) {
 				if lastUpdated, err := time.Parse(time.RFC3339, resolved.GetLastUpdated(obj)); err == nil {
@@ -148,11 +172,12 @@ func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespa
 			}
 			resolved.SetError(obj, "Channel", nil)
 			obj.Status.LatestVersion = latest
-			return obj.Status, nil
+			return hashPlanLatest(secretsCache, obj)
 		},
 	)
 
-	upgradectlv1.RegisterPlanGeneratingHandler(ctx, plans, apply.WithCacheTypes(jobs).WithCacheTypes(nodes).WithNoDelete(), "", controllerName,
+	// process plan events by creating jobs to apply the plan
+	upgradectlv1.RegisterPlanGeneratingHandler(ctx, plans, apply.WithCacheTypes(jobs, nodes, secrets).WithNoDelete(), "", controllerName,
 		func(obj *upgradeapiv1.Plan, status upgradeapiv1.PlanStatus) (objects []runtime.Object, _ upgradeapiv1.PlanStatus, _ error) {
 			concurrentNodeNames, err := selectConcurrentNodeNames(nodes.Cache(), obj)
 			if err != nil {
@@ -174,6 +199,32 @@ func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespa
 	return nil
 }
 
+func hashPlanLatest(secretCache corectlv1.SecretCache, plan *upgradeapiv1.Plan) (upgradeapiv1.PlanStatus, error) {
+	if upgradeapiv1.PlanLatestResolved.GetReason(plan) == "Error" {
+		plan.Status.LatestVersion = ""
+		plan.Status.LatestHash = ""
+	} else {
+		hash := sha256.New224()
+		hash.Write([]byte(plan.Status.LatestVersion))
+		for _, s := range plan.Spec.Secrets {
+			secret, err := secretCache.Get(plan.Namespace, s.Name)
+			if err != nil {
+				return plan.Status, err
+			}
+			keys := []string{}
+			for k := range secret.Data {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			for _, k := range keys {
+				hash.Write(secret.Data[k])
+			}
+		}
+		plan.Status.LatestHash = fmt.Sprintf("%x", hash.Sum(nil))
+	}
+	return plan.Status, nil
+}
+
 func resolveChannel(ctx context.Context, channelURL, clusterID string) (string, error) {
 	httpClient := &http.Client{
 		CheckRedirect: func(*http.Request, []*http.Request) error {
@@ -185,7 +236,7 @@ func resolveChannel(ctx context.Context, channelURL, clusterID string) (string, 
 	if err != nil {
 		return "", err
 	}
-	request.Header.Set(`x-`+metav1.NamespaceSystem, string(clusterID))
+	request.Header.Set(`x-`+metav1.NamespaceSystem, clusterID)
 	logrus.Debugf("Sending %+v", request)
 	response, err := httpClient.Do(request)
 	if err != nil {
@@ -213,7 +264,7 @@ func selectConcurrentNodeNames(nodeCache corectlv1.NodeCache, plan *upgradeapiv1
 	if err != nil {
 		return nil, err
 	}
-	requirementPlanNotLatest, err := labels.NewRequirement(upgradeapi.LabelPlanName(plan.Name), selection.NotIn, []string{"disabled", plan.Status.LatestVersion})
+	requirementPlanNotLatest, err := labels.NewRequirement(upgradeapi.LabelPlanName(plan.Name), selection.NotIn, []string{"disabled", plan.Status.LatestHash})
 	if err != nil {
 		return nil, err
 	}
