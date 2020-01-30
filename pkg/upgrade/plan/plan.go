@@ -72,6 +72,9 @@ func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespa
 	nodes := coreFactory.Core().V1().Node()
 	secrets := coreFactory.Core().V1().Secret()
 
+	nodeCache := nodes.Cache()
+	planCache := plans.Cache()
+
 	// cluster id hack: see https://groups.google.com/forum/#!msg/kubernetes-sig-architecture/mVGobfD4TpY/nkdbkX1iBwAJ
 	systemNS, err := coreFactory.Core().V1().Namespace().Get(metav1.NamespaceSystem, metav1.GetOptions{})
 	if err != nil {
@@ -83,7 +86,7 @@ func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespa
 		if obj == nil {
 			return obj, nil
 		}
-		planList, err := plans.Cache().List(controllerNamespace, labels.Everything())
+		planList, err := planCache.List(controllerNamespace, labels.Everything())
 		if err != nil {
 			return obj, err
 		}
@@ -94,13 +97,12 @@ func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespa
 				plans.Enqueue(plan.Namespace, plan.Name)
 			}
 		}
-
 		return obj, nil
 	})
 
 	// secret events referred to by a plan (potentially) trigger that plan
 	secrets.OnChange(ctx, controllerName, func(key string, obj *corev1.Secret) (*corev1.Secret, error) {
-		planList, err := plans.Cache().List(controllerNamespace, labels.Everything())
+		planList, err := planCache.List(controllerNamespace, labels.Everything())
 		if err != nil {
 			return obj, err
 		}
@@ -125,13 +127,20 @@ func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespa
 				defer plans.Enqueue(obj.Namespace, planName)
 				if obj.Status.Succeeded == 1 {
 					planLabel := upgradeapi.LabelPlanName(planName)
-					if version, ok := obj.Labels[planLabel]; ok {
+					if planHash, ok := obj.Labels[planLabel]; ok {
 						if nodeName, ok := obj.Labels[upgradeapi.LabelNode]; ok {
-							node, err := nodes.Get(nodeName, metav1.GetOptions{})
+							node, err := nodeCache.Get(nodeName)
 							if err != nil {
 								return obj, err
 							}
-							node.Labels[planLabel] = version
+							plan, err := planCache.Get(obj.Namespace, planName)
+							if err != nil {
+								return obj, err
+							}
+							node.Labels[planLabel] = planHash
+							if node.Spec.Unschedulable && (plan.Spec.Cordon || plan.Spec.Drain != nil) {
+								node.Spec.Unschedulable = false
+							}
 							if node, err = nodes.Update(node); err != nil {
 								return obj, err
 							}
@@ -179,7 +188,7 @@ func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespa
 	// process plan events by creating jobs to apply the plan
 	upgradectlv1.RegisterPlanGeneratingHandler(ctx, plans, apply.WithCacheTypes(jobs, nodes, secrets).WithNoDelete(), "", controllerName,
 		func(obj *upgradeapiv1.Plan, status upgradeapiv1.PlanStatus) (objects []runtime.Object, _ upgradeapiv1.PlanStatus, _ error) {
-			concurrentNodeNames, err := selectConcurrentNodeNames(nodes.Cache(), obj)
+			concurrentNodeNames, err := selectConcurrentNodeNames(nodeCache, obj)
 			if err != nil {
 				logrus.Error(err)
 				return objects, status, nil
