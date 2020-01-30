@@ -14,7 +14,7 @@ import (
 )
 
 // StartController starts the controller
-func StartController(ctx context.Context, config *rest.Config, threads int, namespace, serviceAccountName, name string) error {
+func StartController(ctx context.Context, config *rest.Config, threads int, namespace, name string) error {
 	if crdFactory, err := crd.NewFactoryFromClient(config); err != nil {
 		return err
 	} else if err = plan.RegisterCRD(ctx, crdFactory); err != nil {
@@ -41,7 +41,7 @@ func StartController(ctx context.Context, config *rest.Config, threads int, name
 		return err
 	}
 
-	err = plan.RegisterHandlers(ctx, serviceAccountName, namespace, name, apply, upgradeFactory, coreFactory, batchFactory)
+	err = plan.RegisterHandlers(ctx, namespace, name, apply, upgradeFactory, coreFactory, batchFactory)
 	if err != nil {
 		return err
 	}

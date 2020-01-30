@@ -1,4 +1,12 @@
 #!/bin/bash
 set -e
 
+source $(dirname $0)/version
+
+DIST=$(dirname $0)/../dist/artifacts
+echo "Copying binaries to ${DIST} ..."
+mkdir -vp "${DIST}"
+cp -vf $(dirname $0)/../bin/system-upgrade-controller "${DIST}/system-upgrade-controller-${ARCH}"
+
+echo "Packaging ${REPO}/system-upgrade-controller ..."
 $(dirname $0)/package-controller

@@ -3,24 +3,23 @@ set -e
 
 source $(dirname $0)/version
 
-ARCH=${ARCH:-"amd64"}
-SUFFIX=""
-[ "${ARCH}" != "amd64" ] && SUFFIX="_${ARCH}"
-
 cd $(dirname $0)/..
 
-TAG=${TAG:-${VERSION}${SUFFIX}}
-REPO=${REPO:-rancher}
-
-if echo $TAG | grep -q dirty; then
-    TAG=dev
+if [ "$ARCH" != "arm" ]; then
+    export DOCKER_BUILDKIT=1
 fi
 
-IMAGE=${REPO}/system-upgrade-controller:${TAG}
-docker image build -t ${IMAGE} -f ./package/Dockerfile .
-docker image tag ${IMAGE} ${REPO}/system-upgrade-controller:latest
+docker build \
+  --build-arg ARCH=${ARCH} \
+  --build-arg REPO=${REPO} \
+  --build-arg TAG=${TAG} \
+  --build-arg VERSION=${VERSION} \
+  --file package/Dockerfile \
+  --tag ${REPO}/system-upgrade-controller:${TAG} \
+  --tag ${REPO}/system-upgrade-controller:latest \
+.
 docker image save --output ./dist/images.tar \
   ${REPO}/system-upgrade-controller:${TAG} \
   ${REPO}/system-upgrade-controller:latest
-echo ${IMAGE} > ./dist/images.txt
-echo Built ${IMAGE} and ${REPO}/system-upgrade-controller:latest
+echo ${REPO}/system-upgrade-controller:${TAG} > ./dist/images.txt
+echo Built ${REPO}/system-upgrade-controller:${TAG}

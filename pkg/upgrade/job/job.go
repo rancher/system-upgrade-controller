@@ -74,7 +74,7 @@ func UpgradeImage(plan *upgradeapiv1.Plan) string {
 	return image + `:` + plan.Status.LatestVersion
 }
 
-func NewUpgradeJob(plan *upgradeapiv1.Plan, serviceAccountName, nodeName, controllerName string) *batchv1.Job {
+func NewUpgradeJob(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job {
 	hostPathDirectory := corev1.HostPathDirectory
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
 	job := &batchv1.Job{
@@ -102,7 +102,7 @@ func NewUpgradeJob(plan *upgradeapiv1.Plan, serviceAccountName, nodeName, contro
 				Spec: corev1.PodSpec{
 					HostIPC:            true,
 					HostPID:            true,
-					ServiceAccountName: serviceAccountName,
+					ServiceAccountName: plan.Spec.ServiceAccountName,
 					Affinity: &corev1.Affinity{
 						NodeAffinity: &corev1.NodeAffinity{
 							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{

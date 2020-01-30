@@ -66,7 +66,7 @@ func RegisterCRD(ctx context.Context, factory *crd.Factory) error {
 }
 
 // RegisterHandlers registers Plan handlers
-func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespace, controllerName string, apply apply.Apply, upgradeFactory *upgradectl.Factory, coreFactory *corectl.Factory, batchFactory *batchctl.Factory) error {
+func RegisterHandlers(ctx context.Context, controllerNamespace, controllerName string, apply apply.Apply, upgradeFactory *upgradectl.Factory, coreFactory *corectl.Factory, batchFactory *batchctl.Factory) error {
 	plans := upgradeFactory.Upgrade().V1().Plan()
 	jobs := batchFactory.Batch().V1().Job()
 	nodes := coreFactory.Core().V1().Node()
@@ -160,12 +160,12 @@ func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespa
 			resolved.CreateUnknownIfNotExists(obj)
 			if obj.Spec.Version == "" && obj.Spec.Channel == "" {
 				resolved.SetError(obj, "Error", fmt.Errorf("missing one of channel or version"))
-				return hashPlanLatest(secretsCache, obj)
+				return digestPlan(secretsCache, obj)
 			}
 			if obj.Spec.Version != "" {
 				resolved.SetError(obj, "Version", nil)
 				obj.Status.LatestVersion = obj.Spec.Version
-				return hashPlanLatest(secretsCache, obj)
+				return digestPlan(secretsCache, obj)
 			}
 			if resolved.IsTrue(obj) {
 				if lastUpdated, err := time.Parse(time.RFC3339, resolved.GetLastUpdated(obj)); err == nil {
@@ -181,7 +181,7 @@ func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespa
 			}
 			resolved.SetError(obj, "Channel", nil)
 			obj.Status.LatestVersion = latest
-			return hashPlanLatest(secretsCache, obj)
+			return digestPlan(secretsCache, obj)
 		},
 	)
 
@@ -195,7 +195,7 @@ func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespa
 			}
 			logrus.Debugf("concurrentNodeNames = %q", concurrentNodeNames)
 			for _, nodeName := range concurrentNodeNames {
-				objects = append(objects, jobctl.NewUpgradeJob(obj, serviceAccountName, nodeName, controllerName))
+				objects = append(objects, jobctl.NewUpgradeJob(obj, nodeName, controllerName))
 			}
 			obj.Status.Applying = concurrentNodeNames
 			logrus.Debugf("%#v", objects)
@@ -208,13 +208,14 @@ func RegisterHandlers(ctx context.Context, serviceAccountName, controllerNamespa
 	return nil
 }
 
-func hashPlanLatest(secretCache corectlv1.SecretCache, plan *upgradeapiv1.Plan) (upgradeapiv1.PlanStatus, error) {
+func digestPlan(secretCache corectlv1.SecretCache, plan *upgradeapiv1.Plan) (upgradeapiv1.PlanStatus, error) {
 	if upgradeapiv1.PlanLatestResolved.GetReason(plan) == "Error" {
 		plan.Status.LatestVersion = ""
 		plan.Status.LatestHash = ""
 	} else {
 		hash := sha256.New224()
 		hash.Write([]byte(plan.Status.LatestVersion))
+		hash.Write([]byte(plan.Spec.ServiceAccountName))
 		for _, s := range plan.Spec.Secrets {
 			secret, err := secretCache.Get(plan.Namespace, s.Name)
 			if err != nil {

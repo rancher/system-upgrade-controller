@@ -16,3 +16,13 @@ fi
 if [ -z "$ARCH" ]; then
     ARCH=$(go env GOHOSTARCH)
 fi
+
+ARCH=${ARCH:-"amd64"}
+TAG=${TAG:-"${VERSION}-${ARCH}"}
+REPO=${REPO:-rancher}
+
+if echo $TAG | grep -q dirty; then
+    TAG=dev
+fi
+
+PKG=github.com/rancher/system-upgrade-controller
