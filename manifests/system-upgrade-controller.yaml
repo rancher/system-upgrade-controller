@@ -50,6 +50,12 @@ spec:
       labels:
         upgrade.cattle.io/controller: system-upgrade-controller # necessary to avoid drain
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - {key: "node-role.kubernetes.io/master", operator: In, values: ["true"]}
       serviceAccountName: system-upgrade
       tolerations:
         - key: "node.kubernetes.io/unschedulable" # necessary to avoid cordon/drain
