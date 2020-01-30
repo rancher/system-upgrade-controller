@@ -91,7 +91,7 @@ func Run(c *cli.Context) {
 		logrus.Fatal(err)
 	}
 	ctx := signals.SetupSignalHandler(context.Background())
-	if err := upgrade.StartController(ctx, cfg, threads, namespace, serviceAccountName, name); err != nil {
+	if err := upgrade.StartController(ctx, cfg, threads, namespace, name); err != nil {
 		logrus.Fatalf("Error starting: %v", err)
 	}
 	<-ctx.Done()
