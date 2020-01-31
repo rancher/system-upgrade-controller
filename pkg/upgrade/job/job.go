@@ -2,9 +2,7 @@ package job
 
 import (
 	"os"
-	"path/filepath"
 	"strconv"
-	"strings"
 
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
@@ -22,6 +20,7 @@ const (
 	defaultActiveDeadlineSeconds = int64(600)
 	defaultPrivileged            = true
 	defaultKubectlImage          = "rancher/kubectl:latest"
+	defaultImagePullPolicy       = corev1.PullIfNotPresent
 )
 
 var (
@@ -64,18 +63,16 @@ var (
 		}
 		return defaultValue
 	}(defaultPrivileged)
+
+	ImagePullPolicy = func(defaultValue corev1.PullPolicy) corev1.PullPolicy {
+		if str := os.Getenv("SYSTEM_UPGRADE_JOB_IMAGE_PULL_POLICY"); str != "" {
+			return corev1.PullPolicy(str)
+		}
+		return defaultValue
+	}(defaultImagePullPolicy)
 )
 
-func UpgradeImage(plan *upgradeapiv1.Plan) string {
-	image := plan.Spec.Upgrade.Image
-	if p := strings.Split(image, `:`); len(p) > 1 {
-		image = strings.Join(p[0:len(p)-1], `:`)
-	}
-	return image + `:` + plan.Status.LatestVersion
-}
-
 func NewUpgradeJob(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job {
-	hostPathDirectory := corev1.HostPathDirectory
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -138,116 +135,46 @@ func NewUpgradeJob(plan *upgradeapiv1.Plan, nodeName, controllerName string) *ba
 						Effect:   corev1.TaintEffectNoSchedule,
 					}},
 					RestartPolicy: corev1.RestartPolicyNever,
-					Volumes: []corev1.Volume{{
-						Name: `host-root`,
-						VolumeSource: corev1.VolumeSource{
-							HostPath: &corev1.HostPathVolumeSource{
-								Path: "/", Type: &hostPathDirectory,
-							},
-						},
-					}, {
-						Name: "pod-info",
-						VolumeSource: corev1.VolumeSource{
-							DownwardAPI: &corev1.DownwardAPIVolumeSource{
-								Items: []corev1.DownwardAPIVolumeFile{{
-									Path: "labels",
-									FieldRef: &corev1.ObjectFieldSelector{
-										FieldPath: "metadata.labels",
+					Volumes:       volumes(plan.Spec.Secrets),
+					Containers: []corev1.Container{
+						container("upgrade", *plan.Spec.Upgrade,
+							withImageTag(plan.Status.LatestVersion),
+							withSecurityContext(&corev1.SecurityContext{
+								Privileged: &Privileged,
+								Capabilities: &corev1.Capabilities{
+									Add: []corev1.Capability{
+										corev1.Capability("CAP_SYS_BOOT"),
 									},
-								}, {
-									Path: "annotations",
-									FieldRef: &corev1.ObjectFieldSelector{
-										FieldPath: "metadata.annotations",
-									},
-								}},
-							},
-						},
-					}},
-					Containers: []corev1.Container{{
-						SecurityContext: &corev1.SecurityContext{
-							Privileged: &Privileged,
-							Capabilities: &corev1.Capabilities{
-								Add: []corev1.Capability{
-									corev1.Capability("CAP_SYS_BOOT"),
 								},
-							},
-						},
-						Name:    "upgrade",
-						Image:   UpgradeImage(plan),
-						Command: plan.Spec.Upgrade.Command,
-						Args:    plan.Spec.Upgrade.Args,
-						VolumeMounts: []corev1.VolumeMount{
-							{Name: "host-root", MountPath: "/host"},
-							{Name: "pod-info", MountPath: "/run/system-upgrade/pod", ReadOnly: true},
-						},
-						Env: []corev1.EnvVar{{
-							Name:  "SYSTEM_UPGRADE_PLAN_NAME",
-							Value: plan.Name,
-						}, {
-							Name:  "SYSTEM_UPGRADE_PLAN_LATEST_HASH",
-							Value: plan.Status.LatestHash,
-						}, {
-							Name:  "SYSTEM_UPGRADE_PLAN_LATEST_VERSION",
-							Value: plan.Status.LatestVersion,
-						}, {
-							Name: "SYSTEM_UPGRADE_NODE_NAME",
-							ValueFrom: &corev1.EnvVarSource{
-								FieldRef: &corev1.ObjectFieldSelector{
-									FieldPath: "spec.nodeName",
-								},
-							},
-						}, {
-							Name: "SYSTEM_UPGRADE_POD_NAME",
-							ValueFrom: &corev1.EnvVarSource{
-								FieldRef: &corev1.ObjectFieldSelector{
-									FieldPath: "metadata.name",
-								},
-							},
-						}, {
-							Name: "SYSTEM_UPGRADE_POD_UID",
-							ValueFrom: &corev1.EnvVarSource{
-								FieldRef: &corev1.ObjectFieldSelector{
-									FieldPath: "metadata.uid",
-								},
-							},
-						}},
-					}},
+							}),
+							withSecrets(plan.Spec.Secrets),
+							withPlanEnvironment(plan.Name, plan.Status),
+						),
+					},
 				},
 			},
 		},
 	}
 
-	for _, secret := range plan.Spec.Secrets {
-		secretVolumeName := name.SafeConcatName("secret", secret.Name)
-		secretVolumePath := secret.Path
-		if secretVolumePath == "" {
-			secretVolumePath = filepath.Join("/run/system-upgrade/secrets", secret.Name)
-		} else if secretVolumePath[0:1] != "/" {
-			secretVolumePath = filepath.Join("/run/system-upgrade/secrets", secretVolumePath)
-		}
-		job.Spec.Template.Spec.Volumes = append(job.Spec.Template.Spec.Volumes, corev1.Volume{
-			Name: secretVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: secret.Name,
-				},
-			},
-		})
-		job.Spec.Template.Spec.Containers[0].VolumeMounts = append(job.Spec.Template.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
-			Name:      secretVolumeName,
-			MountPath: secretVolumePath,
-			ReadOnly:  true,
-		})
+	// first, we prepare
+	if plan.Spec.Prepare != nil {
+		job.Spec.Template.Spec.InitContainers = append(job.Spec.Template.Spec.InitContainers,
+			container("prepare", *plan.Spec.Prepare,
+				withSecrets(plan.Spec.Secrets),
+				withPlanEnvironment(plan.Name, plan.Status),
+			),
+		)
 	}
 
+	// then we cordon/drain
 	cordon, drain := plan.Spec.Cordon, plan.Spec.Drain
 	if drain != nil {
 		args := []string{"drain", nodeName, "--pod-selector", `!` + upgradeapi.LabelController}
 		if drain.IgnoreDaemonSets == nil || *plan.Spec.Drain.IgnoreDaemonSets {
-			args = append(args, "--delete-local-data")
+			args = append(args, "--ignore-daemonsets")
 		}
 		if drain.DeleteLocalData == nil || *drain.DeleteLocalData {
-			args = append(args, "--ignore-daemonsets")
+			args = append(args, "--delete-local-data")
 		}
 		if drain.Force {
 			args = append(args, "--force")
@@ -258,26 +185,73 @@ func NewUpgradeJob(plan *upgradeapiv1.Plan, nodeName, controllerName string) *ba
 		if drain.GracePeriod != nil {
 			args = append(args, "--grace-period", strconv.FormatInt(int64(*drain.GracePeriod), 10))
 		}
-		job.Spec.Template.Spec.InitContainers = append(job.Spec.Template.Spec.InitContainers, corev1.Container{
-			Image:        KubectlImage,
-			Name:         "drain",
-			Args:         args,
-			VolumeMounts: job.Spec.Template.Spec.Containers[0].VolumeMounts,
-		})
+		job.Spec.Template.Spec.InitContainers = append(job.Spec.Template.Spec.InitContainers,
+			container("drain", upgradeapiv1.ContainerSpec{
+				Image: KubectlImage,
+				Args:  args,
+			},
+				withSecrets(plan.Spec.Secrets),
+				withPlanEnvironment(plan.Name, plan.Status),
+			),
+		)
 	} else if cordon {
-		args := []string{"cordon", nodeName}
-		job.Spec.Template.Spec.InitContainers = append(job.Spec.Template.Spec.InitContainers, corev1.Container{
-			Image:        KubectlImage,
-			Name:         "cordon",
-			Args:         args,
-			VolumeMounts: job.Spec.Template.Spec.Containers[0].VolumeMounts,
-		})
+		job.Spec.Template.Spec.InitContainers = append(job.Spec.Template.Spec.InitContainers,
+			container("cordon", upgradeapiv1.ContainerSpec{
+				Image: KubectlImage,
+				Args:  []string{"cordon", nodeName},
+			},
+				withSecrets(plan.Spec.Secrets),
+				withPlanEnvironment(plan.Name, plan.Status),
+			),
+		)
 	}
+
 	if ActiveDeadlineSeconds > 0 {
 		job.Spec.ActiveDeadlineSeconds = &ActiveDeadlineSeconds
 		if drain != nil && drain.Timeout != nil && drain.Timeout.Milliseconds() > ActiveDeadlineSeconds*1000 {
-			logrus.Errorf("drain timeout exceeds active deadline seconds")
+			logrus.Warnf("drain timeout exceeds active deadline seconds")
 		}
 	}
+
 	return job
+}
+
+func volumes(secrets []upgradeapiv1.SecretSpec) []corev1.Volume {
+	hostPathDirectory := corev1.HostPathDirectory
+	volumes := []corev1.Volume{{
+		Name: `host-root`,
+		VolumeSource: corev1.VolumeSource{
+			HostPath: &corev1.HostPathVolumeSource{
+				Path: "/", Type: &hostPathDirectory,
+			},
+		},
+	}, {
+		Name: "pod-info",
+		VolumeSource: corev1.VolumeSource{
+			DownwardAPI: &corev1.DownwardAPIVolumeSource{
+				Items: []corev1.DownwardAPIVolumeFile{{
+					Path: "labels",
+					FieldRef: &corev1.ObjectFieldSelector{
+						FieldPath: "metadata.labels",
+					},
+				}, {
+					Path: "annotations",
+					FieldRef: &corev1.ObjectFieldSelector{
+						FieldPath: "metadata.annotations",
+					},
+				}},
+			},
+		},
+	}}
+	for _, secret := range secrets {
+		volumes = append(volumes, corev1.Volume{
+			Name: name.SafeConcatName("secret", secret.Name),
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: secret.Name,
+				},
+			},
+		})
+	}
+	return volumes
 }
