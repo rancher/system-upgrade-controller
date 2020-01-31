@@ -38,22 +38,67 @@ Below is example Plan in development for [k3OS](https://github.com/rancher/k3os)
 ---
 apiVersion: upgrade.cattle.io/v1
 kind: Plan
+
 metadata:
+  # This `name` should be short but descriptive.
   name: k3os-latest
+
+  # The same `namespace` as is used for the system-upgrade-controller Deployment.
   namespace: k3os-system
+
 spec:
+  # The maximum number of concurrent nodes to apply this update on.
   concurrency: 1
+
+  # The value for `channel` is assumed to be a URL that returns HTTP 302 with the last path element of the value
+  # returned in the Location header assumed to be an image tag.
+  # SEE https://github.com/rancher/system-upgrade-controller/blob/v0.1.0/pkg/upgrade/plan/plan.go#L177
   channel: https://github.com/rancher/k3os/releases/latest
-  version: v0.9.0-dev
+
+  # Providing a value for `version` will prevent polling/resolution of the `channel` if specified.
+  # version: v0.9.0-dev
+
+  # Select which nodes this plan can be applied to.
   nodeSelector:
     matchExpressions:
+      # This limits application of this upgrade only to nodes that have opted in by applying this label.
+      # Additionally, a value of `disabled` for this label on a node will cause the controller to skip over the node.
+      # SEE https://github.com/rancher/system-upgrade-controller/blob/v0.1.0/pkg/upgrade/plan/plan.go#L216
+      # NOTICE THAT THE NAME PORTION OF THIS LABEL MATCHES THE PLAN NAME. This is related to the fact that the
+      # system-upgrade-controller will tag the node with this very label having the value of the applied version.
+      # SEE https://github.com/rancher/system-upgrade-controller/blob/v0.1.0/pkg/upgrade/plan/plan.go#L112-L115
       - {key: plan.upgrade.cattle.io/k3os-latest, operator: Exists}
+      # This label is set by k3OS, therefore a node without it should not apply this upgrade.
+      - {key: k3os.io/mode, operator: Exists}
+      # Additionally, do not attempt to upgrade nodes booted from "live" CDROM.
       - {key: k3os.io/mode, operator: NotIn, values: ["live"]}
+
+  # The service account for the pod to use. As with normal pods, if not specified the `default` service account from the namespace will be assigned.
+  # See https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  serviceAccountName: k3os-upgrade
+
+  # The prepare init container is run before cordon/drain which is run before the upgrade container.
+  # Shares the same format as the `upgrade` container
+  # prepare:
+  #   image: alpine:3.11
+  #   command: [sh, -c]
+  #   args: [" echo '### ENV ###'; env | sort; echo '### RUN ###'; find /run/system-upgrade | sort"]
+  # SEE https://github.com/rancher/system-upgrade-controller/blob/v0.1.0/pkg/apis/upgrade.cattle.io/v1/types.go#L58
+
+  # See https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/#use-kubectl-drain-to-remove-a-node-from-service
   drain:
+    # deleteLocalData: true
+    # ignoreDaemonSets: true
     force: true
+
+  # SEE https://github.com/rancher/system-upgrade-controller/blob/v0.1.0/pkg/apis/upgrade.cattle.io/v1/types.go#L51
   upgrade:
+    # The tag portion of the image will be overridden with the value from `.status.latestVersion` a.k.a. the resolved version.
+    # SEE https://github.com/rancher/system-upgrade-controller/blob/v0.1.0/pkg/apis/upgrade.cattle.io/v1/types.go#L47
     image: rancher/k3os
     command: [k3os, --debug]
+    # It is safe to specify `--kernel` on overlay installations as the destination path will not exist and so the
+    # upgrade of the kernel component will be skipped (with a warning in the log).
     args:
       - upgrade
       - --kernel
@@ -65,22 +110,6 @@ spec:
       - --source=/k3os/system
       - --destination=/host/k3os/system
 ```
-
-This plan specifies via `concurrency` that only one node at a time in the cluster can be applying this plan.
-It specifies a `channel` URL that should adhere to the simple contract exhibited by Github latest release browser URLs
-which is to simply return an HTTP 302 with Location header pointing to the latest release tag. The controller will attempt to
-resolve `channel` URL redirects every 15 minutes by default. If, as in this example, the `version` is specified then 
-`channel` resolution is skipped and only the specified `version` is honored.
-To specify which nodes in the cluster are eligible for application of this Plan a `nodeSelector` entry must be provided.
-The format of `nodeSelector` is the same as `nodeSelectorTerms` in the `nodeAffinity` section of the `affinity` spec for
-Pods.
-Not shown in this example is a `cordon` boolean, default `false`, that would indicate that `kubectl cordon` should be
-run against the node prior to invoking the upgrade.
-Instead we have a non-nil `drain` (which will set the same unscheduleable taint as `cordon`) with parameters
-corresponding to those used for `kubectl drain` minus the selectors. Additionally, the `deleteLocalData` and 
-`ignoreDaemonSets` parameters both default to `true` if, as in this example, `drain` is specified.
-Both the `drain` and `cordon` `kubectl` invocations are run in init containers for the Pod.
-Finally, to specify the `upgrade`, we have a very truncated container template: `image`, `command`, and `args`.
 
 ## Building
 `make`
