@@ -28,7 +28,7 @@ type Plan struct {
 	Status PlanStatus `json:"status,omitempty"`
 }
 
-// PlanSpec represents the user-configurable details of a Plan
+// PlanSpec represents the user-configurable details of a Plan.
 type PlanSpec struct {
 	Concurrency        int64                 `json:"concurrency,omitempty"`
 	NodeSelector       *metav1.LabelSelector `json:"nodeSelector,omitempty"`
@@ -38,9 +38,10 @@ type PlanSpec struct {
 	Version string       `json:"version,omitempty"`
 	Secrets []SecretSpec `json:"secrets,omitempty"`
 
-	Upgrade *UpgradeSpec `json:"upgrade,omitempty"`
-	Cordon  bool         `json:"cordon,omitempty"`
-	Drain   *DrainSpec   `json:"drain,omitempty"`
+	Prepare *ContainerSpec `json:"prepare,omitempty"`
+	Cordon  bool           `json:"cordon,omitempty"`
+	Drain   *DrainSpec     `json:"drain,omitempty"`
+	Upgrade *ContainerSpec `json:"upgrade,omitempty"`
 }
 
 // PlanStatus represents the resulting state from processing Plan events.
@@ -51,13 +52,14 @@ type PlanStatus struct {
 	Applying      []string                            `json:"applying,omitempty"`
 }
 
-// UpgradeSpec is a simplified container template.
-type UpgradeSpec struct {
+// ContainerSpec is a simplified container template.
+type ContainerSpec struct {
 	Image   string   `json:"image,omitempty"`
 	Command []string `json:"command,omitempty"`
 	Args    []string `json:"args,omitempty"`
 }
 
+// DrainSpec encapsulates `kubectl drain` parameters minus node/pod selectors.
 type DrainSpec struct {
 	Timeout          *time.Duration `json:"timeout,omitempty"`
 	GracePeriod      *int32         `json:"gracePeriod,omitempty"`
@@ -66,6 +68,7 @@ type DrainSpec struct {
 	Force            bool           `json:"force,omitempty"`
 }
 
+// SecretSpec describes a secret to be mounted for prepare/upgrade containers.
 type SecretSpec struct {
 	Name string `json:"name,omitempty"`
 	Path string `json:"path,omitempty"`
