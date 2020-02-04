@@ -99,6 +99,7 @@ func NewUpgradeJob(plan *upgradeapiv1.Plan, nodeName, controllerName string) *ba
 				Spec: corev1.PodSpec{
 					HostIPC:            true,
 					HostPID:            true,
+					HostNetwork:        true,
 					ServiceAccountName: plan.Spec.ServiceAccountName,
 					Affinity: &corev1.Affinity{
 						NodeAffinity: &corev1.NodeAffinity{
