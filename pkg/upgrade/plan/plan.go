@@ -15,7 +15,7 @@ import (
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	upgradectl "github.com/rancher/system-upgrade-controller/pkg/generated/controllers/upgrade.cattle.io"
 	upgradectlv1 "github.com/rancher/system-upgrade-controller/pkg/generated/controllers/upgrade.cattle.io/v1"
-	jobctl "github.com/rancher/system-upgrade-controller/pkg/upgrade/job"
+	upgradejob "github.com/rancher/system-upgrade-controller/pkg/upgrade/job"
 	batchctl "github.com/rancher/wrangler-api/pkg/generated/controllers/batch"
 	corectl "github.com/rancher/wrangler-api/pkg/generated/controllers/core"
 	corectlv1 "github.com/rancher/wrangler-api/pkg/generated/controllers/core/v1"
@@ -195,7 +195,7 @@ func RegisterHandlers(ctx context.Context, controllerNamespace, controllerName s
 			}
 			logrus.Debugf("concurrentNodeNames = %q", concurrentNodeNames)
 			for _, nodeName := range concurrentNodeNames {
-				objects = append(objects, jobctl.NewUpgradeJob(obj, nodeName, controllerName))
+				objects = append(objects, upgradejob.New(obj, nodeName, controllerName))
 			}
 			obj.Status.Applying = concurrentNodeNames
 			logrus.Debugf("%#v", objects)

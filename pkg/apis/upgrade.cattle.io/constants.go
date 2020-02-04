@@ -12,6 +12,9 @@ const (
 	// LabelPlan is the plan being applied.
 	LabelPlan = GroupName + `/plan`
 
+	// LabelPlan is the version being applied.
+	LabelVersion = GroupName + `/version`
+
 	// LabelPlanSuffix is used for composing labels specific to a plan.
 	LabelPlanSuffix = `plan.` + GroupName
 )
