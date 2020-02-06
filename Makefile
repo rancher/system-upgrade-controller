@@ -10,6 +10,9 @@ TARGETS := $(shell ls scripts)
 $(TARGETS): .dapper
 	./.dapper $@
 
+e2e:
+	./scripts/verify
+
 .DEFAULT_GOAL := ci
 
-.PHONY: $(TARGETS)
+.PHONY: $(TARGETS) e2e

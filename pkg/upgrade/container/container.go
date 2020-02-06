@@ -1,4 +1,4 @@
-package job
+package container
 
 import (
 	"path/filepath"
@@ -9,9 +9,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type containerOpt func(*corev1.Container)
+type Option func(*corev1.Container)
 
-func withSecrets(secrets []upgradeapiv1.SecretSpec) containerOpt {
+func WithSecrets(secrets []upgradeapiv1.SecretSpec) Option {
 	return func(container *corev1.Container) {
 		for _, secret := range secrets {
 			secretVolumeName := name.SafeConcatName("secret", secret.Name)
@@ -30,13 +30,19 @@ func withSecrets(secrets []upgradeapiv1.SecretSpec) containerOpt {
 	}
 }
 
-func withSecurityContext(securityContext *corev1.SecurityContext) containerOpt {
+func WithSecurityContext(securityContext *corev1.SecurityContext) Option {
 	return func(container *corev1.Container) {
 		container.SecurityContext = securityContext
 	}
 }
 
-func withImageTag(tag string) containerOpt {
+func WithImagePullPolicy(pullPolicy corev1.PullPolicy) Option {
+	return func(container *corev1.Container) {
+		container.ImagePullPolicy = pullPolicy
+	}
+}
+
+func WithImageTag(tag string) Option {
 	return func(container *corev1.Container) {
 		image := container.Image
 		if p := strings.Split(image, `:`); len(p) > 1 {
@@ -46,7 +52,7 @@ func withImageTag(tag string) containerOpt {
 	}
 }
 
-func withPlanEnvironment(planName string, planStatus upgradeapiv1.PlanStatus) containerOpt {
+func WithPlanEnvironment(planName string, planStatus upgradeapiv1.PlanStatus) Option {
 	return func(container *corev1.Container) {
 		container.Env = append(container.Env, []corev1.EnvVar{{
 			Name:  "SYSTEM_UPGRADE_PLAN_NAME",
@@ -61,13 +67,12 @@ func withPlanEnvironment(planName string, planStatus upgradeapiv1.PlanStatus) co
 	}
 }
 
-func container(name string, spec upgradeapiv1.ContainerSpec, opt ...containerOpt) corev1.Container {
+func New(name string, spec upgradeapiv1.ContainerSpec, opt ...Option) corev1.Container {
 	container := corev1.Container{
-		Name:            name,
-		Image:           spec.Image,
-		ImagePullPolicy: ImagePullPolicy,
-		Command:         spec.Command,
-		Args:            spec.Args,
+		Name:    name,
+		Image:   spec.Image,
+		Command: spec.Command,
+		Args:    spec.Args,
 		VolumeMounts: []corev1.VolumeMount{
 			{Name: "host-root", MountPath: "/host"},
 			{Name: "pod-info", MountPath: "/run/system-upgrade/pod", ReadOnly: true},
