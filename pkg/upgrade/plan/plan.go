@@ -159,7 +159,7 @@ func RegisterHandlers(ctx context.Context, controllerNamespace, controllerName s
 			resolved := upgradeapiv1.PlanLatestResolved
 			resolved.CreateUnknownIfNotExists(obj)
 			if obj.Spec.Version == "" && obj.Spec.Channel == "" {
-				resolved.SetError(obj, "Error", fmt.Errorf("missing one of channel or version"))
+				resolved.SetError(obj, "Error", upgradeapiv1.ErrPlanUnresolvable)
 				return digestPlan(secretsCache, obj)
 			}
 			if obj.Spec.Version != "" {

@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+source $(dirname $0)/version
+
+cd $(dirname $0)/..
+
+mkdir -p bin
+[ "$(uname)" != "Darwin" ] && LINKFLAGS="-extldflags -static -s"
+echo "Building $PKG ..."
+VERSIONFLAGS="-X ${PKG}/pkg/version.Version=${VERSION} -X ${PKG}/pkg/version.GitCommit=${COMMIT:0:8}"
+CGO_ENABLED=0 go build -ldflags "$VERSIONFLAGS $LINKFLAGS" -o bin/system-upgrade-controller

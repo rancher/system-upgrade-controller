@@ -17,9 +17,10 @@ docker build \
   --file package/Dockerfile \
   --tag ${REPO}/system-upgrade-controller:${TAG} \
   --tag ${REPO}/system-upgrade-controller:latest \
+  --target controller \
 .
 
-docker image save --output ./dist/images.tar \
+docker image save --output ./dist/artifacts/system-upgrade-controller-${ARCH}.tar \
   ${REPO}/system-upgrade-controller:${TAG} \
   ${REPO}/system-upgrade-controller:latest
 echo ${REPO}/system-upgrade-controller:${TAG} > ./dist/images.txt

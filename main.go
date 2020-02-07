@@ -63,8 +63,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:        "service-account",
-			EnvVar:      "SYSTEM_UPGRADE_CONTROLLER_SERVICE_ACCOUNT",
-			Required:    true,
+			Hidden:      true,
 			Destination: &serviceAccountName,
 		},
 		cli.IntFlag{
@@ -75,6 +74,10 @@ func main() {
 		},
 	}
 	app.Action = Run
+
+	if serviceAccountName != "" {
+		logrus.Warn("deprecated flag `service-account` is ignored")
+	}
 
 	if err := app.Run(os.Args); err != nil {
 		logrus.Fatal(err)

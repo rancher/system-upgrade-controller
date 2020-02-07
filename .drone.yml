@@ -11,11 +11,12 @@ steps:
   image: rancher/dapper:v0.4.2
   commands:
   - dapper ci
+  - dapper e2e-verify
   volumes:
   - name: docker
     path: /var/run/docker.sock
 
-- name: github_binary_release
+- name: upload-artifacts
   image: ibuildthecloud/github-release:v0.0.1
   settings:
     api_key:
@@ -36,7 +37,7 @@ steps:
     event:
     - tag
 
-- name: docker-publish
+- name: push-controller
   image: plugins/docker
   settings:
     dockerfile: package/Dockerfile
@@ -54,6 +55,26 @@ steps:
     - refs/tags/*
     event:
     - tag
+
+- name: push-e2e-tests
+  image: plugins/docker
+  settings:
+    dockerfile: package/Dockerfile
+    target: e2e-tests
+    password:
+      from_secret: docker_password
+    repo: "rancher/system-upgrade-controller"
+    tag: "${DRONE_TAG}-amd64-e2e-tests"
+    username:
+      from_secret: docker_username
+  when:
+    instance:
+      - drone-publish.rancher.io
+    ref:
+      - refs/head/master
+      - refs/tags/*
+    event:
+      - tag
 
 volumes:
 - name: docker
@@ -77,7 +98,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 
-- name: github_binary_release
+- name: upload-artifacts
   image: ibuildthecloud/github-release:v0.0.1
   settings:
     api_key:
@@ -98,7 +119,7 @@ steps:
     event:
     - tag
 
-- name: docker-publish
+- name: push-controller
   image: plugins/docker
   settings:
     dockerfile: package/Dockerfile
@@ -116,6 +137,26 @@ steps:
     - refs/tags/*
     event:
     - tag
+
+- name: push-e2e-tests
+  image: plugins/docker
+  settings:
+    dockerfile: package/Dockerfile
+    target: e2e-tests
+    password:
+      from_secret: docker_password
+    repo: "rancher/system-upgrade-controller"
+    tag: "${DRONE_TAG}-arm64-e2e-tests"
+    username:
+      from_secret: docker_username
+  when:
+    instance:
+      - drone-publish.rancher.io
+    ref:
+      - refs/head/master
+      - refs/tags/*
+    event:
+      - tag
 
 volumes:
 - name: docker
@@ -139,7 +180,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 
-- name: github_binary_release
+- name: upload-artifacts
   image: ibuildthecloud/github-release:v0.0.1
   settings:
     api_key:
@@ -160,7 +201,7 @@ steps:
     event:
     - tag
 
-- name: docker-publish
+- name: push-controller
   image: plugins/docker
   settings:
     dockerfile: package/Dockerfile
@@ -193,7 +234,7 @@ platform:
   arch: amd64
 
 steps:
-- name: manifest
+- name: controller
   image: plugins/manifest:1.0.2
   settings:
     username:
@@ -214,6 +255,27 @@ steps:
     - refs/tags/*
     event:
     - tag
+
+- name: e2e-tests
+  image: plugins/manifest:1.0.2
+  settings:
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    target: "rancher/system-upgrade-controller:${DRONE_TAG}-e2e-tests"
+    template: "rancher/system-upgrade-controller:${DRONE_TAG}-ARCH-e2e-tests"
+  when:
+    instance:
+      - drone-publish.rancher.io
+    ref:
+      - refs/head/master
+      - refs/tags/*
+    event:
+      - tag
 
 depends_on:
 - amd64

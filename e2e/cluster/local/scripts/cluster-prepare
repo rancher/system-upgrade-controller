@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -e
+
+: "${ARCH?required}"
+: "${DIST?required}"
+: "${ALPINE_TAG:=3.11}"
+: "${KUBECTL_TAG:=v1.17.0}"
+: "${SONOBUOY_TAG:=v0.17.2}"
+
+docker-image-save() {
+  echo "Pulling '$1:$2' ..."
+  docker image pull "$1:$2" 1> /dev/null
+
+  echo "Tagging '$1:$2' as '$1:latest' ..."
+  docker image tag "$1:$2" "$1:latest"
+
+  echo "Saving '$1' images to '$(dirname $0)/../images/k3s/scratch/${1/\//-}-${ARCH}.tar' ..."
+  docker image save --output "$(dirname $0)/../images/k3s/scratch/${1/\//-}-${ARCH}.tar" "$1:$2" "$1:latest"
+}
+
+rm -rf $(dirname $0)/../images/*/scratch/*
+
+cp -vf "${DIST}/system-upgrade-controller-${ARCH}.tar" $(dirname $0)/../images/k3s/scratch/
+cp -vf "${DIST}/system-upgrade-controller-e2e-tests-${ARCH}.tar" $(dirname $0)/../images/k3s/scratch/
+
+docker-image-save "library/alpine"    "${ALPINE_TAG}"
+docker-image-save "rancher/kubectl"   "${KUBECTL_TAG}"
+docker-image-save "sonobuoy/sonobuoy" "${SONOBUOY_TAG}"

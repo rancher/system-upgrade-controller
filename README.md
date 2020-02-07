@@ -52,7 +52,6 @@ spec:
 
   # The value for `channel` is assumed to be a URL that returns HTTP 302 with the last path element of the value
   # returned in the Location header assumed to be an image tag.
-  # SEE https://github.com/rancher/system-upgrade-controller/blob/v0.1.0/pkg/upgrade/plan/plan.go#L177
   channel: https://github.com/rancher/k3os/releases/latest
 
   # Providing a value for `version` will prevent polling/resolution of the `channel` if specified.
@@ -63,10 +62,8 @@ spec:
     matchExpressions:
       # This limits application of this upgrade only to nodes that have opted in by applying this label.
       # Additionally, a value of `disabled` for this label on a node will cause the controller to skip over the node.
-      # SEE https://github.com/rancher/system-upgrade-controller/blob/v0.1.0/pkg/upgrade/plan/plan.go#L216
       # NOTICE THAT THE NAME PORTION OF THIS LABEL MATCHES THE PLAN NAME. This is related to the fact that the
-      # system-upgrade-controller will tag the node with this very label having the value of the applied version.
-      # SEE https://github.com/rancher/system-upgrade-controller/blob/v0.1.0/pkg/upgrade/plan/plan.go#L112-L115
+      # system-upgrade-controller will tag the node with this very label having the value of the applied plan.status.latestHash.
       - {key: plan.upgrade.cattle.io/k3os-latest, operator: Exists}
       # This label is set by k3OS, therefore a node without it should not apply this upgrade.
       - {key: k3os.io/mode, operator: Exists}
@@ -83,7 +80,6 @@ spec:
   #   image: alpine:3.11
   #   command: [sh, -c]
   #   args: [" echo '### ENV ###'; env | sort; echo '### RUN ###'; find /run/system-upgrade | sort"]
-  # SEE https://github.com/rancher/system-upgrade-controller/blob/v0.1.0/pkg/apis/upgrade.cattle.io/v1/types.go#L58
 
   # See https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/#use-kubectl-drain-to-remove-a-node-from-service
   drain:
@@ -91,7 +87,6 @@ spec:
     # ignoreDaemonSets: true
     force: true
 
-  # SEE https://github.com/rancher/system-upgrade-controller/blob/v0.1.0/pkg/apis/upgrade.cattle.io/v1/types.go#L51
   upgrade:
     # The tag portion of the image will be overridden with the value from `.status.latestVersion` a.k.a. the resolved version.
     # SEE https://github.com/rancher/system-upgrade-controller/blob/v0.1.0/pkg/apis/upgrade.cattle.io/v1/types.go#L47
@@ -112,7 +107,10 @@ spec:
 ```
 
 ## Building
-`make`
+
+```shell script
+make
+```
 
 ### Local Execution
 
@@ -121,6 +119,27 @@ Use `./bin/system-upgrade-controller`.
 Also see [`manifests/system-upgrade-controller.yaml`](manifests/system-upgrade-controller.yaml) that spells out what a
 "typical" deployment might look like with default environment variables that parameterize various operational aspects
 of the controller and the resources spawned by it.
+
+### End-to-End Testing
+
+Integration tests are bundled as a [Sonobuoy plugin](https://sonobuoy.io/docs/v0.17.2/plugins/) that expects to be run within a pod.
+To verify locally:
+
+```shell script
+make e2e
+```
+
+This will, via Dapper, stand up a local cluster (using docker-compose) and then run the Sonobuoy plugin against/within it.
+The Sonobuoy results are parsed and a `Status: passed` results in a clean exit, whereas `Status: failed` exits non-zero.
+See [scripts/e2e-results](scripts/e2e-results) called by [scripts/e2e-verify](scripts/e2e-verify).
+
+Alternatively, if you have a working cluster and Sonobuoy installation, provided you've pushed the images (consider building with
+something like `make REPO=dweomer TAG=dev`), then you can run the e2e tests thusly:
+
+```shell script
+sonobuoy run --plugin dist/artifacts/system-upgrade-controller-e2e-tests.yaml --wait
+sonobuoy results $(sonobuoy retrieve)
+```
 
 ## License
 Copyright (c) 2019-2020 [Rancher Labs, Inc.](http://rancher.com)
