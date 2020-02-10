@@ -10,9 +10,11 @@ TARGETS := $(shell ls scripts)
 $(TARGETS): .dapper
 	./.dapper $@
 
-e2e:
-	./scripts/verify
+e2e: e2e-verify
+
+clean:
+	rm -rvf ./bin ./dist
 
 .DEFAULT_GOAL := ci
 
-.PHONY: $(TARGETS) e2e
+.PHONY: $(TARGETS) e2e clean
