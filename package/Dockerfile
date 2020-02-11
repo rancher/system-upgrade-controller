@@ -11,7 +11,7 @@ RUN set -x \
 
 FROM ${ALPINE} AS e2e-tests
 ARG ARCH
-ARG REPO
+ARG REPO=rancher
 ARG TAG
 ENV SYSTEM_UPGRADE_CONTROLLER_IMAGE=${REPO}/system-upgrade-controller:${TAG}
 RUN set -x \
