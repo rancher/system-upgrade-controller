@@ -41,6 +41,9 @@ steps:
   image: plugins/docker
   settings:
     dockerfile: package/Dockerfile
+    build_args:
+    - ARCH=amd64
+    - TAG=${DRONE_TAG}-amd64
     password:
       from_secret: docker_password
     repo: "rancher/system-upgrade-controller"
@@ -60,6 +63,9 @@ steps:
   image: plugins/docker
   settings:
     dockerfile: package/Dockerfile
+    build_args:
+    - ARCH=amd64
+    - TAG=${DRONE_TAG}-amd64
     target: e2e-tests
     password:
       from_secret: docker_password
@@ -123,6 +129,9 @@ steps:
   image: plugins/docker
   settings:
     dockerfile: package/Dockerfile
+    build_args:
+    - ARCH=arm64
+    - TAG=${DRONE_TAG}-arm64
     password:
       from_secret: docker_password
     repo: "rancher/system-upgrade-controller"
@@ -142,6 +151,9 @@ steps:
   image: plugins/docker
   settings:
     dockerfile: package/Dockerfile
+    build_args:
+    - ARCH=arm64
+    - TAG=${DRONE_TAG}-arm64
     target: e2e-tests
     password:
       from_secret: docker_password
@@ -205,6 +217,9 @@ steps:
   image: plugins/docker
   settings:
     dockerfile: package/Dockerfile
+    build_args:
+    - ARCH=arm
+    - TAG=${DRONE_TAG}-arm
     password:
       from_secret: docker_password
     repo: "rancher/system-upgrade-controller"
