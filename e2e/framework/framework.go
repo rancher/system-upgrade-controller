@@ -2,10 +2,6 @@ package framework
 
 import (
 	"fmt"
-	"net"
-	"net/http"
-	"net/http/httptest"
-	"os"
 	"strings"
 	"time"
 
@@ -46,8 +42,6 @@ type Client struct {
 
 	controllerDeployment     *appsv1.Deployment
 	controllerServiceAccount *corev1.ServiceAccount
-
-	channelServer *httptest.Server
 }
 
 func New(name string, opt ...Option) *Client {
@@ -88,10 +82,6 @@ func (c *Client) NewPlan(name, image string, command []string, args ...string) *
 		plan.Name = name
 	}
 	return plan
-}
-
-func (c *Client) ChannelServerURL() string {
-	return c.channelServer.URL
 }
 
 func (c *Client) CreatePlan(plan *upgradeapiv1.Plan) (*upgradeapiv1.Plan, error) {
@@ -140,34 +130,10 @@ func (c *Client) BeforeEach() {
 	c.beforeFramework()
 	c.Framework.BeforeEach()
 	c.setupController()
-	c.setupChannelServer()
 }
 
 func (c *Client) AfterEach() {
-	c.teardownChannelServer()
 	c.Framework.AfterEach()
-}
-
-func (c *Client) setupChannelServer() {
-	hostname, err := os.Hostname()
-	if err != nil {
-		Failf("cannot read hostname: %v", err)
-	}
-	c.channelServer = &httptest.Server{
-		Config: &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Location", "/local/channel/test")
-			w.WriteHeader(http.StatusFound)
-		})},
-	}
-	c.channelServer.Listener, err = net.Listen("tcp", net.JoinHostPort(hostname, "0"))
-	if err != nil {
-		Failf("cannot create tcp listener: %v", err)
-	}
-	c.channelServer.Start()
-}
-
-func (c *Client) teardownChannelServer() {
-	c.channelServer.Close()
 }
 
 func (c *Client) setupController() {
