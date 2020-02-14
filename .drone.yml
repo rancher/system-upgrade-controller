@@ -11,6 +11,7 @@ steps:
   image: rancher/dapper:v0.4.2
   commands:
   - dapper ci
+  - dapper e2e-sonobuoy
   - dapper e2e-verify
   volumes:
   - name: docker

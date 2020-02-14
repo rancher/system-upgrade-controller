@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/rancher/norman/pkg/openapi"
@@ -164,7 +165,7 @@ func RegisterHandlers(ctx context.Context, controllerNamespace, controllerName s
 			}
 			if obj.Spec.Version != "" {
 				resolved.SetError(obj, "Version", nil)
-				obj.Status.LatestVersion = obj.Spec.Version
+				obj.Status.LatestVersion = mungeVersionTag(obj.Spec.Version)
 				return digestPlan(secretsCache, obj)
 			}
 			if resolved.IsTrue(obj) {
@@ -180,7 +181,7 @@ func RegisterHandlers(ctx context.Context, controllerNamespace, controllerName s
 				return status, err
 			}
 			resolved.SetError(obj, "Channel", nil)
-			obj.Status.LatestVersion = latest
+			obj.Status.LatestVersion = mungeVersionTag(latest)
 			return digestPlan(secretsCache, obj)
 		},
 	)
@@ -311,4 +312,8 @@ func selectConcurrentNodeNames(nodeCache corectlv1.NodeCache, plan *upgradeapiv1
 
 	sort.Strings(selected)
 	return selected, nil
+}
+
+func mungeVersionTag(version string) string {
+	return strings.ReplaceAll(version, `+`, `-`)
 }

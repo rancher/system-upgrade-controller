@@ -131,7 +131,6 @@ make e2e
 
 This will, via Dapper, stand up a local cluster (using docker-compose) and then run the Sonobuoy plugin against/within it.
 The Sonobuoy results are parsed and a `Status: passed` results in a clean exit, whereas `Status: failed` exits non-zero.
-See [scripts/e2e-results](scripts/e2e-results) called by [scripts/e2e-verify](scripts/e2e-verify).
 
 Alternatively, if you have a working cluster and Sonobuoy installation, provided you've pushed the images (consider building with
 something like `make REPO=dweomer TAG=dev`), then you can run the e2e tests thusly:

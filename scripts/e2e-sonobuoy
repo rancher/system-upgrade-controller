@@ -1,0 +1,44 @@
+#!/bin/bash
+
+set -e -o pipefail
+
+source $(dirname $0)/version
+DIST=$(realpath "$(dirname $0)/../dist/artifacts")
+if [ ! -d "${DIST}" ]; then
+  echo "Missing artifacts directory '${DIST}', have you run 'make build' (and then 'make package') ?" >&2
+  exit 1
+fi
+export ARCH COMMIT DIST REPO TAG VERSION E2E_CLUSTER=${E2E_CLUSTER:=local} KUBECONFIG=${KUBECONFIG:-$HOME/.kube/config}
+export PATH="$PWD/e2e/cluster/${E2E_CLUSTER}/scripts:$PATH"
+
+e2e-sonobuoy-run() {
+  : ${SONOBUOY_RUN_SONOBUOY_IMAGE:="sonobuoy/sonobuoy:v0.17.2"}
+  : ${SONOBUOY_RUN_IMAGE_PULL_POLICY:=Never}
+  : ${SONOBUOY_RUN_WAIT:=10}
+
+  sonobuoy run --kubeconfig=${KUBECONFIG} \
+    --image-pull-policy=${SONOBUOY_RUN_IMAGE_PULL_POLICY} \
+    --plugin ${DIST}/system-upgrade-controller-e2e-tests.yaml \
+    --sonobuoy-image=${SONOBUOY_RUN_SONOBUOY_IMAGE} \
+    --wait=${SONOBUOY_RUN_WAIT}
+  mv -vf $(sonobuoy retrieve) ${DIST}/sonobuoy-results-${ARCH}.tar.gz
+  sonobuoy results ${DIST}/sonobuoy-results-${ARCH}.tar.gz | tee ${DIST}/../sonobuoy-results-${ARCH}.txt
+}
+export -f e2e-sonobuoy-run
+
+# ---
+
+echo "Verifying package (a.k.a. running integration tests on '\${E2E_CLUSTER}=${E2E_CLUSTER}')"
+source $(dirname $0)/e2e-functions
+
+cd $(dirname $0)/..
+
+type docker-compose kubectl sonobuoy
+
+trap cluster-down EXIT
+
+timeout --foreground 5m cluster-up
+timeout --foreground 1m bash -c "e2e-wait-for-kubeconfig"
+timeout --foreground 5m bash -c "e2e-wait-for-nodes"
+timeout --foreground 5m bash -c "e2e-wait-for-services"
+timeout --foreground 9m bash -c "e2e-sonobuoy-run"

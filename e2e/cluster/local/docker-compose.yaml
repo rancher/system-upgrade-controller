@@ -19,7 +19,7 @@ services:
     hostname: local-leader
     privileged: true
     ports:
-      - "172.17.0.1:6443:6443" # k3s
+      - "6443:6443" # k3s
     volumes:
       - source: kubeconfig
         target: /etc/rancher/k3s
