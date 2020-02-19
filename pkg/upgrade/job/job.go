@@ -78,7 +78,7 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name.SafeConcatName("upgrade", "apply", plan.Status.LatestHash),
+			Name:      name.SafeConcatName("apply", plan.Name, "at", plan.Status.LatestHash, "on", nodeName),
 			Namespace: plan.Namespace,
 			Labels: labels.Set{
 				upgradeapi.LabelController: controllerName,
