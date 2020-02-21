@@ -230,6 +230,11 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 	}
 
 	// and finally, we upgrade
+	if plan.Spec.Upgrade == nil {
+		logrus.Warnf("upgrade field is empty")
+		return job
+	}
+
 	podTemplate.Spec.Containers = []corev1.Container{
 		upgradecontainer.New("upgrade", *plan.Spec.Upgrade,
 			upgradecontainer.WithImageTag(plan.Status.LatestVersion),
