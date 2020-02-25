@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/onsi/ginkgo v1.10.1
 	github.com/onsi/gomega v1.7.0
-	github.com/rancher/wrangler v0.3.1
+	github.com/rancher/wrangler v0.4.2-0.20200225192203-e5307acd8846
 	github.com/rancher/wrangler-api v0.2.1-0.20191025043713-b1ca9c21825a
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/cli v1.22.2
@@ -16,7 +16,6 @@ require (
 )
 
 replace (
-	github.com/rancher/wrangler => github.com/dweomer/wrangler v0.3.1-0.20200224190549-90c17807f3cf
 	k8s.io/api => github.com/rancher/kubernetes/staging/src/k8s.io/api v1.17.2-k3s1
 	k8s.io/apiextensions-apiserver => github.com/rancher/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.17.2-k3s1
 	k8s.io/apimachinery => github.com/rancher/kubernetes/staging/src/k8s.io/apimachinery v1.17.2-k3s1

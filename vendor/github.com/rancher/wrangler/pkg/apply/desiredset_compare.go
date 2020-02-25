@@ -133,18 +133,11 @@ func applyPatch(gvk schema.GroupVersionKind, reconciler Reconciler, patcher Patc
 	if err != nil {
 		return false, err
 	}
-	originalObject, err := getOriginalObject(gvk, oldMetadata)
-	if err != nil {
-		return false, err
-	}
-	if originalObject != nil {
-		oldObject = originalObject
-	}
+
 	original, modified, err := originalAndModified(gvk, oldMetadata, newObject)
 	if err != nil {
 		return false, err
 	}
-
 	current, err := json.Marshal(oldObject)
 	if err != nil {
 		return false, err
@@ -168,12 +161,18 @@ func applyPatch(gvk schema.GroupVersionKind, reconciler Reconciler, patcher Patc
 		return false, nil
 	}
 
+	logrus.Debugf("DesiredSet - Patch %s %s/%s for %s -- [%s, %s, %s, %s]", gvk, oldMetadata.GetNamespace(), oldMetadata.GetName(), debugID, patch, original, modified, current)
+
 	if reconciler != nil {
 		newObject, err := prepareObjectForCreate(gvk, newObject)
 		if err != nil {
 			return false, err
 		}
-		handled, err := reconciler(oldObject, newObject)
+		originalObject, err := getOriginalObject(gvk, oldMetadata)
+		if err != nil {
+			return false, err
+		}
+		handled, err := reconciler(originalObject, newObject)
 		if err != nil {
 			return false, err
 		}
@@ -181,9 +180,6 @@ func applyPatch(gvk schema.GroupVersionKind, reconciler Reconciler, patcher Patc
 			return true, nil
 		}
 	}
-
-	logrus.Debugf("DesiredSet - Patch %s %s/%s for %s -- [%s, %s, %s, %s]", gvk, oldMetadata.GetNamespace(), oldMetadata.GetName(), debugID,
-		patch, original, modified, current)
 
 	logrus.Debugf("DesiredSet - Updated %s %s/%s for %s -- %s %s", gvk, oldMetadata.GetNamespace(), oldMetadata.GetName(), debugID, patchType, patch)
 	_, err = patcher(oldMetadata.GetNamespace(), oldMetadata.GetName(), patchType, patch)

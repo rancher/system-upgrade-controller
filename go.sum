@@ -157,6 +157,8 @@ github.com/dustin/go-humanize v1.0.0 h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/dweomer/wrangler v0.3.1-0.20200224190549-90c17807f3cf h1:HtRu4kCpGj1Na2P1LSRe+PmGA7RuB/ISFAftISeg07Q=
 github.com/dweomer/wrangler v0.3.1-0.20200224190549-90c17807f3cf/go.mod h1:txHSBkPtVgNH/0pUCvdP0Ak0HptAOc9ffBmFxQnL4z4=
+github.com/dweomer/wrangler v0.4.2-0.20200225164759-0bbf8877e077 h1:awEmYfbkg1UqkdYhugTqkTETXMIBjfO0EjCtYegfgEY=
+github.com/dweomer/wrangler v0.4.2-0.20200225164759-0bbf8877e077/go.mod h1:txHSBkPtVgNH/0pUCvdP0Ak0HptAOc9ffBmFxQnL4z4=
 github.com/eapache/go-resiliency v1.1.0/go.mod h1:kFI+JgMyC7bLPUVY133qvEBtVayf5mFgVsvEsIPBvNs=
 github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21/go.mod h1:+020luEh2TKB4/GOp8oxxtq0Daoen/Cii55CzbTV6DU=
 github.com/eapache/queue v1.1.0/go.mod h1:6eCeP0CKFpHLu8blIFXhExK/dRa7WDZfr6jVFPTqq+I=
@@ -265,6 +267,7 @@ github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b h1:VKtxabqXZkF25pY9ekf
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/groupcache v0.0.0-20160516000752-02826c3e7903/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
 github.com/golang/groupcache v0.0.0-20180513044358-24b0969c4cb7/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
+github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
 github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 h1:ZgQEtGgCBiWRM39fZuwSd1LwSqqSW0hOdXCYYDX0R3I=
 github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
 github.com/golang/mock v1.0.0/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
@@ -383,6 +386,8 @@ github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpO
 github.com/imdario/mergo v0.3.5/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
 github.com/imdario/mergo v0.3.6 h1:xTNEAn+kxVO7dTZGu0CegyqKZmoWFI0rF8UxjlB2d28=
 github.com/imdario/mergo v0.3.6/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
+github.com/imdario/mergo v0.3.7 h1:Y+UAYTZ7gDEuOfhxKWy+dvb5dRQ6rJjFSdX2HZY1/gI=
+github.com/imdario/mergo v0.3.7/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/jefferai/jsonx v1.0.0/go.mod h1:OGmqmi2tTeI/PS+qQfBDToLHHJIy/RMp24fPo8vFvoQ=
 github.com/jellevandenhooff/dkim v0.0.0-20150330215556-f50fe3d243e1/go.mod h1:E0B/fFc00Y+Rasa88328GlI/XbtyysCtTHZS8h7IrBU=
@@ -597,6 +602,10 @@ github.com/rancher/kubernetes/staging/src/k8s.io/kubelet v1.17.2-k3s1/go.mod h1:
 github.com/rancher/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.17.2-k3s1/go.mod h1:GTPm6pl8yIFEzk7bX03iY6kI5Bpt0Qd+BN3ajg/qeUI=
 github.com/rancher/kubernetes/staging/src/k8s.io/metrics v1.17.2-k3s1/go.mod h1:e70DTGI+y72YcU8iGDifilyP5uW6sPmBflDEjtiH/p0=
 github.com/rancher/kubernetes/staging/src/k8s.io/sample-apiserver v1.17.2-k3s1/go.mod h1:Ey49UYt1h2yQl0P61nfZEo/LZUu78Bj55oBL/VOejW4=
+github.com/rancher/wrangler v0.2.1-0.20191025041946-1fd360590735/go.mod h1:zmXTOSzU0vhumCyl0+Acq2FEP5WJOJRqnCQDegknyWA=
+github.com/rancher/wrangler v0.4.1/go.mod h1:1cR91WLhZgkZ+U4fV9nVuXqKurWbgXcIReU4wnQvTN8=
+github.com/rancher/wrangler v0.4.2-0.20200225192203-e5307acd8846 h1:jiA0wj/6QAIW3w1bSC0jKHzRVA2lxybR9bgj2wFfPE8=
+github.com/rancher/wrangler v0.4.2-0.20200225192203-e5307acd8846/go.mod h1:txHSBkPtVgNH/0pUCvdP0Ak0HptAOc9ffBmFxQnL4z4=
 github.com/rancher/wrangler-api v0.2.1-0.20191025043713-b1ca9c21825a h1:dH3D71jzKuYRY7qLe9AKuwz8DKO6G9PCfkeafETMmZo=
 github.com/rancher/wrangler-api v0.2.1-0.20191025043713-b1ca9c21825a/go.mod h1:U4nfgObQ7EERMwljGhCfQIbh2ql/t8suINX8/VfWiko=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
