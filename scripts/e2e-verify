@@ -12,6 +12,8 @@ export ARCH COMMIT DIST REPO TAG VERSION
 
 # ---
 
+set -x
+tar xzf ${DIST}/sonobuoy-results-amd64.tar.gz -C ${DIST}/../.
 if [[ $(grep -E 'Status' ${DIST}/../sonobuoy-results-${ARCH}.txt | awk '{print $2}') != passed ]]; then
   exit 255
 fi

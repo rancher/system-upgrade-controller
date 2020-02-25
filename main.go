@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/rancher/system-upgrade-controller/pkg/upgrade"
 	"github.com/rancher/system-upgrade-controller/pkg/version"
@@ -84,7 +85,7 @@ func main() {
 	}
 }
 
-func Run(c *cli.Context) {
+func Run(_ *cli.Context) {
 	if debug {
 		logrus.SetLevel(logrus.DebugLevel)
 		logrus.SetReportCaller(true)
@@ -93,8 +94,12 @@ func Run(c *cli.Context) {
 	if err != nil {
 		logrus.Fatal(err)
 	}
+	ctl, err := upgrade.NewController(cfg, namespace, name)
+	if err != nil {
+		logrus.Fatal(err)
+	}
 	ctx := signals.SetupSignalHandler(context.Background())
-	if err := upgrade.StartController(ctx, cfg, threads, namespace, name); err != nil {
+	if err := ctl.Start(ctx, threads, 2*time.Hour); err != nil {
 		logrus.Fatalf("Error starting: %v", err)
 	}
 	<-ctx.Done()

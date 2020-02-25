@@ -8,7 +8,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
-	schedulerapi "k8s.io/kubernetes/pkg/scheduler/api"
 	e2eframework "k8s.io/kubernetes/test/e2e/framework"
 	e2edeployment "k8s.io/kubernetes/test/e2e/framework/deployment"
 )
@@ -59,7 +58,7 @@ func DeploymentWithTolerations(toleration ...corev1.Toleration) DeploymentOption
 func DeploymentDefaultTolerations() DeploymentOption {
 	return DeploymentWithTolerations(
 		corev1.Toleration{
-			Key:      schedulerapi.TaintNodeUnschedulable,
+			Key:      corev1.TaintNodeUnschedulable,
 			Operator: corev1.TolerationOpExists,
 			Effect:   corev1.TaintEffectNoSchedule,
 		},

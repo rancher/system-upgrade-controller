@@ -9,19 +9,20 @@ import (
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 )
 
-var _ = Describe("Upgrade", func() {
+var _ = Describe("Plan Resolution", func() {
 	e2e := framework.New("resolve")
 
-	When("plan missing channel and version", func() {
+	When("missing channel and version", func() {
 		var (
 			err  error
-			plan = e2e.NewPlan("missing-", "", nil)
+			plan *upgradeapiv1.Plan
 		)
 		BeforeEach(func() {
+			plan = e2e.NewPlan("missing-", "", nil)
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.PollPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 2*time.Second, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
 		})
 		It("should not resolve", func() {
@@ -31,18 +32,19 @@ var _ = Describe("Upgrade", func() {
 		})
 	})
 
-	When("plan has version", func() {
+	When("has version", func() {
 		var (
 			err  error
-			plan = e2e.NewPlan("version-", "", nil)
+			plan *upgradeapiv1.Plan
 		)
 		BeforeEach(func() {
+			plan = e2e.NewPlan("version-", "", nil)
 			plan.Spec.Version = "test"
 
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.PollPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 2*time.Second, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
 		})
 		It("should resolve", func() {
@@ -53,19 +55,20 @@ var _ = Describe("Upgrade", func() {
 		})
 	})
 
-	When("plan has version with semver+metadata", func() {
+	When("has version with semver+metadata", func() {
 		var (
 			err    error
-			plan   = e2e.NewPlan("version-semver-metadata-", "", nil)
+			plan   *upgradeapiv1.Plan
 			semver = "v1.2.3+test"
 		)
 		BeforeEach(func() {
+			plan = e2e.NewPlan("version-semver-metadata-", "", nil)
 			plan.Spec.Version = semver
 
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.PollPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 2*time.Second, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
 		})
 		It("should resolve", func() {
@@ -78,22 +81,23 @@ var _ = Describe("Upgrade", func() {
 		})
 	})
 
-	When("plan has channel", func() {
+	When("has channel", func() {
 		var (
 			err        error
-			plan       = e2e.NewPlan("channel-", "", nil)
+			plan       *upgradeapiv1.Plan
 			channelSrv *httptest.Server
 			channelTag = "test"
 		)
 		BeforeEach(func() {
 			channelSrv = framework.ChannelServer(path.Join("/local", channelTag))
+			plan = e2e.NewPlan("channel-", "", nil)
 			plan.Spec.Channel = channelSrv.URL
 			Expect(plan.Spec.Channel).ToNot(BeEmpty())
 
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.PollPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 2*time.Second, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
 		})
 		AfterEach(func() {
@@ -109,22 +113,23 @@ var _ = Describe("Upgrade", func() {
 		})
 	})
 
-	When("plan has channel with semver+metadata", func() {
+	When("has channel with semver+metadata", func() {
 		var (
 			err        error
-			plan       = e2e.NewPlan("channel-semver-metadata-", "", nil)
+			plan       *upgradeapiv1.Plan
 			channelSrv *httptest.Server
 			channelTag = "v1.2.3+test"
 		)
 		BeforeEach(func() {
 			channelSrv = framework.ChannelServer(path.Join("/local/test", channelTag))
+			plan = e2e.NewPlan("channel-semver-metadata-", "", nil)
 			plan.Spec.Channel = channelSrv.URL
 			Expect(plan.Spec.Channel).ToNot(BeEmpty())
 
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.PollPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 2*time.Second, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
 		})
 		AfterEach(func() {

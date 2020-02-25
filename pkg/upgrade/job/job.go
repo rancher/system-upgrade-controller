@@ -6,14 +6,13 @@ import (
 
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
-	upgradecontainer "github.com/rancher/system-upgrade-controller/pkg/upgrade/container"
+	upgradectr "github.com/rancher/system-upgrade-controller/pkg/upgrade/container"
 	"github.com/rancher/wrangler/pkg/name"
 	"github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	schedulerapi "k8s.io/kubernetes/pkg/scheduler/api"
 )
 
 const (
@@ -78,7 +77,7 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name.SafeConcatName("apply", plan.Name, "at", plan.Status.LatestHash, "on", nodeName),
+			Name:      name.SafeConcatName("apply", plan.Name, "on", nodeName, "with", plan.Status.LatestHash),
 			Namespace: plan.Namespace,
 			Labels: labels.Set{
 				upgradeapi.LabelController: controllerName,
@@ -135,7 +134,7 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 						},
 					},
 					Tolerations: []corev1.Toleration{{
-						Key:      schedulerapi.TaintNodeUnschedulable,
+						Key:      corev1.TaintNodeUnschedulable,
 						Operator: corev1.TolerationOpExists,
 						Effect:   corev1.TaintEffectNoSchedule,
 					}},
@@ -179,10 +178,10 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 	// first, we prepare
 	if plan.Spec.Prepare != nil {
 		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
-			upgradecontainer.New("prepare", *plan.Spec.Prepare,
-				upgradecontainer.WithSecrets(plan.Spec.Secrets),
-				upgradecontainer.WithPlanEnvironment(plan.Name, plan.Status),
-				upgradecontainer.WithImagePullPolicy(ImagePullPolicy),
+			upgradectr.New("prepare", *plan.Spec.Prepare,
+				upgradectr.WithSecrets(plan.Spec.Secrets),
+				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
+				upgradectr.WithImagePullPolicy(ImagePullPolicy),
 			),
 		)
 	}
@@ -207,33 +206,33 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 			args = append(args, "--grace-period", strconv.FormatInt(int64(*drain.GracePeriod), 10))
 		}
 		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
-			upgradecontainer.New("drain", upgradeapiv1.ContainerSpec{
+			upgradectr.New("drain", upgradeapiv1.ContainerSpec{
 				Image: KubectlImage,
 				Args:  args,
 			},
-				upgradecontainer.WithSecrets(plan.Spec.Secrets),
-				upgradecontainer.WithPlanEnvironment(plan.Name, plan.Status),
-				upgradecontainer.WithImagePullPolicy(ImagePullPolicy),
+				upgradectr.WithSecrets(plan.Spec.Secrets),
+				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
+				upgradectr.WithImagePullPolicy(ImagePullPolicy),
 			),
 		)
 	} else if cordon {
 		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
-			upgradecontainer.New("cordon", upgradeapiv1.ContainerSpec{
+			upgradectr.New("cordon", upgradeapiv1.ContainerSpec{
 				Image: KubectlImage,
 				Args:  []string{"cordon", nodeName},
 			},
-				upgradecontainer.WithSecrets(plan.Spec.Secrets),
-				upgradecontainer.WithPlanEnvironment(plan.Name, plan.Status),
-				upgradecontainer.WithImagePullPolicy(ImagePullPolicy),
+				upgradectr.WithSecrets(plan.Spec.Secrets),
+				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
+				upgradectr.WithImagePullPolicy(ImagePullPolicy),
 			),
 		)
 	}
 
 	// and finally, we upgrade
 	podTemplate.Spec.Containers = []corev1.Container{
-		upgradecontainer.New("upgrade", *plan.Spec.Upgrade,
-			upgradecontainer.WithImageTag(plan.Status.LatestVersion),
-			upgradecontainer.WithSecurityContext(&corev1.SecurityContext{
+		upgradectr.New("upgrade", *plan.Spec.Upgrade,
+			upgradectr.WithImageTag(plan.Status.LatestVersion),
+			upgradectr.WithSecurityContext(&corev1.SecurityContext{
 				Privileged: &Privileged,
 				Capabilities: &corev1.Capabilities{
 					Add: []corev1.Capability{
@@ -241,9 +240,9 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 					},
 				},
 			}),
-			upgradecontainer.WithSecrets(plan.Spec.Secrets),
-			upgradecontainer.WithPlanEnvironment(plan.Name, plan.Status),
-			upgradecontainer.WithImagePullPolicy(ImagePullPolicy),
+			upgradectr.WithSecrets(plan.Spec.Secrets),
+			upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
+			upgradectr.WithImagePullPolicy(ImagePullPolicy),
 		),
 	}
 
@@ -254,5 +253,6 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 		}
 	}
 
+	//batchobjv1.SetObjectDefaults_Job(job)
 	return job
 }
