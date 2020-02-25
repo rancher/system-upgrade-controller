@@ -93,29 +93,23 @@ func reconcileService(oldObj, newObj runtime.Object) (bool, error) {
 }
 
 func reconcileJob(oldObj, newObj runtime.Object) (bool, error) {
-	oldJob, ok := oldObj.(*batchv1.Job)
+	oldSvc, ok := oldObj.(*batchv1.Job)
 	if !ok {
-		oldJob = &batchv1.Job{}
-		if err := convertObj(oldObj, oldJob); err != nil {
+		oldSvc = &batchv1.Job{}
+		if err := convertObj(oldObj, oldSvc); err != nil {
 			return false, err
 		}
 	}
-	oldJob = oldJob.DeepCopy()
-	oldJob.Spec.Template.Labels = nil // ignore for equality check
-	oldJob.Spec.Template.Spec.DeprecatedServiceAccount = ""
 
-	newJob, ok := newObj.(*batchv1.Job)
+	newSvc, ok := newObj.(*batchv1.Job)
 	if !ok {
-		newJob = &batchv1.Job{}
-		if err := convertObj(newObj, newJob); err != nil {
+		newSvc = &batchv1.Job{}
+		if err := convertObj(newObj, newSvc); err != nil {
 			return false, err
 		}
 	}
-	newJob = newJob.DeepCopy()
-	newJob.Spec.Template.Labels = nil // ignore for equality check
-	newJob.Spec.Template.Spec.DeprecatedServiceAccount = ""
 
-	if !equality.Semantic.DeepEqual(oldJob.Spec.Template, newJob.Spec.Template) {
+	if !equality.Semantic.DeepEqual(oldSvc.Spec.Template, newSvc.Spec.Template) {
 		return false, ErrReplace
 	}
 

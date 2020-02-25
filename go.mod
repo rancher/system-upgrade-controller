@@ -16,7 +16,7 @@ require (
 )
 
 replace (
-	github.com/rancher/wrangler => github.com/dweomer/wrangler v0.3.1-0.20200222053412-c7827c00df3a
+	github.com/rancher/wrangler => github.com/dweomer/wrangler v0.3.1-0.20200224190549-90c17807f3cf
 	k8s.io/api => github.com/rancher/kubernetes/staging/src/k8s.io/api v1.17.2-k3s1
 	k8s.io/apiextensions-apiserver => github.com/rancher/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.17.2-k3s1
 	k8s.io/apimachinery => github.com/rancher/kubernetes/staging/src/k8s.io/apimachinery v1.17.2-k3s1

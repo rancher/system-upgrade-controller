@@ -58,7 +58,7 @@ func prepareObjectForCreate(gvk schema.GroupVersionKind, obj runtime.Object) (ru
 }
 
 func originalAndModified(gvk schema.GroupVersionKind, oldMetadata v1.Object, newObject runtime.Object) ([]byte, []byte, error) {
-	original, err := getOriginal(gvk, oldMetadata)
+	original, err := getOriginalBytes(gvk, oldMetadata)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -133,7 +133,13 @@ func applyPatch(gvk schema.GroupVersionKind, reconciler Reconciler, patcher Patc
 	if err != nil {
 		return false, err
 	}
-
+	originalObject, err := getOriginalObject(gvk, oldMetadata)
+	if err != nil {
+		return false, err
+	}
+	if originalObject != nil {
+		oldObject = originalObject
+	}
 	original, modified, err := originalAndModified(gvk, oldMetadata, newObject)
 	if err != nil {
 		return false, err
@@ -215,10 +221,10 @@ func removeCreationTimestamp(data map[string]interface{}) bool {
 	return false
 }
 
-func getOriginal(gvk schema.GroupVersionKind, obj v1.Object) ([]byte, error) {
+func getOriginalObject(gvk schema.GroupVersionKind, obj v1.Object) (runtime.Object, error) {
 	original := appliedFromAnnotation(obj.GetAnnotations()[LabelApplied])
 	if len(original) == 0 {
-		return []byte("{}"), nil
+		return nil, nil
 	}
 
 	mapObj := map[string]interface{}{}
@@ -228,16 +234,19 @@ func getOriginal(gvk schema.GroupVersionKind, obj v1.Object) ([]byte, error) {
 	}
 
 	removeCreationTimestamp(mapObj)
-
-	u := &unstructured.Unstructured{
+	return prepareObjectForCreate(gvk, &unstructured.Unstructured{
 		Object: mapObj,
-	}
+	})
+}
 
-	objCopy, err := prepareObjectForCreate(gvk, u)
+func getOriginalBytes(gvk schema.GroupVersionKind, obj v1.Object) ([]byte, error) {
+	objCopy, err := getOriginalObject(gvk, obj)
 	if err != nil {
 		return nil, err
 	}
-
+	if objCopy == nil {
+		return []byte("{}"), nil
+	}
 	return json.Marshal(objCopy)
 }
 

@@ -10,7 +10,8 @@ TARGETS := $(shell ls scripts)
 $(TARGETS): .dapper
 	./.dapper $@
 
-e2e: | e2e-sonobuoy e2e-verify
+e2e: e2e-sonobuoy
+	$(MAKE) e2e-verify
 
 clean:
 	rm -rvf ./bin ./dist

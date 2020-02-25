@@ -7,14 +7,17 @@ import (
 
 	"github.com/onsi/ginkgo"
 	"github.com/rancher/system-upgrade-controller/e2e/framework/controller"
+	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
-	upgrade "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned"
+	upgradecln "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned"
 	upgradescheme "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned/scheme"
 	"github.com/rancher/wrangler/pkg/condition"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
@@ -38,7 +41,7 @@ type Options struct {
 type Client struct {
 	framework.Framework
 
-	UpgradeClientSet *upgrade.Clientset
+	UpgradeClientSet *upgradecln.Clientset
 
 	controllerDeployment     *appsv1.Deployment
 	controllerServiceAccount *corev1.ServiceAccount
@@ -116,13 +119,37 @@ func (c *Client) DeletePlans(options *metav1.DeleteOptions, listOpts metav1.List
 	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).DeleteCollection(options, listOpts)
 }
 
-func (c *Client) PollPlanCondition(name string, cond condition.Cond, interval, timeout time.Duration) (plan *upgradeapiv1.Plan, err error) {
-	return plan, wait.Poll(interval, timeout, func() (bool, error) {
+func (c *Client) WaitForPlanCondition(name string, cond condition.Cond, timeout time.Duration) (plan *upgradeapiv1.Plan, err error) {
+	return plan, wait.Poll(time.Second, timeout, func() (bool, error) {
 		plan, err = c.GetPlan(name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
 		return cond.GetStatus(plan) != "", nil
+	})
+}
+
+func (c *Client) WaitForPlanJobs(plan *upgradeapiv1.Plan, count int, timeout time.Duration) (jobs []batchv1.Job, err error) {
+	complete := condition.Cond(batchv1.JobComplete)
+	failed := condition.Cond(batchv1.JobFailed)
+
+	labelSelector := labels.SelectorFromSet(labels.Set{
+		upgradeapi.LabelPlan: plan.Name,
+	})
+
+	return jobs, wait.Poll(5*time.Second, timeout, func() (bool, error) {
+		list, err := c.ClientSet.BatchV1().Jobs(plan.Namespace).List(metav1.ListOptions{
+			LabelSelector: labelSelector.String(),
+		})
+		if err != nil {
+			return false, err
+		}
+		for _, item := range list.Items {
+			if failed.IsTrue(&item) || complete.IsTrue(&item) {
+				jobs = append(jobs, item)
+			}
+		}
+		return len(jobs) >= count, nil
 	})
 }
 
@@ -204,7 +231,7 @@ func (c *Client) beforeFramework() {
 		config.NegotiatedSerializer = upgradescheme.Codecs
 	}
 
-	c.UpgradeClientSet, err = upgrade.NewForConfig(config)
+	c.UpgradeClientSet, err = upgradecln.NewForConfig(config)
 	framework.ExpectNoError(err)
 
 	restClient, err := rest.RESTClientFor(config)

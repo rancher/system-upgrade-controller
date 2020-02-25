@@ -19,6 +19,7 @@ RUN set -x \
  && k3s --version
 
 COPY scratch/*-${ARCH}.tar /var/lib/rancher/k3s/agent/images/
+#ADD https://github.com/rancher/k3s/releases/download/${K3S_VERSION}/k3s-airgap-images-${ARCH}.tar /var/lib/rancher/k3s/agent/images/
 
 VOLUME /var/lib/cni
 VOLUME /var/lib/kubelet
