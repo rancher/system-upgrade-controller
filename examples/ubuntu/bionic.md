@@ -10,13 +10,13 @@ built from a [Dockerfile](bionic/k3s/Dockerfile) (ubuntu:bionic + k3s). To run i
 is why there are only two.)*
 
 For demonstration purposes the nodes are build with curl and openssl (and their libs) pinned at obsolete versions. The
-supplied **Plan** will bump both curl and openssl to their newest versions at the time of this writing. You will and 
+supplied **Plan** will bump both curl and openssl to their newest versions at the time of this writing. You and/or 
 your organization will probably build your own upgrade containers but I wanted to show the power and simplicity of the
 system-upgrade-controller (a.k.a. SUC) combined with official container images that match the OS of the nodes you are
 upgrading.
 
 The SUC will normally trigger jobs for a **Plan** when there is a new `.status.latestVersion` which can be specified
-directory in `.spec.version` or resolved from the URL in `.spec.channel` (i.e. a GitHub latest release link that 
+directly in `.spec.version` or resolved from the URL in `.spec.channel` (i.e. a GitHub latest release link that 
 redirects to the most recent release tag). But what about more granular upgrade operations (i.e. individual packages)
 for an OS that is pinned at the LTS version or codename (in this case `bionic`)? The SUC allows for this by also
 triggering jobs if any underlying secrets change that the **Plan** has referenced. We will be leveraging this
