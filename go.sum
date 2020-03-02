@@ -601,6 +601,8 @@ github.com/rancher/kubernetes/staging/src/k8s.io/sample-apiserver v1.17.2-k3s1/g
 github.com/rancher/wrangler v0.2.1-0.20191025041946-1fd360590735/go.mod h1:zmXTOSzU0vhumCyl0+Acq2FEP5WJOJRqnCQDegknyWA=
 github.com/rancher/wrangler v0.4.2-0.20200225192203-e5307acd8846 h1:jiA0wj/6QAIW3w1bSC0jKHzRVA2lxybR9bgj2wFfPE8=
 github.com/rancher/wrangler v0.4.2-0.20200225192203-e5307acd8846/go.mod h1:txHSBkPtVgNH/0pUCvdP0Ak0HptAOc9ffBmFxQnL4z4=
+github.com/rancher/wrangler v0.5.0 h1:zTchAfY9DzchLvXpRpQuNB0PbNfl/HSuvFL1wHN6mDU=
+github.com/rancher/wrangler v0.5.0/go.mod h1:txHSBkPtVgNH/0pUCvdP0Ak0HptAOc9ffBmFxQnL4z4=
 github.com/rancher/wrangler-api v0.2.1-0.20191025043713-b1ca9c21825a h1:dH3D71jzKuYRY7qLe9AKuwz8DKO6G9PCfkeafETMmZo=
 github.com/rancher/wrangler-api v0.2.1-0.20191025043713-b1ca9c21825a/go.mod h1:U4nfgObQ7EERMwljGhCfQIbh2ql/t8suINX8/VfWiko=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=

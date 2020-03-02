@@ -233,6 +233,7 @@ func (c *planCache) GetByIndex(indexName, key string) (result []*v1.Plan, err er
 	if err != nil {
 		return nil, err
 	}
+	result = make([]*v1.Plan, 0, len(objs))
 	for _, obj := range objs {
 		result = append(result, obj.(*v1.Plan))
 	}
