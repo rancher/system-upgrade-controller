@@ -21,7 +21,7 @@ minimal imposition of opinion. Our design constraints, such as they are, follow:
 - Content delivery via container image a.k.a. container command pattern
 - Operator-overridable command(s)
 - A very privileged job/pod/container:
-  - Host IPC, PID
+  - Host IPC, NET, and PID
   - CAP_SYS_BOOT
   - Host root mounted at `/host` (read/write)
 - Optional opt-in/opt-out via node labels

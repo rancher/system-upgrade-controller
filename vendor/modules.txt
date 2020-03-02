@@ -689,6 +689,7 @@ k8s.io/klog
 k8s.io/kube-openapi/pkg/util/proto
 # k8s.io/kubectl v0.0.0 => github.com/rancher/kubernetes/staging/src/k8s.io/kubectl v1.17.2-k3s1
 k8s.io/kubectl/pkg/scale
+k8s.io/kubectl/pkg/util/hash
 # k8s.io/kubernetes v1.17.2 => github.com/rancher/kubernetes v1.17.2-k3s1
 k8s.io/kubernetes/pkg/api/legacyscheme
 k8s.io/kubernetes/pkg/api/service

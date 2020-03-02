@@ -1,0 +1,80 @@
+version: "3.7"
+
+services:
+
+  leader:
+    container_name: ubuntu-leader
+    hostname: ubuntu-leader
+    image: "example/ubuntu/bionic:k3s"
+    build:
+      context: bionic/k3s
+    privileged: true
+    environment:
+      - K3S_CLUSTER_INIT=true
+      - K3S_TOKEN=example/ubuntu
+    ports:
+      - "6443:6443"
+    volumes:
+      - target: /etc/rancher
+        type: volume
+      - target: /etc/systemd/system/k3s.service
+        source: ./bionic/k3s/server/k3s.service
+        type: bind
+      - target: /var/lib/rancher
+        type: volume
+      - target: /var/lib/rancher/k3s/server/manifests/system-upgrade-controller.yaml
+        source: ../../manifests/system-upgrade-controller.yaml
+        type: bind
+      - target: /var/lib/rancher/k3s/server/manifests/system-upgrade-plans/bionic.yaml
+        source: ./bionic.yaml
+        type: bind
+      - target: /var/lib/rancher/k3s/server/manifests/system-upgrade-plans/k3s.yaml
+        source: ./k3s.yaml
+        type: bind
+
+  master:
+    depends_on:
+      - leader
+    image: "example/ubuntu/bionic:k3s"
+    build:
+      context: bionic/k3s
+    privileged: true
+    environment:
+      - K3S_TOKEN=example/ubuntu
+      - K3S_URL=https://ubuntu-leader:6443
+    volumes:
+      - target: /etc/rancher
+        type: volume
+      - target: /etc/systemd/system/k3s.service
+        source: ./bionic/k3s/server/k3s.service
+        type: bind
+      - target: /var/lib/rancher
+        type: volume
+      - target: /var/lib/rancher/k3s/server/manifests/system-upgrade-controller.yaml
+        source: ../../manifests/system-upgrade-controller.yaml
+        type: bind
+      - target: /var/lib/rancher/k3s/server/manifests/system-upgrade-plans/bionic.yaml
+        source: ./bionic.yaml
+        type: bind
+      - target: /var/lib/rancher/k3s/server/manifests/system-upgrade-plans/k3s.yaml
+        source: ./k3s.yaml
+        type: bind
+
+  worker:
+    depends_on:
+      - master
+    privileged: true
+    image: "example/ubuntu/bionic:k3s"
+    build:
+      context: bionic/k3s
+    environment:
+      - K3S_TOKEN=example/ubuntu
+      - K3S_URL=https://ubuntu-leader:6443
+    volumes:
+      - target: /etc/rancher
+        type: volume
+      - target: /etc/systemd/system/k3s.service
+        source: ./bionic/k3s/agent/k3s.service
+        type: bind
+      - target: /var/lib/rancher
+        type: volume
