@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/onsi/ginkgo v1.10.1
 	github.com/onsi/gomega v1.7.0
-	github.com/rancher/wrangler v0.4.2-0.20200225192203-e5307acd8846
+	github.com/rancher/wrangler v0.5.0
 	github.com/rancher/wrangler-api v0.2.1-0.20191025043713-b1ca9c21825a
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/cli v1.22.2
