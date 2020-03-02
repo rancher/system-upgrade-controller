@@ -15,6 +15,7 @@ import (
 	"github.com/rancher/wrangler/pkg/apply"
 	"github.com/rancher/wrangler/pkg/crd"
 	"github.com/rancher/wrangler/pkg/start"
+	kubeapiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -30,8 +31,8 @@ type Controller struct {
 	Namespace string
 	Name      string
 
-	cfg *rest.Config
 	kcs *kubernetes.Clientset
+	xcs *kubeapiext.Clientset
 	ucs *upgradecln.Clientset
 
 	clusterID string
@@ -61,21 +62,16 @@ func NewController(cfg *rest.Config, namespace, name string) (ctl *Controller, e
 	ctl = &Controller{
 		Namespace: namespace,
 		Name:      name,
-		cfg:       cfg,
 	}
 
 	ctl.kcs, err = kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
-
-	// cluster id hack: see https://groups.google.com/forum/#!msg/kubernetes-sig-architecture/mVGobfD4TpY/nkdbkX1iBwAJ
-	systemNS, err := ctl.kcs.CoreV1().Namespaces().Get(metav1.NamespaceSystem, metav1.GetOptions{})
+	ctl.xcs, err = kubeapiext.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
-	ctl.clusterID = fmt.Sprintf("%s", systemNS.UID)
-
 	ctl.ucs, err = upgradecln.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -89,6 +85,13 @@ func NewController(cfg *rest.Config, namespace, name string) (ctl *Controller, e
 }
 
 func (ctl *Controller) Start(ctx context.Context, threads int, resync time.Duration) error {
+	// cluster id hack: see https://groups.google.com/forum/#!msg/kubernetes-sig-architecture/mVGobfD4TpY/nkdbkX1iBwAJ
+	systemNS, err := ctl.kcs.CoreV1().Namespaces().Get(metav1.NamespaceSystem, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	ctl.clusterID = fmt.Sprintf("%s", systemNS.UID)
+
 	if err := ctl.registerCRD(ctx); err != nil {
 		return err
 	}
@@ -117,23 +120,18 @@ func (ctl *Controller) Start(ctx context.Context, threads int, resync time.Durat
 	return start.All(ctx, threads, ctl.coreFactory, ctl.batchFactory, ctl.upgradeFactory)
 }
 
-type crdFunc func() (*crd.CRD, error)
-
 func (ctl *Controller) registerCRD(ctx context.Context) error {
-	factory, err := crd.NewFactoryFromClient(ctl.cfg)
-	if err != nil {
-		return err
-	}
+	factory := crd.NewFactoryFromClientGetter(ctl.xcs)
 
 	var crds []crd.CRD
-	for _, crdFn := range []crdFunc{
+	for _, crdFn := range []func() (*crd.CRD, error){
 		upgradeplan.CRD,
 	} {
-		crdRef, err := crdFn()
+		crdef, err := crdFn()
 		if err != nil {
 			return err
 		}
-		crds = append(crds, *crdRef)
+		crds = append(crds, *crdef)
 	}
 
 	return factory.BatchCreateCRDs(ctx, crds...).BatchWait()

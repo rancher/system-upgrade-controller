@@ -155,10 +155,6 @@ github.com/duosecurity/duo_api_golang v0.0.0-20190308151101-6c680f768e74/go.mod 
 github.com/dustin/go-humanize v0.0.0-20171111073723-bb3d318650d4/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/dustin/go-humanize v1.0.0 h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4zYo=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
-github.com/dweomer/wrangler v0.3.1-0.20200224190549-90c17807f3cf h1:HtRu4kCpGj1Na2P1LSRe+PmGA7RuB/ISFAftISeg07Q=
-github.com/dweomer/wrangler v0.3.1-0.20200224190549-90c17807f3cf/go.mod h1:txHSBkPtVgNH/0pUCvdP0Ak0HptAOc9ffBmFxQnL4z4=
-github.com/dweomer/wrangler v0.4.2-0.20200225164759-0bbf8877e077 h1:awEmYfbkg1UqkdYhugTqkTETXMIBjfO0EjCtYegfgEY=
-github.com/dweomer/wrangler v0.4.2-0.20200225164759-0bbf8877e077/go.mod h1:txHSBkPtVgNH/0pUCvdP0Ak0HptAOc9ffBmFxQnL4z4=
 github.com/eapache/go-resiliency v1.1.0/go.mod h1:kFI+JgMyC7bLPUVY133qvEBtVayf5mFgVsvEsIPBvNs=
 github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21/go.mod h1:+020luEh2TKB4/GOp8oxxtq0Daoen/Cii55CzbTV6DU=
 github.com/eapache/queue v1.1.0/go.mod h1:6eCeP0CKFpHLu8blIFXhExK/dRa7WDZfr6jVFPTqq+I=
@@ -603,7 +599,6 @@ github.com/rancher/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.17.2-
 github.com/rancher/kubernetes/staging/src/k8s.io/metrics v1.17.2-k3s1/go.mod h1:e70DTGI+y72YcU8iGDifilyP5uW6sPmBflDEjtiH/p0=
 github.com/rancher/kubernetes/staging/src/k8s.io/sample-apiserver v1.17.2-k3s1/go.mod h1:Ey49UYt1h2yQl0P61nfZEo/LZUu78Bj55oBL/VOejW4=
 github.com/rancher/wrangler v0.2.1-0.20191025041946-1fd360590735/go.mod h1:zmXTOSzU0vhumCyl0+Acq2FEP5WJOJRqnCQDegknyWA=
-github.com/rancher/wrangler v0.4.1/go.mod h1:1cR91WLhZgkZ+U4fV9nVuXqKurWbgXcIReU4wnQvTN8=
 github.com/rancher/wrangler v0.4.2-0.20200225192203-e5307acd8846 h1:jiA0wj/6QAIW3w1bSC0jKHzRVA2lxybR9bgj2wFfPE8=
 github.com/rancher/wrangler v0.4.2-0.20200225192203-e5307acd8846/go.mod h1:txHSBkPtVgNH/0pUCvdP0Ak0HptAOc9ffBmFxQnL4z4=
 github.com/rancher/wrangler-api v0.2.1-0.20191025043713-b1ca9c21825a h1:dH3D71jzKuYRY7qLe9AKuwz8DKO6G9PCfkeafETMmZo=

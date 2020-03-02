@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/kubectl/pkg/util/hash"
 )
 
 const (
@@ -57,24 +58,21 @@ func CRD() (*crd.CRD, error) {
 
 func DigestStatus(plan *upgradeapiv1.Plan, secretCache corectlv1.SecretCache) (upgradeapiv1.PlanStatus, error) {
 	if upgradeapiv1.PlanLatestResolved.GetReason(plan) != "Error" {
-		hash := sha256.New224()
-		hash.Write([]byte(plan.Status.LatestVersion))
-		hash.Write([]byte(plan.Spec.ServiceAccountName))
+		h := sha256.New224()
+		h.Write([]byte(plan.Status.LatestVersion))
+		h.Write([]byte(plan.Spec.ServiceAccountName))
 		for _, s := range plan.Spec.Secrets {
 			secret, err := secretCache.Get(plan.Namespace, s.Name)
 			if err != nil {
 				return plan.Status, err
 			}
-			keys := []string{}
-			for k := range secret.Data {
-				keys = append(keys, k)
+			secretHash, err := hash.SecretHash(secret)
+			if err != nil {
+				return plan.Status, err
 			}
-			sort.Strings(keys)
-			for _, k := range keys {
-				hash.Write(secret.Data[k])
-			}
+			h.Write([]byte(secretHash))
 		}
-		plan.Status.LatestHash = fmt.Sprintf("%x", hash.Sum(nil))
+		plan.Status.LatestHash = fmt.Sprintf("%x", h.Sum(nil))
 	}
 	return plan.Status, nil
 }
@@ -155,14 +153,34 @@ func SelectConcurrentNodeNames(plan *upgradeapiv1.Plan, nodeCache corectlv1.Node
 		nodeSelector = nodeSelector.Add(*requirementNotApplying)
 	}
 
-	candidateNodes, err := nodeCache.List(nodeSelector)
-	if err != nil {
-		return nil, err
-	}
-	for i := 0; i < len(candidateNodes) && int64(len(selected)) < plan.Spec.Concurrency; i++ {
-		selected = append(selected, candidateNodes[i].Name)
+	// avoid listing, sorting, and appending candidate nodes if we can
+	if int64(len(selected)) < plan.Spec.Concurrency {
+		candidateNodes, err := nodeCache.List(nodeSelector)
+		if err != nil {
+			return nil, err
+		}
+		// this code exists to establish a defined order for generating jobs per plan, per latest hash.
+		// it is necessary to avoid the sometimes occurrence of multiple calls to the generating handler for the same
+		// plan resource version which, due to undefined ordering when listing nodes, was causing more jobs to be
+		// generated than dictated by the plan concurrency
+		sort.Slice(candidateNodes, func(i, j int) bool {
+			isum := sha256sum(string(candidateNodes[i].UID), string(plan.UID), plan.Status.LatestHash)
+			jsum := sha256sum(string(candidateNodes[j].UID), string(plan.UID), plan.Status.LatestHash)
+			return isum < jsum
+		})
+		for i := 0; i < len(candidateNodes) && int64(len(selected)) < plan.Spec.Concurrency; i++ {
+			selected = append(selected, candidateNodes[i].Name)
+		}
 	}
 
 	sort.Strings(selected)
 	return selected, nil
+}
+
+func sha256sum(s ...string) string {
+	h := sha256.New()
+	for i := range s {
+		h.Write([]byte(s[i]))
+	}
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
