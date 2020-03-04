@@ -1,0 +1,77 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kernel
+  namespace: system-upgrade
+type: Opaque
+stringData:
+  version: 4.15.0.1060.61
+  upgrade.sh: |
+    #!/bin/sh
+    set -e
+    export DEBIAN_FRONTEND=noninteractive
+    secrets=$(dirname $0)
+    apt-get update
+    apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -yq \
+      linux-aws=$(cat $secrets/version) \
+      linux-headers-aws=$(cat $secrets/version) \
+      linux-image-aws=$(cat $secrets/version)
+    if [ -f /run/reboot-required ]; then
+      cat /run/reboot-required
+      reboot
+    fi
+---
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: kernel
+  namespace: system-upgrade
+spec:
+  # The maximum number of concurrent nodes to apply this update on.
+  concurrency: 1
+
+  # Select which nodes this plan can be applied to.
+  nodeSelector:
+    matchExpressions:
+      - {key: plan.upgrade.cattle.io/kernel, operator: Exists}
+
+  # The service account for the pod to use. As with normal pods, if not specified the `default` service account from the namespace will be assigned.
+  # See https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  serviceAccountName: system-upgrade
+
+  # Link to secrets that will be mounted into all containers in job pods.
+  # Secrets are calculated as part of the `.status.latestHash`. This means that changing
+  # the secrets profile for a plan or changing the secrets that a plan refers to will
+  # trigger application.
+  secrets:
+    - name: kernel
+      # optional: default=/run/system-upgrade/secrets/{name}
+      path: /host/run/system-upgrade/secrets/kernel
+
+  # The value for `channel` is assumed to be a URL that returns HTTP 302 with the last path element of the value
+  # returned in the Location header assumed to be an image tag.
+  #channel: https://canonical.example.com/ubuntu/lts
+
+  # Providing a value for `version` will prevent polling/resolution of the `channel` if specified.  
+  version: bionic
+
+  # The prepare init container is run before cordon/drain which is run before the upgrade container.
+  # Shares the same format as the `upgrade` container
+  #prepare:
+  #  image: alpine:3.11
+  #  command: [sh, -c]
+  #  args: [" echo '### ENV ###'; env | sort; echo '### RUN ###'; find /run/system-upgrade | sort"]
+
+  # See https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/#use-kubectl-drain-to-remove-a-node-from-service
+  drain:
+    # deleteLocalData: true
+    # ignoreDaemonSets: true
+    force: true
+
+  # A very limited container spec
+  upgrade:
+    # The tag portion of the image will be overridden with the value from `.status.latestVersion` a.k.a. the resolved version.
+    image: ubuntu
+    command: ["chroot", "/host"]
+    args: ["sh", "/run/system-upgrade/secrets/kernel/upgrade.sh"]
