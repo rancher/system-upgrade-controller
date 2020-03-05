@@ -56,13 +56,7 @@ func DeploymentWithTolerations(toleration ...corev1.Toleration) DeploymentOption
 }
 
 func DeploymentDefaultTolerations() DeploymentOption {
-	return DeploymentWithTolerations(
-		corev1.Toleration{
-			Key:      corev1.TaintNodeUnschedulable,
-			Operator: corev1.TolerationOpExists,
-			Effect:   corev1.TaintEffectNoSchedule,
-		},
-	)
+	return DeploymentWithTolerations()
 }
 
 func DeploymentWithServiceAccountName(serviceAcountName string) DeploymentOption {

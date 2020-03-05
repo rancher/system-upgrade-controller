@@ -59,10 +59,6 @@ spec:
               - matchExpressions:
                   - {key: "node-role.kubernetes.io/master", operator: In, values: ["true"]}
       serviceAccountName: system-upgrade
-      tolerations:
-        - key: "node.kubernetes.io/unschedulable" # necessary to avoid cordon/drain
-          operator: "Exists"
-          effect: "NoSchedule"
       containers:
         - name: system-upgrade-controller
           image: rancher/system-upgrade-controller:v0.3.1
