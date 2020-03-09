@@ -599,8 +599,6 @@ github.com/rancher/kubernetes/staging/src/k8s.io/legacy-cloud-providers v1.17.2-
 github.com/rancher/kubernetes/staging/src/k8s.io/metrics v1.17.2-k3s1/go.mod h1:e70DTGI+y72YcU8iGDifilyP5uW6sPmBflDEjtiH/p0=
 github.com/rancher/kubernetes/staging/src/k8s.io/sample-apiserver v1.17.2-k3s1/go.mod h1:Ey49UYt1h2yQl0P61nfZEo/LZUu78Bj55oBL/VOejW4=
 github.com/rancher/wrangler v0.2.1-0.20191025041946-1fd360590735/go.mod h1:zmXTOSzU0vhumCyl0+Acq2FEP5WJOJRqnCQDegknyWA=
-github.com/rancher/wrangler v0.4.2-0.20200225192203-e5307acd8846 h1:jiA0wj/6QAIW3w1bSC0jKHzRVA2lxybR9bgj2wFfPE8=
-github.com/rancher/wrangler v0.4.2-0.20200225192203-e5307acd8846/go.mod h1:txHSBkPtVgNH/0pUCvdP0Ak0HptAOc9ffBmFxQnL4z4=
 github.com/rancher/wrangler v0.5.0 h1:zTchAfY9DzchLvXpRpQuNB0PbNfl/HSuvFL1wHN6mDU=
 github.com/rancher/wrangler v0.5.0/go.mod h1:txHSBkPtVgNH/0pUCvdP0Ak0HptAOc9ffBmFxQnL4z4=
 github.com/rancher/wrangler-api v0.2.1-0.20191025043713-b1ca9c21825a h1:dH3D71jzKuYRY7qLe9AKuwz8DKO6G9PCfkeafETMmZo=
