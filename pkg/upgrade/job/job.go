@@ -7,6 +7,7 @@ import (
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	upgradectr "github.com/rancher/system-upgrade-controller/pkg/upgrade/container"
+	"github.com/rancher/wrangler/pkg/condition"
 	"github.com/rancher/wrangler/pkg/name"
 	"github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
@@ -70,6 +71,11 @@ var (
 		}
 		return defaultValue
 	}(defaultImagePullPolicy)
+)
+
+var (
+	ConditionComplete = condition.Cond(batchv1.JobComplete)
+	ConditionFailed   = condition.Cond(batchv1.JobFailed)
 )
 
 func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job {
@@ -253,6 +259,5 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 		}
 	}
 
-	//batchobjv1.SetObjectDefaults_Job(job)
 	return job
 }

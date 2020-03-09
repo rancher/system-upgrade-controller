@@ -55,8 +55,10 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 		},
 	)
 
+	apply := ctl.apply.WithCacheTypes(jobs, nodes, secrets).WithNoDelete().WithReconciler(upgradejob.Reconciler())
+
 	// process plan events by creating jobs to apply the plan
-	upgradectlv1.RegisterPlanGeneratingHandler(ctx, plans, ctl.apply.WithCacheTypes(jobs, nodes, secrets).WithNoDelete(), "", ctl.Name,
+	upgradectlv1.RegisterPlanGeneratingHandler(ctx, plans, apply, "", ctl.Name,
 		func(obj *upgradeapiv1.Plan, status upgradeapiv1.PlanStatus) (objects []runtime.Object, _ upgradeapiv1.PlanStatus, _ error) {
 			logrus.Debugf("PLAN GENERATING HANDLER: plan=%s/%s@%s, status=%+v", obj.Namespace, obj.Name, obj.ResourceVersion, status)
 			concurrentNodeNames, err := upgradeplan.SelectConcurrentNodeNames(obj, nodes.Cache())
@@ -67,7 +69,6 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 			for _, nodeName := range concurrentNodeNames {
 				objects = append(objects, upgradejob.New(obj, nodeName, ctl.Name))
 			}
-			//logrus.Debugf("jobs = %+v", objects)
 			obj.Status.Applying = concurrentNodeNames
 			return objects, obj.Status, nil
 		},

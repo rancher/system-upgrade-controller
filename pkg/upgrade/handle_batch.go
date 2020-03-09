@@ -4,6 +4,7 @@ import (
 	"context"
 
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
+	upgradejob "github.com/rancher/system-upgrade-controller/pkg/upgrade/job"
 	batchv1 "k8s.io/api/batch/v1"
 )
 
@@ -18,8 +19,8 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 		}
 		if obj.Labels != nil {
 			if planName, ok := obj.Labels[upgradeapi.LabelPlan]; ok {
-				defer plans.Enqueue(obj.Namespace, planName)
-				if obj.Status.Succeeded == 1 {
+				if upgradejob.ConditionComplete.IsTrue(obj) {
+					defer plans.Enqueue(obj.Namespace, planName)
 					planLabel := upgradeapi.LabelPlanName(planName)
 					if planHash, ok := obj.Labels[planLabel]; ok {
 						if nodeName, ok := obj.Labels[upgradeapi.LabelNode]; ok {
