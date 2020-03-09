@@ -27,7 +27,7 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 		jobSelector := labels.SelectorFromSet(labels.Set{
 			upgradeapi.LabelController: ctl.Name,
 		})
-		// avoid commandeering jobs that don't belong to us
+		// avoid commandeering jobs that do not contain the label for upgrade controller
 		if obj.Labels != nil && jobSelector.Matches(labels.Set(obj.Labels)) {
 			if planName, ok := obj.Labels[upgradeapi.LabelPlan]; ok {
 				defer plans.Enqueue(obj.Namespace, planName)
