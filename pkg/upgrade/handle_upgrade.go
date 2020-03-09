@@ -67,7 +67,6 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 			for _, nodeName := range concurrentNodeNames {
 				objects = append(objects, upgradejob.New(obj, nodeName, ctl.Name))
 			}
-			//logrus.Debugf("jobs = %+v", objects)
 			obj.Status.Applying = concurrentNodeNames
 			return objects, obj.Status, nil
 		},

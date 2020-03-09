@@ -9,9 +9,10 @@ import (
 	"github.com/rancher/system-upgrade-controller/e2e/framework/controller"
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
+	"github.com/rancher/system-upgrade-controller/pkg/condition"
 	upgradecln "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned"
 	upgradescheme "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned/scheme"
-	"github.com/rancher/wrangler/pkg/condition"
+	upgradejob "github.com/rancher/system-upgrade-controller/pkg/upgrade/job"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -130,9 +131,6 @@ func (c *Client) WaitForPlanCondition(name string, cond condition.Cond, timeout 
 }
 
 func (c *Client) WaitForPlanJobs(plan *upgradeapiv1.Plan, count int, timeout time.Duration) (jobs []batchv1.Job, err error) {
-	complete := condition.Cond(batchv1.JobComplete)
-	failed := condition.Cond(batchv1.JobFailed)
-
 	labelSelector := labels.SelectorFromSet(labels.Set{
 		upgradeapi.LabelPlan: plan.Name,
 	})
@@ -145,7 +143,7 @@ func (c *Client) WaitForPlanJobs(plan *upgradeapiv1.Plan, count int, timeout tim
 			return false, err
 		}
 		for _, item := range list.Items {
-			if failed.IsTrue(&item) || complete.IsTrue(&item) {
+			if upgradejob.ConditionFailed.IsTrue(&item) || upgradejob.ConditionComplete.IsTrue(&item) {
 				jobs = append(jobs, item)
 			}
 		}

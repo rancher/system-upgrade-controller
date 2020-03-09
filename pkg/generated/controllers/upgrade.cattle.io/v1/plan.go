@@ -23,11 +23,11 @@ import (
 	"time"
 
 	v1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
+	"github.com/rancher/system-upgrade-controller/pkg/condition"
 	clientset "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned/typed/upgrade.cattle.io/v1"
 	informers "github.com/rancher/system-upgrade-controller/pkg/generated/informers/externalversions/upgrade.cattle.io/v1"
 	listers "github.com/rancher/system-upgrade-controller/pkg/generated/listers/upgrade.cattle.io/v1"
 	"github.com/rancher/wrangler/pkg/apply"
-	"github.com/rancher/wrangler/pkg/condition"
 	"github.com/rancher/wrangler/pkg/generic"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"

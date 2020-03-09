@@ -6,6 +6,7 @@ import (
 
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
+	"github.com/rancher/system-upgrade-controller/pkg/condition"
 	upgradectr "github.com/rancher/system-upgrade-controller/pkg/upgrade/container"
 	"github.com/rancher/wrangler/pkg/name"
 	"github.com/sirupsen/logrus"
@@ -16,11 +17,12 @@ import (
 )
 
 const (
-	defaultBackoffLimit          = int32(2)
-	defaultActiveDeadlineSeconds = int64(600)
-	defaultPrivileged            = true
-	defaultKubectlImage          = "rancher/kubectl:1.17.0"
-	defaultImagePullPolicy       = corev1.PullIfNotPresent
+	defaultBackoffLimit            = int32(2)
+	defaultActiveDeadlineSeconds   = int64(600)
+	defaultPrivileged              = true
+	defaultKubectlImage            = "rancher/kubectl:1.17.0"
+	defaultImagePullPolicy         = corev1.PullIfNotPresent
+	defaultTTLSecondsAfterFinished = int32(900)
 )
 
 var (
@@ -70,6 +72,22 @@ var (
 		}
 		return defaultValue
 	}(defaultImagePullPolicy)
+
+	TTLSecondsAfterFinished = func(defaultValue int32) int32 {
+		if str, ok := os.LookupEnv("SYSTEM_UPGRADE_JOB_TTL_SECONDS_AFTER_FINISH"); ok {
+			if i, err := strconv.ParseInt(str, 10, 32); err != nil {
+				logrus.Errorf("failed to parse $%s: %v", "SYSTEM_UPGRADE_JOB_TTL_SECONDS_AFTER_FINISH", err)
+			} else {
+				return int32(i)
+			}
+		}
+		return defaultValue
+	}(defaultTTLSecondsAfterFinished)
+)
+
+var (
+	ConditionComplete = condition.Cond(batchv1.JobComplete)
+	ConditionFailed   = condition.Cond(batchv1.JobFailed)
 )
 
 func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job {
@@ -88,7 +106,8 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 			},
 		},
 		Spec: batchv1.JobSpec{
-			BackoffLimit: &BackoffLimit,
+			BackoffLimit:            &BackoffLimit,
+			TTLSecondsAfterFinished: &TTLSecondsAfterFinished,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels.Set{
@@ -253,6 +272,5 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 		}
 	}
 
-	//batchobjv1.SetObjectDefaults_Job(job)
 	return job
 }
