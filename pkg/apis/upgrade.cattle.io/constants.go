@@ -3,6 +3,9 @@ package upgrade
 import "path"
 
 const (
+	// AnnotationTTLSecondsAfterFinished is used to store a fallback value for job.spec.ttlSecondsAfterFinished
+	AnnotationTTLSecondsAfterFinished = GroupName + `/ttl-seconds-after-finished`
+
 	// LabelController is the name of the upgrade controller.
 	LabelController = GroupName + `/controller`
 

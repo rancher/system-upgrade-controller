@@ -3,6 +3,7 @@ package upgrade
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
@@ -68,14 +69,22 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 }
 
 func enqueueOrDelete(jobController batchctlv1.JobController, job *batchv1.Job, done condition.Cond) error {
-	if job.Spec.TTLSecondsAfterFinished == nil {
-		return nil
-	}
 	lastTransitionTime := done.GetLastTransitionTime(job)
 	if lastTransitionTime.IsZero() {
 		return fmt.Errorf("condition %q missing field %q", done, "LastTransitionTime")
 	}
-	ttlSecondsAfterFinished := time.Second * time.Duration(*job.Spec.TTLSecondsAfterFinished)
+
+	var ttlSecondsAfterFinished time.Duration
+
+	if job.Spec.TTLSecondsAfterFinished == nil {
+		fallbackTTLSecondsAfterFinished, err := strconv.ParseInt(job.Annotations[upgradeapi.AnnotationTTLSecondsAfterFinished], 10, 32)
+		if err != nil {
+			return err
+		}
+		ttlSecondsAfterFinished = time.Second * time.Duration(fallbackTTLSecondsAfterFinished)
+	} else {
+		ttlSecondsAfterFinished = time.Second * time.Duration(*job.Spec.TTLSecondsAfterFinished)
+	}
 	if interval := time.Now().Sub(lastTransitionTime); interval < ttlSecondsAfterFinished {
 		jobController.EnqueueAfter(job.Namespace, job.Name, ttlSecondsAfterFinished-interval)
 		return nil

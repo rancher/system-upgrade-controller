@@ -97,6 +97,9 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name.SafeConcatName("apply", plan.Name, "on", nodeName, "with", plan.Status.LatestHash),
 			Namespace: plan.Namespace,
+			Annotations: labels.Set{
+				upgradeapi.AnnotationTTLSecondsAfterFinished: strconv.FormatInt(int64(TTLSecondsAfterFinished), 10),
+			},
 			Labels: labels.Set{
 				upgradeapi.LabelController: controllerName,
 				upgradeapi.LabelNode:       nodeName,
