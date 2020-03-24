@@ -1,7 +1,5 @@
 # System Upgrade Controller
 
-A ***S***ystem ***U***pgrade ***C***ontroller for ***K***ubernetes that doesn't S.U.C.K.
-
 ## Introduction
 
 This project aims to provide a general-purpose, Kubernetes-native upgrade controller (for nodes).
