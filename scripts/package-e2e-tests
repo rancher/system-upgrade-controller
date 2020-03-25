@@ -28,13 +28,11 @@ docker image save --output ./dist/artifacts/system-upgrade-controller-e2e-tests-
 echo ${REPO}/system-upgrade-controller:${TAG}-e2e-tests >> ./dist/images.txt
 echo Built ${REPO}/system-upgrade-controller:${TAG}-e2e-tests
 
-if [ "$ARCH" == "arm" ]; then
-    exit 0
+if [ "$ARCH" = "amd64" ]; then
+  sonobuoy gen plugin \
+    --format=junit \
+    --image ${REPO}/system-upgrade-controller:${VERSION}-e2e-tests \
+    --name system-upgrade-controller \
+    --type job \
+  > ./dist/artifacts/system-upgrade-controller-e2e-tests.yaml
 fi
-
-sonobuoy gen plugin \
-  --format=junit \
-  --image ${REPO}/system-upgrade-controller:${VERSION}-e2e-tests \
-  --name system-upgrade-controller \
-  --type job \
-> ./dist/artifacts/system-upgrade-controller-e2e-tests.yaml
