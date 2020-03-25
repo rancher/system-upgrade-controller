@@ -25,3 +25,14 @@ docker image save --output ./dist/artifacts/system-upgrade-controller-${ARCH}.ta
   ${REPO}/system-upgrade-controller:latest
 echo ${REPO}/system-upgrade-controller:${TAG} > ./dist/images.txt
 echo Built ${REPO}/system-upgrade-controller:${TAG}
+
+reset-kustomization() {
+  cp -vf /tmp/kustomization.yaml .
+}
+
+if [ "$ARCH" = "amd64" ]; then
+  cp kustomization.yaml /tmp/
+  trap reset-kustomization EXIT
+  kustomize edit set image "rancher/system-upgrade-controller=${REPO}/system-upgrade-controller:${VERSION}"
+  kustomize build --reorder=none --output ./dist/artifacts/system-upgrade-controller.yaml
+fi

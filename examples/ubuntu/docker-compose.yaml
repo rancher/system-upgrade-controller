@@ -23,7 +23,7 @@ services:
       - target: /var/lib/rancher
         type: volume
       - target: /var/lib/rancher/k3s/server/manifests/system-upgrade-controller.yaml
-        source: ../../manifests/system-upgrade-controller.yaml
+        source: ../../dist/artifacts/system-upgrade-controller.yaml
         type: bind
       - target: /var/lib/rancher/k3s/server/manifests/system-upgrade-plans/bionic.yaml
         source: ./bionic.yaml
@@ -51,7 +51,7 @@ services:
       - target: /var/lib/rancher
         type: volume
       - target: /var/lib/rancher/k3s/server/manifests/system-upgrade-controller.yaml
-        source: ../../manifests/system-upgrade-controller.yaml
+        source: ../../dist/artifacts/system-upgrade-controller.yaml
         type: bind
       - target: /var/lib/rancher/k3s/server/manifests/system-upgrade-plans/bionic.yaml
         source: ./bionic.yaml
