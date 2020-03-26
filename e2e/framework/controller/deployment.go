@@ -1,12 +1,14 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	e2eframework "k8s.io/kubernetes/test/e2e/framework"
 	e2edeployment "k8s.io/kubernetes/test/e2e/framework/deployment"
@@ -79,7 +81,7 @@ func DeploymentDefaultImage() DeploymentOption {
 }
 
 func CreateDeployment(client clientset.Interface, namespace string, deploymentObj *appsv1.Deployment) (*appsv1.Deployment, error) {
-	deploymentRes, err := client.AppsV1().Deployments(namespace).Create(deploymentObj)
+	deploymentRes, err := client.AppsV1().Deployments(namespace).Create(context.TODO(), deploymentObj, metav1.CreateOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("deployment %q Create API error: %v", deploymentObj.Name, err)
 	}
