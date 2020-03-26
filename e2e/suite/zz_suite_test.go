@@ -5,13 +5,11 @@ import (
 	"os"
 	"testing"
 
-	"k8s.io/kubernetes/test/e2e/framework"
-	"k8s.io/kubernetes/test/e2e/framework/config"
-
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/onsi/gomega"
-	"k8s.io/kubernetes/test/e2e/framework/log"
+	"k8s.io/kubernetes/test/e2e/framework"
+	"k8s.io/kubernetes/test/e2e/framework/config"
 )
 
 func TestMain(m *testing.M) {
@@ -26,7 +24,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestSuite(t *testing.T) {
-	gomega.RegisterFailHandler(log.Fail)
+	gomega.RegisterFailHandler(ginkgo.Fail)
 	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "E2E SUITE", []ginkgo.Reporter{
 		reporters.NewJUnitReporter("/tmp/results/junit.xml"),
 	})
