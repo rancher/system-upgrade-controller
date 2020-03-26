@@ -86,7 +86,7 @@ func NewController(cfg *rest.Config, namespace, name string) (ctl *Controller, e
 
 func (ctl *Controller) Start(ctx context.Context, threads int, resync time.Duration) error {
 	// cluster id hack: see https://groups.google.com/forum/#!msg/kubernetes-sig-architecture/mVGobfD4TpY/nkdbkX1iBwAJ
-	systemNS, err := ctl.kcs.CoreV1().Namespaces().Get(metav1.NamespaceSystem, metav1.GetOptions{})
+	systemNS, err := ctl.kcs.CoreV1().Namespaces().Get(ctx, metav1.NamespaceSystem, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}

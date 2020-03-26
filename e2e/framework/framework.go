@@ -1,6 +1,7 @@
 package framework
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -89,35 +90,35 @@ func (c *Client) NewPlan(name, image string, command []string, args ...string) *
 }
 
 func (c *Client) CreatePlan(plan *upgradeapiv1.Plan) (*upgradeapiv1.Plan, error) {
-	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).Create(plan)
+	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).Create(context.TODO(), plan, metav1.CreateOptions{})
 }
 
 func (c *Client) UpdatePlan(plan *upgradeapiv1.Plan) (*upgradeapiv1.Plan, error) {
-	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).Update(plan)
+	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).Update(context.TODO(), plan, metav1.UpdateOptions{})
 }
 
 func (c *Client) UpdatePlanStatus(plan *upgradeapiv1.Plan) (*upgradeapiv1.Plan, error) {
-	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).UpdateStatus(plan)
+	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).UpdateStatus(context.TODO(), plan, metav1.UpdateOptions{})
 }
 
 func (c *Client) GetPlan(name string, options metav1.GetOptions) (*upgradeapiv1.Plan, error) {
-	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).Get(name, options)
+	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).Get(context.TODO(), name, options)
 }
 
 func (c *Client) ListPlans(options metav1.ListOptions) (*upgradeapiv1.PlanList, error) {
-	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).List(options)
+	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).List(context.TODO(), options)
 }
 
 func (c *Client) WatchPlans(options metav1.ListOptions) (watch.Interface, error) {
-	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).Watch(options)
+	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).Watch(context.TODO(), options)
 }
 
-func (c *Client) DeletePlan(name string, options *metav1.DeleteOptions) error {
-	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).Delete(name, options)
+func (c *Client) DeletePlan(name string, options metav1.DeleteOptions) error {
+	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).Delete(context.TODO(), name, options)
 }
 
-func (c *Client) DeletePlans(options *metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).DeleteCollection(options, listOpts)
+func (c *Client) DeletePlans(options metav1.DeleteOptions, listOpts metav1.ListOptions) error {
+	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).DeleteCollection(context.TODO(), options, listOpts)
 }
 
 func (c *Client) WaitForPlanCondition(name string, cond condition.Cond, timeout time.Duration) (plan *upgradeapiv1.Plan, err error) {
@@ -136,7 +137,7 @@ func (c *Client) WaitForPlanJobs(plan *upgradeapiv1.Plan, count int, timeout tim
 	})
 
 	return jobs, wait.Poll(5*time.Second, timeout, func() (bool, error) {
-		list, err := c.ClientSet.BatchV1().Jobs(plan.Namespace).List(metav1.ListOptions{
+		list, err := c.ClientSet.BatchV1().Jobs(plan.Namespace).List(context.TODO(), metav1.ListOptions{
 			LabelSelector: labelSelector.String(),
 		})
 		if err != nil {
@@ -163,12 +164,12 @@ func (c *Client) AfterEach() {
 
 func (c *Client) setupController() {
 	var err error
-	c.controllerServiceAccount, err = c.ClientSet.CoreV1().ServiceAccounts(c.Namespace.Name).Create(&corev1.ServiceAccount{
+	c.controllerServiceAccount, err = c.ClientSet.CoreV1().ServiceAccounts(c.Namespace.Name).Create(context.TODO(), &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: c.Namespace.Name,
 			Name:      c.Namespace.Name,
 		},
-	})
+	}, metav1.CreateOptions{})
 	framework.ExpectNoError(err)
 
 	err = frameworkauth.BindClusterRole(c.ClientSet.RbacV1(), "cluster-admin", c.Namespace.Name, rbacv1.Subject{
