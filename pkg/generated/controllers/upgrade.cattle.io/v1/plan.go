@@ -23,11 +23,11 @@ import (
 	"time"
 
 	v1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
-	"github.com/rancher/system-upgrade-controller/pkg/condition"
 	clientset "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned/typed/upgrade.cattle.io/v1"
 	informers "github.com/rancher/system-upgrade-controller/pkg/generated/informers/externalversions/upgrade.cattle.io/v1"
 	listers "github.com/rancher/system-upgrade-controller/pkg/generated/listers/upgrade.cattle.io/v1"
 	"github.com/rancher/wrangler/pkg/apply"
+	"github.com/rancher/wrangler/pkg/condition"
 	"github.com/rancher/wrangler/pkg/generic"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -176,35 +176,38 @@ func (c *planController) Cache() PlanCache {
 }
 
 func (c *planController) Create(obj *v1.Plan) (*v1.Plan, error) {
-	return c.clientGetter.Plans(obj.Namespace).Create(obj)
+	return c.clientGetter.Plans(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
 }
 
 func (c *planController) Update(obj *v1.Plan) (*v1.Plan, error) {
-	return c.clientGetter.Plans(obj.Namespace).Update(obj)
+	return c.clientGetter.Plans(obj.Namespace).Update(context.TODO(), obj, metav1.UpdateOptions{})
 }
 
 func (c *planController) UpdateStatus(obj *v1.Plan) (*v1.Plan, error) {
-	return c.clientGetter.Plans(obj.Namespace).UpdateStatus(obj)
+	return c.clientGetter.Plans(obj.Namespace).UpdateStatus(context.TODO(), obj, metav1.UpdateOptions{})
 }
 
 func (c *planController) Delete(namespace, name string, options *metav1.DeleteOptions) error {
-	return c.clientGetter.Plans(namespace).Delete(name, options)
+	if options == nil {
+		options = &metav1.DeleteOptions{}
+	}
+	return c.clientGetter.Plans(namespace).Delete(context.TODO(), name, *options)
 }
 
 func (c *planController) Get(namespace, name string, options metav1.GetOptions) (*v1.Plan, error) {
-	return c.clientGetter.Plans(namespace).Get(name, options)
+	return c.clientGetter.Plans(namespace).Get(context.TODO(), name, options)
 }
 
 func (c *planController) List(namespace string, opts metav1.ListOptions) (*v1.PlanList, error) {
-	return c.clientGetter.Plans(namespace).List(opts)
+	return c.clientGetter.Plans(namespace).List(context.TODO(), opts)
 }
 
 func (c *planController) Watch(namespace string, opts metav1.ListOptions) (watch.Interface, error) {
-	return c.clientGetter.Plans(namespace).Watch(opts)
+	return c.clientGetter.Plans(namespace).Watch(context.TODO(), opts)
 }
 
 func (c *planController) Patch(namespace, name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Plan, err error) {
-	return c.clientGetter.Plans(namespace).Patch(name, pt, data, subresources...)
+	return c.clientGetter.Plans(namespace).Patch(context.TODO(), name, pt, data, metav1.PatchOptions{}, subresources...)
 }
 
 type planCache struct {

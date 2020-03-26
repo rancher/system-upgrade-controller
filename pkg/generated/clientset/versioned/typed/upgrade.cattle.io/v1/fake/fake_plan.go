@@ -19,6 +19,8 @@ limitations under the License.
 package fake
 
 import (
+	"context"
+
 	upgradecattleiov1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -39,7 +41,7 @@ var plansResource = schema.GroupVersionResource{Group: "upgrade.cattle.io", Vers
 var plansKind = schema.GroupVersionKind{Group: "upgrade.cattle.io", Version: "v1", Kind: "Plan"}
 
 // Get takes name of the plan, and returns the corresponding plan object, and an error if there is any.
-func (c *FakePlans) Get(name string, options v1.GetOptions) (result *upgradecattleiov1.Plan, err error) {
+func (c *FakePlans) Get(ctx context.Context, name string, options v1.GetOptions) (result *upgradecattleiov1.Plan, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(plansResource, c.ns, name), &upgradecattleiov1.Plan{})
 
@@ -50,7 +52,7 @@ func (c *FakePlans) Get(name string, options v1.GetOptions) (result *upgradecatt
 }
 
 // List takes label and field selectors, and returns the list of Plans that match those selectors.
-func (c *FakePlans) List(opts v1.ListOptions) (result *upgradecattleiov1.PlanList, err error) {
+func (c *FakePlans) List(ctx context.Context, opts v1.ListOptions) (result *upgradecattleiov1.PlanList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(plansResource, plansKind, c.ns, opts), &upgradecattleiov1.PlanList{})
 
@@ -72,14 +74,14 @@ func (c *FakePlans) List(opts v1.ListOptions) (result *upgradecattleiov1.PlanLis
 }
 
 // Watch returns a watch.Interface that watches the requested plans.
-func (c *FakePlans) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakePlans) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(plansResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a plan and creates it.  Returns the server's representation of the plan, and an error, if there is any.
-func (c *FakePlans) Create(plan *upgradecattleiov1.Plan) (result *upgradecattleiov1.Plan, err error) {
+func (c *FakePlans) Create(ctx context.Context, plan *upgradecattleiov1.Plan, opts v1.CreateOptions) (result *upgradecattleiov1.Plan, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(plansResource, c.ns, plan), &upgradecattleiov1.Plan{})
 
@@ -90,7 +92,7 @@ func (c *FakePlans) Create(plan *upgradecattleiov1.Plan) (result *upgradecattlei
 }
 
 // Update takes the representation of a plan and updates it. Returns the server's representation of the plan, and an error, if there is any.
-func (c *FakePlans) Update(plan *upgradecattleiov1.Plan) (result *upgradecattleiov1.Plan, err error) {
+func (c *FakePlans) Update(ctx context.Context, plan *upgradecattleiov1.Plan, opts v1.UpdateOptions) (result *upgradecattleiov1.Plan, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(plansResource, c.ns, plan), &upgradecattleiov1.Plan{})
 
@@ -102,7 +104,7 @@ func (c *FakePlans) Update(plan *upgradecattleiov1.Plan) (result *upgradecattlei
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakePlans) UpdateStatus(plan *upgradecattleiov1.Plan) (*upgradecattleiov1.Plan, error) {
+func (c *FakePlans) UpdateStatus(ctx context.Context, plan *upgradecattleiov1.Plan, opts v1.UpdateOptions) (*upgradecattleiov1.Plan, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(plansResource, "status", c.ns, plan), &upgradecattleiov1.Plan{})
 
@@ -113,7 +115,7 @@ func (c *FakePlans) UpdateStatus(plan *upgradecattleiov1.Plan) (*upgradecattleio
 }
 
 // Delete takes name of the plan and deletes it. Returns an error if one occurs.
-func (c *FakePlans) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakePlans) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(plansResource, c.ns, name), &upgradecattleiov1.Plan{})
 
@@ -121,15 +123,15 @@ func (c *FakePlans) Delete(name string, options *v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakePlans) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(plansResource, c.ns, listOptions)
+func (c *FakePlans) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(plansResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &upgradecattleiov1.PlanList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched plan.
-func (c *FakePlans) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *upgradecattleiov1.Plan, err error) {
+func (c *FakePlans) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *upgradecattleiov1.Plan, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(plansResource, c.ns, name, pt, data, subresources...), &upgradecattleiov1.Plan{})
 

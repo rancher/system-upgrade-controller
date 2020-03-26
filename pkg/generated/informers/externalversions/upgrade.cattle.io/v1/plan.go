@@ -19,6 +19,7 @@ limitations under the License.
 package v1
 
 import (
+	"context"
 	time "time"
 
 	upgradecattleiov1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
@@ -61,13 +62,13 @@ func NewFilteredPlanInformer(client versioned.Interface, namespace string, resyn
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.UpgradeV1().Plans(namespace).List(options)
+				return client.UpgradeV1().Plans(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.UpgradeV1().Plans(namespace).Watch(options)
+				return client.UpgradeV1().Plans(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&upgradecattleiov1.Plan{},
