@@ -43,22 +43,24 @@ var _ = Describe("Container", func() {
 			BeforeEach(func() {
 				testOption = container.WithImageTag(testImageTag)
 			})
-			for _, image := range []string{
-				testImageInfix,
-				testImageInfix + ":latest",
-				filepath.Join(testRepository, testImageInfix),
-				filepath.Join(testRepository, testImageInfix+":latest"),
+			for _, image := range []struct {
+				img    string
+				suffix string
+			}{
+				{testImageInfix, testImageInfix + `:` + testImageTag},
+				{testImageInfix + ":latest", testImageInfix + ":latest"},
+				{filepath.Join(testRepository, testImageInfix), testImageInfix + `:` + testImageTag},
+				{filepath.Join(testRepository, testImageInfix+":latest"), testImageInfix + ":latest"},
 			} {
-				When("image is `"+image+"` and tag is `"+testImageTag+"` ", func() {
-					var suffix = testImageInfix + `:` + testImageTag
+				When("image is `"+image.img+"` and tag is `"+testImageTag+"` ", func() {
 					BeforeEach(func() {
-						testContainer.Image = image
+						testContainer.Image = image.img
 						testOption(&testContainer) // apply the option
 						*zeroContainer = testContainer
 						zeroContainer.Image = ""
 					})
 					It("should have correct image suffix with no other side effects", func() {
-						Expect(testContainer.Image).To(HaveSuffix(suffix))
+						Expect(testContainer.Image).To(HaveSuffix(image.suffix))
 						Expect(*zeroContainer).To(BeZero())
 					})
 				})

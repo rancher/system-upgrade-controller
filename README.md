@@ -86,7 +86,7 @@ spec:
     force: true
 
   upgrade:
-    # The tag portion of the image will be overridden with the value from `.status.latestVersion` a.k.a. the resolved version.
+    # If not present, the tag portion of the image will be the value from `.status.latestVersion` a.k.a. the resolved version.
     # SEE https://github.com/rancher/system-upgrade-controller/blob/v0.1.0/pkg/apis/upgrade.cattle.io/v1/types.go#L47
     image: rancher/k3os
     command: [k3os, --debug]

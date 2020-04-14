@@ -71,7 +71,7 @@ spec:
 
   # A very limited container spec
   upgrade:
-    # The tag portion of the image will be overridden with the value from `.status.latestVersion` a.k.a. the resolved version.
+    # If not present, the tag of the image will be the value from `.status.latestVersion` a.k.a. the resolved version.
     image: ubuntu
     command: ["chroot", "/host"]
     args: ["sh", "/run/system-upgrade/secrets/kernel/upgrade.sh"]

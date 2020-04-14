@@ -46,7 +46,7 @@ func WithImageTag(tag string) Option {
 	return func(container *corev1.Container) {
 		image := container.Image
 		if p := strings.Split(image, `:`); len(p) > 1 {
-			image = strings.Join(p[0:len(p)-1], `:`)
+			return
 		}
 		container.Image = image + `:` + tag
 	}
