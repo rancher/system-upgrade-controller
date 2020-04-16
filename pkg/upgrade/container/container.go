@@ -2,10 +2,11 @@ package container
 
 import (
 	"path/filepath"
-	"strings"
 
+	"github.com/docker/distribution/reference"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	"github.com/rancher/wrangler/pkg/name"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -42,13 +43,21 @@ func WithImagePullPolicy(pullPolicy corev1.PullPolicy) Option {
 	}
 }
 
-func WithImageTag(tag string) Option {
+func WithLatestTag(tag string) Option {
 	return func(container *corev1.Container) {
-		image := container.Image
-		if p := strings.Split(image, `:`); len(p) > 1 {
-			image = strings.Join(p[0:len(p)-1], `:`)
+		ref, err := reference.ParseNormalizedNamed(container.Image)
+		if err != nil {
+			logrus.Errorf("WithLatestTag(%s): %v (on %s)", tag, err, container.Image)
+			return
 		}
-		container.Image = image + `:` + tag
+		if reference.IsNameOnly(ref) {
+			tagged, err := reference.WithTag(ref, tag)
+			if err != nil {
+				logrus.Errorf("WithLatestTag(%s): %v (on %s)", tag, err, container.Image)
+				return
+			}
+			container.Image = reference.FamiliarString(tagged)
+		}
 	}
 }
 
