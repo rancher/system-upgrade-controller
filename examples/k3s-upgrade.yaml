@@ -1,3 +1,5 @@
+# These plans are adapted from work by Dax McDonald (https://github.com/daxmc99) and Hussein Galal (https://github.com/galal-hussein)
+# in support of Rancher v2 managed k3s upgrades. See Also: https://rancher.com/docs/k3s/latest/en/upgrades/automated/
 ---
 apiVersion: upgrade.cattle.io/v1
 kind: Plan
@@ -42,7 +44,9 @@ spec:
       - {key: node-role.kubernetes.io/master, operator: NotIn, values: ["true"]}
   serviceAccountName: system-upgrade
   prepare:
-    image: rancher/k3s-upgrade:v1.17.4-k3s1
+    # Since v0.5.0-m1 SUC will use the resolved version of the plan for the tag on the prepare container.
+    # image: rancher/k3s-upgrade:v1.17.4-k3s1
+    image: rancher/k3s-upgrade
     args: ["prepare", "k3s-server"]
   drain:
     force: true

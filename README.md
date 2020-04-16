@@ -6,31 +6,62 @@ This project aims to provide a general-purpose, Kubernetes-native upgrade contro
 It introduces a new CRD, the **Plan**, for defining any and all of your upgrade policies/requirements.
 For up-to-date details on defining a plan please review [v1/types.go](pkg/apis/upgrade.cattle.io/v1/types.go).
 
-The Controller manages Plans by selecting Nodes to run upgrade Jobs on.
-A Plan defines which Nodes are eligible by specifying label selector.
-When a Job has run to completion successfully the Controller will label the Node on which it ran
-according to the Plan that was applied by the Job.
+![diagram](doc/architecture.png "The Controller manages Plans by selecting Nodes to run upgrade Jobs on.
+ A Plan defines which Nodes are eligible for upgrade by specifying a label selector.
+ When a Job has run to completion successfully the Controller will label the Node
+ on which it ran according to the Plan that was applied by the Job.")
+
+### Presentations and Recordings
+
+#### April 14, 2020
+[CNCF Member Webinar: Declarative Host Upgrades From Within Kubernetes](https://www.cncf.io/webinars/declarative-host-upgrades-from-within-k8s/)
+- [Slides](https://www.cncf.io/wp-content/uploads/2020/04/CNCF-Webinar-System-Upgrade-Controller-1.pdf)
+- [Video](https://www.youtube.com/watch?v=uHF6C0GKjlA)
+
+#### March 4, 2020
+[Rancher Online Meetup: Automating K3s Cluster Upgrades](https://info.rancher.com/online-meetup-automating-k3s-cluster-upgrades)
+- [Video](https://www.youtube.com/watch?v=UsPV8cZX8BY)
 
 ### Considerations
 
 Purporting to support general-purpose node upgrades (essentially, arbitrary mutations) this controller attempts
-minimal imposition of opinion. Our design constraints, such as they are, follow:
+minimal imposition of opinion. Our design constraints, such as they are:
 
-- Content delivery via container image a.k.a. container command pattern
-- Operator-overridable command(s)
-- A very privileged job/pod/container:
-  - Host IPC, NET, and PID
+- content delivery via container image a.k.a. container command pattern
+- operator-overridable command(s)
+- a very privileged job/pod/container:
+  - host IPC, NET, and PID
   - CAP_SYS_BOOT
-  - Host root mounted at `/host` (read/write)
-- Optional opt-in/opt-out via node labels
-- Optional cordon/drain a la `kubectl`
+  - host root file-system mounted at `/host` (read/write)
+- optional opt-in/opt-out via node labels
+- optional cordon/drain a la `kubectl`
 
 _Additionally, one should take care when defining upgrades by ensuring that such are idempotent--**there be dragons**._
 
-### Example Upgrade Plans
+## Deploying
+
+The most up-to-date manifest is always [manifests/system-upgrade-controller.yaml](manifests/system-upgrade-controller.yaml)
+but since release v0.4.0 a manifest specific to the release has been created and uploaded to the release artifacts page.
+See [releases/download/v0.4.0/system-upgrade-controller.yaml](https://github.com/rancher/system-upgrade-controller/releases/download/v0.4.0/system-upgrade-controller.yaml)
+
+But in the time-honored tradition of `curl ${script} | sudo sh -` here is a nice one-liner:
+
+```shell script
+# Y.O.L.O.
+kustomize build https://github.com/rancher/system-upgrade-controller | kubectl apply -f - 
+```
+
+### Example Plans
 
 - [examples/k3s-upgrade.yaml](examples/k3s-upgrade.yaml)
+  - Demonstrates upgrading k3s itself.
 - [examples/ubuntu/bionic.yaml](examples/ubuntu/bionic.yaml)
+  - Demonstrates upgrading, apt-get style, arbitrary packages at pinned versions.
+- [examples/ubuntu/bionic/linux-kernel-aws.yaml](examples/ubuntu/bionic/linux-kernel-aws.yaml)
+  - Demonstrates upgrading the kernel on Ubuntu 18.04 EC2 instances on AWS.
+- [examples/ubuntu/bionic/linux-kernel-virtual-hwe-18.04.yaml](examples/ubuntu/bionic/linux-kernel-virtual-hwe-18.04.yaml)
+  - Demonstrates upgrading the kernel on Ubuntu 18.04 (to the HWE version) on generic virtual machines.
+
 
 Below is an example Plan developed for [k3OS](https://github.com/rancher/k3os) that implements something like an
 `rsync` of content from the container image to the host, preceded by a remount if necessary, immediately followed by a reboot.
@@ -118,7 +149,7 @@ spec:
 make
 ```
 
-### Local Execution
+## Running
 
 Use `./bin/system-upgrade-controller`.
 
@@ -126,7 +157,7 @@ Also see [`manifests/system-upgrade-controller.yaml`](manifests/system-upgrade-c
 "typical" deployment might look like with default environment variables that parameterize various operational aspects
 of the controller and the resources spawned by it.
 
-### End-to-End Testing
+## Testing
 
 Integration tests are bundled as a [Sonobuoy plugin](https://sonobuoy.io/docs/v0.17.2/plugins/) that expects to be run within a pod.
 To verify locally:
