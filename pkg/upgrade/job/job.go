@@ -201,6 +201,7 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 	if plan.Spec.Prepare != nil {
 		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
 			upgradectr.New("prepare", *plan.Spec.Prepare,
+				upgradectr.WithLatestTag(plan.Status.LatestVersion),
 				upgradectr.WithSecrets(plan.Spec.Secrets),
 				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
 				upgradectr.WithImagePullPolicy(ImagePullPolicy),
@@ -253,7 +254,7 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 	// and finally, we upgrade
 	podTemplate.Spec.Containers = []corev1.Container{
 		upgradectr.New("upgrade", *plan.Spec.Upgrade,
-			upgradectr.WithImageTag(plan.Status.LatestVersion),
+			upgradectr.WithLatestTag(plan.Status.LatestVersion),
 			upgradectr.WithSecurityContext(&corev1.SecurityContext{
 				Privileged: &Privileged,
 				Capabilities: &corev1.Capabilities{

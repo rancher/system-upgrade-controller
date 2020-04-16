@@ -27,9 +27,12 @@ minimal imposition of opinion. Our design constraints, such as they are, follow:
 
 _Additionally, one should take care when defining upgrades by ensuring that such are idempotent--**there be dragons**._
 
-### Example Upgrade Plan
+### Example Upgrade Plans
 
-Below is example Plan in development for [k3OS](https://github.com/rancher/k3os) that implements something like an
+- [examples/k3s-upgrade.yaml](examples/k3s-upgrade.yaml)
+- [examples/ubuntu/bionic.yaml](examples/ubuntu/bionic.yaml)
+
+Below is an example Plan developed for [k3OS](https://github.com/rancher/k3os) that implements something like an
 `rsync` of content from the container image to the host, preceded by a remount if necessary, immediately followed by a reboot.
 
 ```
@@ -49,11 +52,11 @@ spec:
   concurrency: 1
 
   # The value for `channel` is assumed to be a URL that returns HTTP 302 with the last path element of the value
-  # returned in the Location header assumed to be an image tag.
+  # returned in the Location header assumed to be an image tag (after munging "+" to "-").
   channel: https://github.com/rancher/k3os/releases/latest
 
   # Providing a value for `version` will prevent polling/resolution of the `channel` if specified.
-  # version: v0.9.0-dev
+  version: v0.10.0
 
   # Select which nodes this plan can be applied to.
   nodeSelector:
@@ -72,22 +75,27 @@ spec:
   # See https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
   serviceAccountName: k3os-upgrade
 
-  # The prepare init container is run before cordon/drain which is run before the upgrade container.
-  # Shares the same format as the `upgrade` container
-  # prepare:
-  #   image: alpine:3.11
-  #   command: [sh, -c]
-  #   args: [" echo '### ENV ###'; env | sort; echo '### RUN ###'; find /run/system-upgrade | sort"]
+  # The prepare init container, if specified, is run before cordon/drain which is run before the upgrade container.
+  # Shares the same format as the `upgrade` container.
+  prepare:
+    # If not present, the tag portion of the image will be the value from `.status.latestVersion` a.k.a. the resolved version for this plan.
+    image: alpine:3.11
+    command: [sh, -c]
+    args: ["echo '### ENV ###'; env | sort; echo '### RUN ###'; find /run/system-upgrade | sort"]
 
+  # If left unspecified, no drain will be performed
   # See https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/#use-kubectl-drain-to-remove-a-node-from-service
   drain:
-    # deleteLocalData: true
-    # ignoreDaemonSets: true
+    # deleteLocalData: true  # default
+    # ignoreDaemonSets: true # default
     force: true
 
+  # If `drain` is specified, the value for `cordon` is ignored.
+  # If neither `drain` nor `cordon` are specified and the node is marked as `schedulable=false` it will not be marked as `schedulable=true` when the apply job completes.
+  cordon: true
+
   upgrade:
-    # The tag portion of the image will be overridden with the value from `.status.latestVersion` a.k.a. the resolved version.
-    # SEE https://github.com/rancher/system-upgrade-controller/blob/v0.1.0/pkg/apis/upgrade.cattle.io/v1/types.go#L47
+    # If not present, the tag portion of the image will be the value from `.status.latestVersion` a.k.a. the resolved version for this plan.
     image: rancher/k3os
     command: [k3os, --debug]
     # It is safe to specify `--kernel` on overlay installations as the destination path will not exist and so the

@@ -3,6 +3,7 @@ module github.com/rancher/system-upgrade-controller
 go 1.13
 
 require (
+	github.com/docker/distribution v2.7.1+incompatible
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.7.0
 	github.com/rancher/wrangler v0.5.4-0.20200326191509-4054411d9736
