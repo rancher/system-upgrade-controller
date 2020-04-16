@@ -85,7 +85,7 @@ With a `.spec.concurrency` of `2` you should see no more than that number of nod
 
 ## k3s
 
-As a bonus, because we are running K3s, I have included two plans in [`k3s.yaml`](k3s.yaml) that are made available to
+As a bonus, because we are running K3s, I have included two plans in [`../k3s-upgrade.yaml`](../k3s-upgrade.yaml) that are made available to
 the cluster and activated by running `docker exec -it kubectl label node --all k3s-upgrade=enabled`. These two plans
 coordinate to upgrade all of the masters with a concurrency of 1 and then all of the workers with a concurrency of 2.
 See https://github.com/rancher/k3s-upgrade, written by https://github.com/galal-hussein.

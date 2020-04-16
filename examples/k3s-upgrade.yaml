@@ -2,17 +2,19 @@
 apiVersion: upgrade.cattle.io/v1
 kind: Plan
 metadata:
-  name: k3s-master
+  name: k3s-server
   namespace: system-upgrade
+  labels:
+    k3s-upgrade: server
 spec:
   concurrency: 1
-  version: v1.17.3+k3s1
+  version: v1.17.4+k3s1
   nodeSelector:
-    matchLabels:
-      node.kubernetes.io/instance-type: k3s
     matchExpressions:
       - {key: k3s-upgrade, operator: Exists}
       - {key: k3s-upgrade, operator: NotIn, values: ["disabled", "false"]}
+      - {key: k3s.io/hostname, operator: Exists}
+      - {key: k3os.io/mode, operator: DoesNotExist}
       - {key: node-role.kubernetes.io/master, operator: In, values: ["true"]}
   serviceAccountName: system-upgrade
   cordon: true
@@ -24,22 +26,24 @@ spec:
 apiVersion: upgrade.cattle.io/v1
 kind: Plan
 metadata:
-  name: k3s-worker
+  name: k3s-agent
   namespace: system-upgrade
+  labels:
+    k3s-upgrade: agent
 spec:
   concurrency: 2
-  version: v1.17.3+k3s1
+  version: v1.17.4+k3s1
   nodeSelector:
-    matchLabels:
-      node.kubernetes.io/instance-type: k3s
     matchExpressions:
       - {key: k3s-upgrade, operator: Exists}
       - {key: k3s-upgrade, operator: NotIn, values: ["disabled", "false"]}
+      - {key: k3s.io/hostname, operator: Exists}
+      - {key: k3os.io/mode, operator: DoesNotExist}
       - {key: node-role.kubernetes.io/master, operator: NotIn, values: ["true"]}
   serviceAccountName: system-upgrade
   prepare:
-    image: rancher/k3s-upgrade:v1.17.3-k3s1
-    args: ["prepare", "k3s-master"]
+    image: rancher/k3s-upgrade:v1.17.4-k3s1
+    args: ["prepare", "k3s-server"]
   drain:
     force: true
   upgrade:
