@@ -23,6 +23,9 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 	// process plan events, mutating status accordingly
 	upgradectlv1.RegisterPlanStatusHandler(ctx, plans, "", ctl.Name,
 		func(obj *upgradeapiv1.Plan, status upgradeapiv1.PlanStatus) (upgradeapiv1.PlanStatus, error) {
+			if obj == nil {
+				return status, nil
+			}
 			logrus.Debugf("PLAN STATUS HANDLER: plan=%s/%s@%s, status=%+v", obj.Namespace, obj.Name, obj.ResourceVersion, status)
 			resolved := upgradeapiv1.PlanLatestResolved
 			resolved.CreateUnknownIfNotExists(obj)
@@ -58,6 +61,9 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 	// process plan events by creating jobs to apply the plan
 	upgradectlv1.RegisterPlanGeneratingHandler(ctx, plans, ctl.apply.WithCacheTypes(jobs, nodes, secrets).WithNoDelete(), "", ctl.Name,
 		func(obj *upgradeapiv1.Plan, status upgradeapiv1.PlanStatus) (objects []runtime.Object, _ upgradeapiv1.PlanStatus, _ error) {
+			if obj == nil {
+				return objects, status, nil
+			}
 			logrus.Debugf("PLAN GENERATING HANDLER: plan=%s/%s@%s, status=%+v", obj.Namespace, obj.Name, obj.ResourceVersion, status)
 			concurrentNodeNames, err := upgradeplan.SelectConcurrentNodeNames(obj, nodes.Cache())
 			if err != nil {
