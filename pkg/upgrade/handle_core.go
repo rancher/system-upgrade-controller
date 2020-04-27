@@ -38,6 +38,9 @@ func (ctl *Controller) handleSecrets(ctx context.Context) error {
 	plans := ctl.upgradeFactory.Upgrade().V1().Plan()
 
 	ctl.coreFactory.Core().V1().Secret().OnChange(ctx, ctl.Name, func(key string, obj *corev1.Secret) (*corev1.Secret, error) {
+		if obj == nil {
+			return obj, nil
+		}
 		planList, err := plans.Cache().List(ctl.Namespace, labels.Everything())
 		if err != nil {
 			return obj, err
