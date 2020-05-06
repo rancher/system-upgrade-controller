@@ -106,6 +106,14 @@ spec:
   # See https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
   serviceAccountName: k3os-upgrade
 
+  # Specify which node taints should be tolerated by pods applying the upgrade.
+  # Anything specified here is appended to the default of:
+  # - {key: node.kubernetes.io/unschedulable, effect: NoSchedule, operator: Exists}
+  tolerations:
+  - {key: kubernetes.io/arch, effect: NoSchedule, operator: Equal, value: amd64}
+  - {key: kubernetes.io/arch, effect: NoSchedule, operator: Equal, value: arm64}
+  - {key: kubernetes.io/arch, effect: NoSchedule, operator: Equal, value: arm}
+
   # The prepare init container, if specified, is run before cordon/drain which is run before the upgrade container.
   # Shares the same format as the `upgrade` container.
   prepare:

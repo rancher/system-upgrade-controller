@@ -8,6 +8,7 @@ import (
 
 	"github.com/rancher/system-upgrade-controller/pkg/condition"
 	"github.com/rancher/wrangler/pkg/genericcondition"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -37,6 +38,8 @@ type PlanSpec struct {
 	Channel string       `json:"channel,omitempty"`
 	Version string       `json:"version,omitempty"`
 	Secrets []SecretSpec `json:"secrets,omitempty"`
+
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 
 	Prepare *ContainerSpec `json:"prepare,omitempty"`
 	Cordon  bool           `json:"cordon,omitempty"`
