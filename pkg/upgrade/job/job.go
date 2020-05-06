@@ -155,11 +155,11 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 							}},
 						},
 					},
-					Tolerations: []corev1.Toleration{{
+					Tolerations: append([]corev1.Toleration{{
 						Key:      corev1.TaintNodeUnschedulable,
 						Operator: corev1.TolerationOpExists,
 						Effect:   corev1.TaintEffectNoSchedule,
-					}},
+					}}, plan.Spec.Tolerations...),
 					RestartPolicy: corev1.RestartPolicyNever,
 					Volumes: []corev1.Volume{{
 						Name: `host-root`,
