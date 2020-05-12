@@ -4,6 +4,7 @@
 
 This project aims to provide a general-purpose, Kubernetes-native upgrade controller (for nodes).
 It introduces a new CRD, the **Plan**, for defining any and all of your upgrade policies/requirements.
+A **Plan** is an outstanding intent to mutate nodes in your cluster.
 For up-to-date details on defining a plan please review [v1/types.go](pkg/apis/upgrade.cattle.io/v1/types.go).
 
 ![diagram](doc/architecture.png "The Controller manages Plans by selecting Nodes to run upgrade Jobs on.
