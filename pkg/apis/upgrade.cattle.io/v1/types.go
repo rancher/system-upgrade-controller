@@ -69,6 +69,7 @@ type DrainSpec struct {
 	DeleteLocalData  *bool          `json:"deleteLocalData,omitempty"`
 	IgnoreDaemonSets *bool          `json:"ignoreDaemonSets,omitempty"`
 	Force            bool           `json:"force,omitempty"`
+	DisableEviction  bool           `json:"disableEviction,omitempty"`
 }
 
 // SecretSpec describes a secret to be mounted for prepare/upgrade containers.
