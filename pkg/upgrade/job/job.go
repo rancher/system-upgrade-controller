@@ -229,11 +229,10 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 		if drain.GracePeriod != nil {
 			args = append(args, "--grace-period", strconv.FormatInt(int64(*drain.GracePeriod), 10))
 		}
-		if drain.DisableEviction{
+		if drain.DisableEviction {
 			//only available in kubectl version 1.18 or later
 			args = append(args, "--disable-eviction=true")
 		}
-
 
 		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
 			upgradectr.New("drain", upgradeapiv1.ContainerSpec{
