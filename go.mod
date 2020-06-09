@@ -6,7 +6,7 @@ require (
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.7.0
-    github.com/rancher/wrangler v0.6.1
+	github.com/rancher/wrangler v0.6.1
 	github.com/rancher/wrangler-api v0.5.1-0.20200326194427-c13310506d04
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/cli v1.22.2
