@@ -44,7 +44,7 @@ type PlanSpec struct {
 	Prepare *ContainerSpec `json:"prepare,omitempty"`
 	Cordon  bool           `json:"cordon,omitempty"`
 	Drain   *DrainSpec     `json:"drain,omitempty"`
-	Upgrade *ContainerSpec `json:"upgrade,omitempty"`
+	Upgrade *ContainerSpec `json:"upgrade,omitempty" wrangler:"required"`
 }
 
 // PlanStatus represents the resulting state from processing Plan events.
