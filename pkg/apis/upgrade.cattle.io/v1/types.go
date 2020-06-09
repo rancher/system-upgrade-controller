@@ -41,10 +41,11 @@ type PlanSpec struct {
 
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 
-	Prepare *ContainerSpec `json:"prepare,omitempty"`
-	Cordon  bool           `json:"cordon,omitempty"`
-	Drain   *DrainSpec     `json:"drain,omitempty"`
-	Upgrade *ContainerSpec `json:"upgrade,omitempty"`
+	Prepare  *ContainerSpec `json:"prepare,omitempty"`
+	Cordon   bool           `json:"cordon,omitempty"`
+	Drain    *DrainSpec     `json:"drain,omitempty"`
+	Upgrade  *ContainerSpec `json:"upgrade,omitempty"`
+	Disabled bool           `json:"disabled,omitempty"`
 }
 
 // PlanStatus represents the resulting state from processing Plan events.
@@ -69,6 +70,7 @@ type DrainSpec struct {
 	DeleteLocalData  *bool          `json:"deleteLocalData,omitempty"`
 	IgnoreDaemonSets *bool          `json:"ignoreDaemonSets,omitempty"`
 	Force            bool           `json:"force,omitempty"`
+	DisableEviction  bool           `json:"disableEviction,omitempty"`
 }
 
 // SecretSpec describes a secret to be mounted for prepare/upgrade containers.
