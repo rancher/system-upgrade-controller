@@ -65,6 +65,10 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 				return objects, status, nil
 			}
 			logrus.Debugf("PLAN GENERATING HANDLER: plan=%s/%s@%s, status=%+v", obj.Namespace, obj.Name, obj.ResourceVersion, status)
+			if !obj.Spec.Disabled {
+				logrus.Debugf("Plan is disabled, No jobs are scheduled")
+				return objects, status, nil
+			}
 			concurrentNodeNames, err := upgradeplan.SelectConcurrentNodeNames(obj, nodes.Cache())
 			if err != nil {
 				return objects, status, err
@@ -75,6 +79,7 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 			}
 			obj.Status.Applying = concurrentNodeNames
 			return objects, obj.Status, nil
+
 		},
 		&generic.GeneratingHandlerOptions{
 			AllowClusterScoped: true,
