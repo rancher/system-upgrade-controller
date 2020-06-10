@@ -14,11 +14,10 @@ var _ = Describe("Plan Creation", func() {
 		)
 		BeforeEach(func() {
 			plan = e2e.NewPlan("upgrade", "", nil)
-
-		})
-		It("should return an error if upgrade in nil", func() {
 			plan.Spec.Upgrade = nil
 			plan, err = e2e.CreatePlan(plan)
+		})
+		It("should return an error if upgrade in nil", func() {
 			Expect(err).Should(HaveOccurred())
 		})
 	})
