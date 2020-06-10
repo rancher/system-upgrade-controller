@@ -168,8 +168,8 @@ func SelectConcurrentNodeNames(plan *upgradeapiv1.Plan, nodeCache corectlv1.Node
 			jsum := sha256sum(string(candidateNodes[j].UID), string(plan.UID), plan.Status.LatestHash)
 			return isum < jsum
 		})
-		for i := 0; i < len(candidateNodes) && int64(len(selected)) < plan.Spec.Concurrency; i++ {
-			selected = append(selected, candidateNodes[i].Name)
+		if int64(len(selected)) < plan.Spec.Concurrency && len(candidateNodes) != 0 {
+			selected = append(selected, candidateNodes[0].Name)
 		}
 	}
 
