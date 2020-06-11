@@ -20,7 +20,7 @@ const (
 	defaultBackoffLimit            = int32(2)
 	defaultActiveDeadlineSeconds   = int64(600)
 	defaultPrivileged              = true
-	defaultKubectlImage            = "rancher/kubectl:1.17.0"
+	defaultKubectlImage            = "rancher/kubectl:1.18.3"
 	defaultImagePullPolicy         = corev1.PullIfNotPresent
 	defaultTTLSecondsAfterFinished = int32(900)
 )
