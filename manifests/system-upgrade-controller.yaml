@@ -59,6 +59,12 @@ spec:
               - matchExpressions:
                   - {key: "node-role.kubernetes.io/master", operator: In, values: ["true"]}
       serviceAccountName: system-upgrade
+      tolerations:
+        - key: "CriticalAddonsOnly"
+          operator: "Exists"
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
       containers:
         - name: system-upgrade-controller
           image: rancher/system-upgrade-controller:v0.5.0
