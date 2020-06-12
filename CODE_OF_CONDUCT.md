@@ -1,4 +1,4 @@
-k3s observes the [CNCF Community Code of Conduct](https://github.com/cncf/foundation/blob/master/code-of-conduct.md), reproduced below for emphasis.
+This project observes the [CNCF Community Code of Conduct](https://github.com/cncf/foundation/blob/master/code-of-conduct.md), reproduced below for emphasis.
 
 ### Contributor Code of Conduct
 
