@@ -129,9 +129,10 @@ spec:
     # deleteLocalData: true  # default
     # ignoreDaemonSets: true # default
     force: true
-    #disableEviction: false #default 
+    #disableEviction: false # default 
     #disableEviction flag option is only available in kubectl v1.18 or later, to force drain pods with pod disruption budget. 
-    
+    #skipWaitForDeleteTimeout : 0 # default
+    #skipWaitForDeleteTimeout flag option is only available in kubectl v1.18 or later, If pod DeletionTimestamp older than N seconds, skip waiting for the pod. Seconds must be greater than 0 to skip.
 
   # If `drain` is specified, the value for `cordon` is ignored.
   # If neither `drain` nor `cordon` are specified and the node is marked as `schedulable=false` it will not be marked as `schedulable=true` when the apply job completes.
