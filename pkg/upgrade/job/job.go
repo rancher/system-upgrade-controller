@@ -233,6 +233,9 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 			//only available in kubectl version 1.18 or later
 			args = append(args, "--disable-eviction=true")
 		}
+		if drain.SkipWaitForDeleteTimeout > 0 {
+			args = append(args, "--skip-wait-for-delete-timeout", string(drain.SkipWaitForDeleteTimeout))
+		}
 
 		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
 			upgradectr.New("drain", upgradeapiv1.ContainerSpec{
