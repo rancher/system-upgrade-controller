@@ -234,6 +234,7 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 			args = append(args, "--disable-eviction=true")
 		}
 		if drain.SkipWaitForDeleteTimeout > 0 {
+			//only available in kubectl version 1.18 or later
 			args = append(args, "--skip-wait-for-delete-timeout", string(drain.SkipWaitForDeleteTimeout))
 		}
 
