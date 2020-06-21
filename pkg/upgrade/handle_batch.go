@@ -54,6 +54,17 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 		case err != nil:
 			return obj, err
 		}
+		if func(jobNode string, applyingNodes []string) bool {
+			for _, node := range applyingNodes {
+				if jobNode == node {
+					return false
+				}
+			}
+			return true
+		}(obj.Labels[upgradeapi.LabelNode], plan.Status.Applying) {
+			return obj, deleteJob(jobs, obj, metav1.DeletePropagationBackground)
+		}
+
 		// if this job was applying a different version then just delete it
 		// this has the side-effect of only ever retaining one job per node during the TTL window
 		if planVersion != plan.Status.LatestVersion {

@@ -168,11 +168,13 @@ func SelectConcurrentNodeNames(plan *upgradeapiv1.Plan, nodeCache corectlv1.Node
 			jsum := sha256sum(string(candidateNodes[j].UID), string(plan.UID), plan.Status.LatestHash)
 			return isum < jsum
 		})
-		if int64(len(selected)) < plan.Spec.Concurrency && len(candidateNodes) != 0 {
-			selected = append(selected, candidateNodes[0].Name)
+		for _, node := range applying {
+			selected = AppendIfMissing(selected, node)
+		}
+		for i := 0; i < len(candidateNodes) && int64(len(selected)) < plan.Spec.Concurrency; i++ {
+			selected = AppendIfMissing(selected, candidateNodes[i].Name)
 		}
 	}
-
 	sort.Strings(selected)
 	return selected, nil
 }
@@ -183,4 +185,13 @@ func sha256sum(s ...string) string {
 		h.Write([]byte(s[i]))
 	}
 	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func AppendIfMissing(slice []string, element string) []string {
+	for _, ele := range slice {
+		if ele == element {
+			return slice
+		}
+	}
+	return append(slice, element)
 }

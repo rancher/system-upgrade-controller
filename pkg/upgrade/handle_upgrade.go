@@ -59,7 +59,7 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 	)
 
 	// process plan events by creating jobs to apply the plan
-	upgradectlv1.RegisterPlanGeneratingHandler(ctx, plans, ctl.apply.WithCacheTypes(jobs, nodes, secrets).WithNoDelete(), "", ctl.Name,
+	upgradectlv1.RegisterPlanGeneratingHandler(ctx, plans, ctl.apply.WithCacheTypes(nodes, secrets).WithGVK(jobs.GroupVersionKind()).WithDynamicLookup().WithNoDelete(), "", ctl.Name,
 		func(obj *upgradeapiv1.Plan, status upgradeapiv1.PlanStatus) (objects []runtime.Object, _ upgradeapiv1.PlanStatus, _ error) {
 			if obj == nil {
 				return objects, status, nil
