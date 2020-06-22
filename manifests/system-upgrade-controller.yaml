@@ -67,7 +67,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: system-upgrade-controller
-          image: rancher/system-upgrade-controller:v0.5.0
+          image: rancher/system-upgrade-controller:v0.6.2
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
