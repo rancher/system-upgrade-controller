@@ -3,6 +3,7 @@ package upgrade
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
@@ -54,17 +55,6 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 		case err != nil:
 			return obj, err
 		}
-		if func(jobNode string, applyingNodes []string) bool {
-			for _, node := range applyingNodes {
-				if jobNode == node {
-					return false
-				}
-			}
-			return true
-		}(obj.Labels[upgradeapi.LabelNode], plan.Status.Applying) {
-			return obj, deleteJob(jobs, obj, metav1.DeletePropagationBackground)
-		}
-
 		// if this job was applying a different version then just delete it
 		// this has the side-effect of only ever retaining one job per node during the TTL window
 		if planVersion != plan.Status.LatestVersion {
@@ -104,6 +94,10 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 				}
 			}
 			return obj, enqueueOrDelete(jobs, obj, upgradejob.ConditionComplete)
+		}
+		if i := sort.SearchStrings(plan.Status.Applying, nodeName); i == len(plan.Status.Applying) ||
+			(i < len(plan.Status.Applying) && plan.Status.Applying[i] != nodeName) {
+			return obj, deleteJob(jobs, obj, metav1.DeletePropagationBackground)
 		}
 		return obj, nil
 	})
