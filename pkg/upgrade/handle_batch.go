@@ -95,6 +95,7 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 			}
 			return obj, enqueueOrDelete(jobs, obj, upgradejob.ConditionComplete)
 		}
+		// if the job is hasn't failed or completed but the job Node is not on the applying list, consider it running out-of-turn and delete it
 		if i := sort.SearchStrings(plan.Status.Applying, nodeName); i == len(plan.Status.Applying) ||
 			(i < len(plan.Status.Applying) && plan.Status.Applying[i] != nodeName) {
 			return obj, deleteJob(jobs, obj, metav1.DeletePropagationBackground)
