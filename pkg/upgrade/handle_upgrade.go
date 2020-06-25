@@ -65,17 +65,18 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 				return objects, status, nil
 			}
 			logrus.Debugf("PLAN GENERATING HANDLER: plan=%s/%s@%s, status=%+v", obj.Namespace, obj.Name, obj.ResourceVersion, status)
-			if upgradeapiv1.PlanLatestResolved.IsTrue(obj) {
-				concurrentNodeNames, err := upgradeplan.SelectConcurrentNodeNames(obj, nodes.Cache())
-				if err != nil {
-					return objects, status, err
-				}
-				logrus.Debugf("concurrentNodeNames = %q", concurrentNodeNames)
-				for _, nodeName := range concurrentNodeNames {
-					objects = append(objects, upgradejob.New(obj, nodeName, ctl.Name))
-				}
-				obj.Status.Applying = concurrentNodeNames
+			if !upgradeapiv1.PlanLatestResolved.IsTrue(obj) {
+				return objects, status, nil
 			}
+			concurrentNodeNames, err := upgradeplan.SelectConcurrentNodeNames(obj, nodes.Cache())
+			if err != nil {
+				return objects, status, err
+			}
+			logrus.Debugf("concurrentNodeNames = %q", concurrentNodeNames)
+			for _, nodeName := range concurrentNodeNames {
+				objects = append(objects, upgradejob.New(obj, nodeName, ctl.Name))
+			}
+			obj.Status.Applying = concurrentNodeNames
 			return objects, obj.Status, nil
 		},
 		&generic.GeneratingHandlerOptions{
