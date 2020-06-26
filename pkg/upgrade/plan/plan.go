@@ -117,7 +117,7 @@ func ResolveChannel(ctx context.Context, url, latestVersion, clusterID string) (
 		}
 		return filepath.Base(redirect.Path), nil
 	}
-	if response.StatusCode < 300 {
+	if (response.StatusCode / 200) == 1 {
 		return filepath.Base(url), nil
 	}
 	return filepath.Base(url), fmt.Errorf("invalid url")
