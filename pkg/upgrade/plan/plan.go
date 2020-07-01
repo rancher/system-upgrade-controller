@@ -117,7 +117,10 @@ func ResolveChannel(ctx context.Context, url, latestVersion, clusterID string) (
 		}
 		return filepath.Base(redirect.Path), nil
 	}
-	return filepath.Base(url), nil
+	if (response.StatusCode / 200) == 1 {
+		return filepath.Base(url), nil
+	}
+	return "", fmt.Errorf("unexpected response: %s %s", response.Proto, response.Status)
 }
 
 func SelectConcurrentNodeNames(plan *upgradeapiv1.Plan, nodeCache corectlv1.NodeCache) ([]string, error) {

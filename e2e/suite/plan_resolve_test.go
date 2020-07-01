@@ -1,6 +1,7 @@
 package suite_test
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"path"
 	"time"
@@ -89,7 +90,7 @@ var _ = Describe("Plan Resolution", func() {
 			channelTag = "test"
 		)
 		BeforeEach(func() {
-			channelSrv = framework.ChannelServer(path.Join("/local", channelTag))
+			channelSrv = framework.ChannelServer(path.Join("/local", channelTag), http.StatusFound)
 			plan = e2e.NewPlan("channel-", "", nil)
 			plan.Spec.Channel = channelSrv.URL
 			Expect(plan.Spec.Channel).ToNot(BeEmpty())
@@ -121,7 +122,7 @@ var _ = Describe("Plan Resolution", func() {
 			channelTag = "v1.2.3+test"
 		)
 		BeforeEach(func() {
-			channelSrv = framework.ChannelServer(path.Join("/local/test", channelTag))
+			channelSrv = framework.ChannelServer(path.Join("/local/test", channelTag), http.StatusFound)
 			plan = e2e.NewPlan("channel-semver-metadata-", "", nil)
 			plan.Spec.Channel = channelSrv.URL
 			Expect(plan.Spec.Channel).ToNot(BeEmpty())
