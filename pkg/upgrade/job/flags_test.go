@@ -1,9 +1,10 @@
 package job
 
 import (
-	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	"strings"
 	"testing"
+
+	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 )
 
 func TestNew(t *testing.T) {
