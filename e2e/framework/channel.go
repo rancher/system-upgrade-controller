@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func ChannelServer(location string) *httptest.Server {
+func ChannelServer(location string, response int) *httptest.Server {
 	hostname, err := os.Hostname()
 	if err != nil {
 		Failf("cannot read hostname: %v", err)
@@ -15,7 +15,7 @@ func ChannelServer(location string) *httptest.Server {
 	server := &httptest.Server{
 		Config: &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Location", location)
-			w.WriteHeader(http.StatusFound)
+			w.WriteHeader(response)
 		})},
 	}
 	server.Listener, err = net.Listen("tcp", net.JoinHostPort(hostname, "0"))
