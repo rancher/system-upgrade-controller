@@ -45,6 +45,14 @@ The most up-to-date manifest is always [manifests/system-upgrade-controller.yaml
 but since release v0.4.0 a manifest specific to the release has been created and uploaded to the release artifacts page.
 See [releases/download/v0.4.0/system-upgrade-controller.yaml](https://github.com/rancher/system-upgrade-controller/releases/download/v0.4.0/system-upgrade-controller.yaml)
 
+Make sure to mark at least one master nodes, or controlplane node with upgrade.cattle.io/controller=system-upgrade-controller:
+
+```shell script
+kubectl label node --selector='node-role.kubernetes.io/master' upgrade.cattle.io/controller=system-upgrade-controller
+# or
+kubectl label node --selector='node-role.kubernetes.io/controlplane' upgrade.cattle.io/controller=system-upgrade-controller
+```
+
 But in the time-honored tradition of `curl ${script} | sudo sh -` here is a nice one-liner:
 
 ```shell script
