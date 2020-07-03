@@ -1,0 +1,95 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bionic
+  namespace: system-upgrade
+type: Opaque
+stringData:
+  upgrade.sh: |
+    #!/bin/sh
+    set -e
+    # mark containerd.io to hold, otherwise it will kill this container BAD!
+    apt-mark hold containerd.io
+    # do actual upgrade
+    apt-get --assume-yes update
+    apt-get --assume-yes dist-upgrade
+    # unmark
+    apt-mark unhold containerd.io
+    # reboot
+    if [ -f /run/reboot-required ]; then
+      cat /run/reboot-required
+      # magic to install docker after the reboot
+      if [ -e /etc/rc.d/rc.local ]; then
+        mv /etc/rc.d/rc.local /etc/rc.d/rc.local.orig
+      fi
+      cp /run/system-upgrade/secrets/bionic/rc.local /etc/rc.d/rc.local
+      chmod 755 /etc/rc.d/rc.local
+      reboot
+    fi
+  rc.local: |
+    #!/bin/bash
+    apt-get upgrade -y containerd.io
+    if [ -e /etc/rc.d/rc.local.orig ]; then
+      /etc/rc.d/rc.local.orig
+      mv /etc/rc.d/rc.local.orig /etc/rc.d/rc.local
+    else
+      rm /etc/rc.d/rc.local
+    fi  
+---
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: bionic-master
+  namespace: system-upgrade
+spec:
+  concurrency: 1
+  nodeSelector:
+    matchExpressions:
+      - {key: plan.upgrade.cattle.io/bionic, operator: Exists}
+      - {key: node-role.kubernetes.io/master, operator: In, values: ["true"]}
+    matchExpressions:
+      - {key: plan.upgrade.cattle.io/bionic, operator: Exists}
+      - {key: node-role.kubernetes.io/controlplane, operator: In, values: ["true"]}
+  tolerations:
+    - key: "node-role.kubernetes.io/controlplane"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "node-role.kubernetes.io/etcd"
+      operator: "Exists"
+      effect: "NoExecute"
+  serviceAccountName: system-upgrade
+  secrets:
+    - name: bionic
+      path: /host/run/system-upgrade/secrets/bionic
+  drain:
+    force: true
+  version: bionic
+  upgrade:
+    image: ubuntu
+    command: ["chroot", "/host"]
+    args: ["sh", "/run/system-upgrade/secrets/bionic/upgrade.sh"]
+---
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: bionic-worker
+  namespace: system-upgrade
+spec:
+  concurrency: 2
+  nodeSelector:
+    matchExpressions:
+      - {key: plan.upgrade.cattle.io/bionic, operator: Exists}
+      - {key: node-role.kubernetes.io/master, operator: NotIn, values: ["true"]}
+      - {key: node-role.kubernetes.io/controlplane, operator: NotIn, values: ["true"]}
+  serviceAccountName: system-upgrade
+  secrets:
+    - name: bionic
+      path: /host/run/system-upgrade/secrets/bionic
+  drain:
+    force: true
+  version: bionic
+  upgrade:
+    image: ubuntu
+    command: ["chroot", "/host"]
+    args: ["sh", "/run/system-upgrade/secrets/bionic/upgrade.sh"]
