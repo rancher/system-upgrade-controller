@@ -58,6 +58,8 @@ spec:
             nodeSelectorTerms:
               - matchExpressions:
                   - {key: "node-role.kubernetes.io/master", operator: In, values: ["true"]}
+              - matchExpressions:
+                  - {key: "node-role.kubernetes.io/controlplane", operator: In, values: ["true"]}
       serviceAccountName: system-upgrade
       tolerations:
         - key: "CriticalAddonsOnly"
@@ -65,6 +67,12 @@ spec:
         - key: "node-role.kubernetes.io/master"
           operator: "Exists"
           effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/controlplane"
+          operator: "Exists"
+          effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/etcd"
+          operator: "Exists"
+          effect: "NoExecute"
       containers:
         - name: system-upgrade-controller
           image: rancher/system-upgrade-controller:v0.5.0
