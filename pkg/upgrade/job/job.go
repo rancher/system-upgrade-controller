@@ -235,7 +235,7 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 		}
 		if drain.SkipWaitForDeleteTimeout > 0 {
 			//only available in kubectl version 1.18 or later
-			args = append(args, "--skip-wait-for-delete-timeout", string(drain.SkipWaitForDeleteTimeout))
+			args = append(args, "--skip-wait-for-delete-timeout", strconv.FormatInt(int64(drain.SkipWaitForDeleteTimeout), 10))
 		}
 
 		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
