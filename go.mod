@@ -6,6 +6,7 @@ require (
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.7.0
+	github.com/rancher/system-upgrade-controller/pkg/apis v0.0.0
 	github.com/rancher/wrangler v0.6.1
 	github.com/rancher/wrangler-api v0.5.1-0.20200326194427-c13310506d04
 	github.com/sirupsen/logrus v1.4.2
@@ -19,6 +20,7 @@ require (
 )
 
 replace (
+	github.com/rancher/system-upgrade-controller/pkg/apis => ./pkg/apis
 	k8s.io/api => github.com/rancher/kubernetes/staging/src/k8s.io/api v1.18.0-k3s.1
 	k8s.io/apiextensions-apiserver => github.com/rancher/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.18.0-k3s.1
 	k8s.io/apimachinery => github.com/rancher/kubernetes/staging/src/k8s.io/apimachinery v1.18.0-k3s.1
