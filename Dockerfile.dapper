@@ -39,10 +39,9 @@ ENV DAPPER_ENV REPO TAG DRONE_TAG
 ENV DAPPER_SOURCE /go/src/github.com/rancher/system-upgrade-controller/
 ENV DAPPER_OUTPUT ./bin ./dist
 ENV DAPPER_DOCKER_SOCKET true
-ENV HOME ${DAPPER_SOURCE}
+ENV DAPPER_RUN_ARGS "-v suc-pkg:/go/pkg -v suc-cache:/root/.cache/go-build"
 ENV KUBECONFIG /root/.kube/config
 ENV KUBEHOST 172.17.0.1
-ENV GO111MODULE off
 WORKDIR ${DAPPER_SOURCE}
 
 ENTRYPOINT ["./scripts/entry"]
