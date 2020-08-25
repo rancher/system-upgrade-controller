@@ -4,9 +4,9 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/rancher/system-upgrade-controller/pkg/apis/condition"
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
-	"github.com/rancher/system-upgrade-controller/pkg/condition"
 	upgradectr "github.com/rancher/system-upgrade-controller/pkg/upgrade/container"
 	"github.com/rancher/wrangler/pkg/name"
 	"github.com/sirupsen/logrus"

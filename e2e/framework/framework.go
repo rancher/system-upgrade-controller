@@ -8,9 +8,9 @@ import (
 
 	"github.com/onsi/ginkgo"
 	"github.com/rancher/system-upgrade-controller/e2e/framework/controller"
+	"github.com/rancher/system-upgrade-controller/pkg/apis/condition"
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
-	"github.com/rancher/system-upgrade-controller/pkg/condition"
 	upgradecln "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned"
 	upgradescheme "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned/scheme"
 	upgradejob "github.com/rancher/system-upgrade-controller/pkg/upgrade/job"
