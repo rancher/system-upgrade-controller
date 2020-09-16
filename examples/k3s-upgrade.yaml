@@ -10,7 +10,7 @@ metadata:
     k3s-upgrade: server
 spec:
   concurrency: 1
-  version: v1.17.4+k3s1
+  version: v1.18.8+k3s1
   nodeSelector:
     matchExpressions:
       - {key: k3s-upgrade, operator: Exists}
@@ -33,8 +33,8 @@ metadata:
   labels:
     k3s-upgrade: agent
 spec:
-  concurrency: 2
-  version: v1.17.4+k3s1
+  concurrency: 2 # in general, this should be the number of workers - 1
+  version: v1.18.8+k3s1
   nodeSelector:
     matchExpressions:
       - {key: k3s-upgrade, operator: Exists}
@@ -50,5 +50,6 @@ spec:
     args: ["prepare", "k3s-server"]
   drain:
     force: true
+    skipWaitForDeleteTimeout: 60 # set this to prevent upgrades from hanging on small clusters since k8s v1.18
   upgrade:
     image: rancher/k3s-upgrade
