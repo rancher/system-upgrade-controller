@@ -90,7 +90,7 @@ func Run(_ *cli.Context) {
 		logrus.SetLevel(logrus.DebugLevel)
 		logrus.SetReportCaller(true)
 	}
-	cfg, err := clientcmd.BuildConfigFromFlags(kubeConfig, masterURL)
+	cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeConfig)
 	if err != nil {
 		logrus.Fatal(err)
 	}
