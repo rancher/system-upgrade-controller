@@ -6,18 +6,14 @@ import (
 	"fmt"
 	"time"
 
-	upgradecln "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned"
 	upgradectl "github.com/rancher/system-upgrade-controller/pkg/generated/controllers/upgrade.cattle.io"
-	upgradeinf "github.com/rancher/system-upgrade-controller/pkg/generated/informers/externalversions"
 	upgradeplan "github.com/rancher/system-upgrade-controller/pkg/upgrade/plan"
-	batchctl "github.com/rancher/wrangler-api/pkg/generated/controllers/batch"
-	corectl "github.com/rancher/wrangler-api/pkg/generated/controllers/core"
 	"github.com/rancher/wrangler/pkg/apply"
 	"github.com/rancher/wrangler/pkg/crd"
+	batchctl "github.com/rancher/wrangler/pkg/generated/controllers/batch"
+	corectl "github.com/rancher/wrangler/pkg/generated/controllers/core"
 	"github.com/rancher/wrangler/pkg/start"
-	kubeapiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -31,9 +27,8 @@ type Controller struct {
 	Namespace string
 	Name      string
 
+	cfg *rest.Config
 	kcs *kubernetes.Clientset
-	xcs *kubeapiext.Clientset
-	ucs *upgradecln.Clientset
 
 	clusterID string
 
@@ -44,7 +39,7 @@ type Controller struct {
 	apply apply.Apply
 }
 
-func NewController(cfg *rest.Config, namespace, name string) (ctl *Controller, err error) {
+func NewController(cfg *rest.Config, namespace, name string, resync time.Duration) (ctl *Controller, err error) {
 	if namespace == "" {
 		return nil, ErrControllerNamespaceRequired
 	}
@@ -62,17 +57,31 @@ func NewController(cfg *rest.Config, namespace, name string) (ctl *Controller, e
 	ctl = &Controller{
 		Namespace: namespace,
 		Name:      name,
+		cfg:       cfg,
 	}
 
 	ctl.kcs, err = kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
-	ctl.xcs, err = kubeapiext.NewForConfig(cfg)
+	ctl.coreFactory, err = corectl.NewFactoryFromConfigWithOptions(cfg, &corectl.FactoryOptions{
+		Namespace: namespace,
+		Resync:    resync,
+	})
 	if err != nil {
 		return nil, err
 	}
-	ctl.ucs, err = upgradecln.NewForConfig(cfg)
+	ctl.batchFactory, err = batchctl.NewFactoryFromConfigWithOptions(cfg, &batchctl.FactoryOptions{
+		Namespace: namespace,
+		Resync:    resync,
+	})
+	if err != nil {
+		return nil, err
+	}
+	ctl.upgradeFactory, err = upgradectl.NewFactoryFromConfigWithOptions(cfg, &corectl.FactoryOptions{
+		Namespace: namespace,
+		Resync:    resync,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +93,7 @@ func NewController(cfg *rest.Config, namespace, name string) (ctl *Controller, e
 	return ctl, nil
 }
 
-func (ctl *Controller) Start(ctx context.Context, threads int, resync time.Duration) error {
+func (ctl *Controller) Start(ctx context.Context, threads int) error {
 	// cluster id hack: see https://groups.google.com/forum/#!msg/kubernetes-sig-architecture/mVGobfD4TpY/nkdbkX1iBwAJ
 	systemNS, err := ctl.kcs.CoreV1().Namespaces().Get(ctx, metav1.NamespaceSystem, metav1.GetOptions{})
 	if err != nil {
@@ -95,13 +104,6 @@ func (ctl *Controller) Start(ctx context.Context, threads int, resync time.Durat
 	if err := ctl.registerCRD(ctx); err != nil {
 		return err
 	}
-
-	kubeInformers := informers.NewSharedInformerFactoryWithOptions(ctl.kcs, resync, informers.WithNamespace(ctl.Namespace))
-	ctl.coreFactory = corectl.NewFactory(ctl.kcs, kubeInformers)
-	ctl.batchFactory = batchctl.NewFactory(ctl.kcs, kubeInformers)
-
-	upgradeInformers := upgradeinf.NewSharedInformerFactoryWithOptions(ctl.ucs, resync, upgradeinf.WithNamespace(ctl.Namespace))
-	ctl.upgradeFactory = upgradectl.NewFactory(ctl.ucs, upgradeInformers)
 
 	// register our handlers
 	if err := ctl.handleJobs(ctx); err != nil {
@@ -121,7 +123,10 @@ func (ctl *Controller) Start(ctx context.Context, threads int, resync time.Durat
 }
 
 func (ctl *Controller) registerCRD(ctx context.Context) error {
-	factory := crd.NewFactoryFromClientGetter(ctl.xcs)
+	factory, err := crd.NewFactoryFromClient(ctl.cfg)
+	if err != nil {
+		return err
+	}
 
 	var crds []crd.CRD
 	for _, crdFn := range []func() (*crd.CRD, error){
