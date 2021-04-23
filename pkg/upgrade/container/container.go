@@ -86,7 +86,7 @@ func New(name string, spec upgradeapiv1.ContainerSpec, opt ...Option) corev1.Con
 			{Name: "host-root", MountPath: "/host"},
 			{Name: "pod-info", MountPath: "/run/system-upgrade/pod", ReadOnly: true},
 		},
-		Env: []corev1.EnvVar{{
+		Env: append([]corev1.EnvVar{{
 			Name: "SYSTEM_UPGRADE_NODE_NAME",
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
@@ -107,7 +107,8 @@ func New(name string, spec upgradeapiv1.ContainerSpec, opt ...Option) corev1.Con
 					FieldPath: "metadata.uid",
 				},
 			},
-		}},
+		}}, spec.Env...),
+		EnvFrom: spec.EnvFrom,
 	}
 	for _, fn := range opt {
 		fn(&container)
