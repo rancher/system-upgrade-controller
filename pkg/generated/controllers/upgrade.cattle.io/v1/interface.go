@@ -19,31 +19,30 @@ limitations under the License.
 package v1
 
 import (
+	"github.com/rancher/lasso/pkg/controller"
 	v1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
-	clientset "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned/typed/upgrade.cattle.io/v1"
-	informers "github.com/rancher/system-upgrade-controller/pkg/generated/informers/externalversions/upgrade.cattle.io/v1"
-	"github.com/rancher/wrangler/pkg/generic"
+	"github.com/rancher/wrangler/pkg/schemes"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+func init() {
+	schemes.Register(v1.AddToScheme)
+}
 
 type Interface interface {
 	Plan() PlanController
 }
 
-func New(controllerManager *generic.ControllerManager, client clientset.UpgradeV1Interface,
-	informers informers.Interface) Interface {
+func New(controllerFactory controller.SharedControllerFactory) Interface {
 	return &version{
-		controllerManager: controllerManager,
-		client:            client,
-		informers:         informers,
+		controllerFactory: controllerFactory,
 	}
 }
 
 type version struct {
-	controllerManager *generic.ControllerManager
-	informers         informers.Interface
-	client            clientset.UpgradeV1Interface
+	controllerFactory controller.SharedControllerFactory
 }
 
 func (c *version) Plan() PlanController {
-	return NewPlanController(v1.SchemeGroupVersion.WithKind("Plan"), c.controllerManager, c.client, c.informers.Plans())
+	return NewPlanController(schema.GroupVersionKind{Group: "upgrade.cattle.io", Version: "v1", Kind: "Plan"}, "plans", true, c.controllerFactory)
 }

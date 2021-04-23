@@ -5,15 +5,14 @@ go 1.13
 require (
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/onsi/ginkgo v1.11.0
-	github.com/onsi/gomega v1.7.0
+	github.com/onsi/gomega v1.8.1
+	github.com/rancher/lasso v0.0.0-20210408231703-9ddd9378d08d
 	github.com/rancher/system-upgrade-controller/pkg/apis v0.0.0
-	github.com/rancher/wrangler v0.6.1
-	github.com/rancher/wrangler-api v0.5.1-0.20200326194427-c13310506d04
+	github.com/rancher/wrangler v0.8.1-0.20210424045532-c389a3e0ae51
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/cli v1.22.2
-	k8s.io/api v0.18.0
-	k8s.io/apiextensions-apiserver v0.18.0
-	k8s.io/apimachinery v0.18.0
+	k8s.io/api v0.18.8
+	k8s.io/apimachinery v0.18.8
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/kubectl v0.0.0
 	k8s.io/kubernetes v1.17.2
