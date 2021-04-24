@@ -13,8 +13,8 @@ import (
 
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
-	corectlv1 "github.com/rancher/wrangler-api/pkg/generated/controllers/core/v1"
 	"github.com/rancher/wrangler/pkg/crd"
+	corectlv1 "github.com/rancher/wrangler/pkg/generated/controllers/core/v1"
 	"github.com/rancher/wrangler/pkg/schemas/openapi"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"

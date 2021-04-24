@@ -94,12 +94,12 @@ func Run(_ *cli.Context) {
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	ctl, err := upgrade.NewController(cfg, namespace, name)
+	ctl, err := upgrade.NewController(cfg, namespace, name, 2*time.Hour)
 	if err != nil {
 		logrus.Fatal(err)
 	}
 	ctx := signals.SetupSignalHandler(context.Background())
-	if err := ctl.Start(ctx, threads, 2*time.Hour); err != nil {
+	if err := ctl.Start(ctx, threads); err != nil {
 		logrus.Fatalf("Error starting: %v", err)
 	}
 	<-ctx.Done()

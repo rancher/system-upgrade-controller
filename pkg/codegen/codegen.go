@@ -15,7 +15,8 @@ func main() {
 				Types: []interface{}{
 					v1.Plan{},
 				},
-				GenerateTypes: true,
+				GenerateTypes:   true,
+				GenerateClients: true,
 			},
 		},
 	})

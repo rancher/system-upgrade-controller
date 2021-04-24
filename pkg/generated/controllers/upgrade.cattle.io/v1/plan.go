@@ -22,10 +22,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/rancher/lasso/pkg/client"
+	"github.com/rancher/lasso/pkg/controller"
 	v1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
-	clientset "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned/typed/upgrade.cattle.io/v1"
-	informers "github.com/rancher/system-upgrade-controller/pkg/generated/informers/externalversions/upgrade.cattle.io/v1"
-	listers "github.com/rancher/system-upgrade-controller/pkg/generated/listers/upgrade.cattle.io/v1"
 	"github.com/rancher/wrangler/pkg/apply"
 	"github.com/rancher/wrangler/pkg/condition"
 	"github.com/rancher/wrangler/pkg/generic"
@@ -78,18 +77,22 @@ type PlanCache interface {
 type PlanIndexer func(obj *v1.Plan) ([]string, error)
 
 type planController struct {
-	controllerManager *generic.ControllerManager
-	clientGetter      clientset.PlansGetter
-	informer          informers.PlanInformer
-	gvk               schema.GroupVersionKind
+	controller    controller.SharedController
+	client        *client.Client
+	gvk           schema.GroupVersionKind
+	groupResource schema.GroupResource
 }
 
-func NewPlanController(gvk schema.GroupVersionKind, controllerManager *generic.ControllerManager, clientGetter clientset.PlansGetter, informer informers.PlanInformer) PlanController {
+func NewPlanController(gvk schema.GroupVersionKind, resource string, namespaced bool, controller controller.SharedControllerFactory) PlanController {
+	c := controller.ForResourceKind(gvk.GroupVersion().WithResource(resource), gvk.Kind, namespaced)
 	return &planController{
-		controllerManager: controllerManager,
-		clientGetter:      clientGetter,
-		informer:          informer,
-		gvk:               gvk,
+		controller: c,
+		client:     c.Client(),
+		gvk:        gvk,
+		groupResource: schema.GroupResource{
+			Group:    gvk.Group,
+			Resource: resource,
+		},
 	}
 }
 
@@ -136,12 +139,11 @@ func UpdatePlanDeepCopyOnChange(client PlanClient, obj *v1.Plan, handler func(ob
 }
 
 func (c *planController) AddGenericHandler(ctx context.Context, name string, handler generic.Handler) {
-	c.controllerManager.AddHandler(ctx, c.gvk, c.informer.Informer(), name, handler)
+	c.controller.RegisterHandler(ctx, name, controller.SharedControllerHandlerFunc(handler))
 }
 
 func (c *planController) AddGenericRemoveHandler(ctx context.Context, name string, handler generic.Handler) {
-	removeHandler := generic.NewRemoveHandler(name, c.Updater(), handler)
-	c.controllerManager.AddHandler(ctx, c.gvk, c.informer.Informer(), name, removeHandler)
+	c.AddGenericHandler(ctx, name, generic.NewRemoveHandler(name, c.Updater(), handler))
 }
 
 func (c *planController) OnChange(ctx context.Context, name string, sync PlanHandler) {
@@ -149,20 +151,19 @@ func (c *planController) OnChange(ctx context.Context, name string, sync PlanHan
 }
 
 func (c *planController) OnRemove(ctx context.Context, name string, sync PlanHandler) {
-	removeHandler := generic.NewRemoveHandler(name, c.Updater(), FromPlanHandlerToHandler(sync))
-	c.AddGenericHandler(ctx, name, removeHandler)
+	c.AddGenericHandler(ctx, name, generic.NewRemoveHandler(name, c.Updater(), FromPlanHandlerToHandler(sync)))
 }
 
 func (c *planController) Enqueue(namespace, name string) {
-	c.controllerManager.Enqueue(c.gvk, c.informer.Informer(), namespace, name)
+	c.controller.Enqueue(namespace, name)
 }
 
 func (c *planController) EnqueueAfter(namespace, name string, duration time.Duration) {
-	c.controllerManager.EnqueueAfter(c.gvk, c.informer.Informer(), namespace, name, duration)
+	c.controller.EnqueueAfter(namespace, name, duration)
 }
 
 func (c *planController) Informer() cache.SharedIndexInformer {
-	return c.informer.Informer()
+	return c.controller.Informer()
 }
 
 func (c *planController) GroupVersionKind() schema.GroupVersionKind {
@@ -171,57 +172,75 @@ func (c *planController) GroupVersionKind() schema.GroupVersionKind {
 
 func (c *planController) Cache() PlanCache {
 	return &planCache{
-		lister:  c.informer.Lister(),
-		indexer: c.informer.Informer().GetIndexer(),
+		indexer:  c.Informer().GetIndexer(),
+		resource: c.groupResource,
 	}
 }
 
 func (c *planController) Create(obj *v1.Plan) (*v1.Plan, error) {
-	return c.clientGetter.Plans(obj.Namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
+	result := &v1.Plan{}
+	return result, c.client.Create(context.TODO(), obj.Namespace, obj, result, metav1.CreateOptions{})
 }
 
 func (c *planController) Update(obj *v1.Plan) (*v1.Plan, error) {
-	return c.clientGetter.Plans(obj.Namespace).Update(context.TODO(), obj, metav1.UpdateOptions{})
+	result := &v1.Plan{}
+	return result, c.client.Update(context.TODO(), obj.Namespace, obj, result, metav1.UpdateOptions{})
 }
 
 func (c *planController) UpdateStatus(obj *v1.Plan) (*v1.Plan, error) {
-	return c.clientGetter.Plans(obj.Namespace).UpdateStatus(context.TODO(), obj, metav1.UpdateOptions{})
+	result := &v1.Plan{}
+	return result, c.client.UpdateStatus(context.TODO(), obj.Namespace, obj, result, metav1.UpdateOptions{})
 }
 
 func (c *planController) Delete(namespace, name string, options *metav1.DeleteOptions) error {
 	if options == nil {
 		options = &metav1.DeleteOptions{}
 	}
-	return c.clientGetter.Plans(namespace).Delete(context.TODO(), name, *options)
+	return c.client.Delete(context.TODO(), namespace, name, *options)
 }
 
 func (c *planController) Get(namespace, name string, options metav1.GetOptions) (*v1.Plan, error) {
-	return c.clientGetter.Plans(namespace).Get(context.TODO(), name, options)
+	result := &v1.Plan{}
+	return result, c.client.Get(context.TODO(), namespace, name, result, options)
 }
 
 func (c *planController) List(namespace string, opts metav1.ListOptions) (*v1.PlanList, error) {
-	return c.clientGetter.Plans(namespace).List(context.TODO(), opts)
+	result := &v1.PlanList{}
+	return result, c.client.List(context.TODO(), namespace, result, opts)
 }
 
 func (c *planController) Watch(namespace string, opts metav1.ListOptions) (watch.Interface, error) {
-	return c.clientGetter.Plans(namespace).Watch(context.TODO(), opts)
+	return c.client.Watch(context.TODO(), namespace, opts)
 }
 
-func (c *planController) Patch(namespace, name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Plan, err error) {
-	return c.clientGetter.Plans(namespace).Patch(context.TODO(), name, pt, data, metav1.PatchOptions{}, subresources...)
+func (c *planController) Patch(namespace, name string, pt types.PatchType, data []byte, subresources ...string) (*v1.Plan, error) {
+	result := &v1.Plan{}
+	return result, c.client.Patch(context.TODO(), namespace, name, pt, data, result, metav1.PatchOptions{}, subresources...)
 }
 
 type planCache struct {
-	lister  listers.PlanLister
-	indexer cache.Indexer
+	indexer  cache.Indexer
+	resource schema.GroupResource
 }
 
 func (c *planCache) Get(namespace, name string) (*v1.Plan, error) {
-	return c.lister.Plans(namespace).Get(name)
+	obj, exists, err := c.indexer.GetByKey(namespace + "/" + name)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, errors.NewNotFound(c.resource, name)
+	}
+	return obj.(*v1.Plan), nil
 }
 
-func (c *planCache) List(namespace string, selector labels.Selector) ([]*v1.Plan, error) {
-	return c.lister.Plans(namespace).List(selector)
+func (c *planCache) List(namespace string, selector labels.Selector) (ret []*v1.Plan, err error) {
+
+	err = cache.ListAllByNamespace(c.indexer, namespace, selector, func(m interface{}) {
+		ret = append(ret, m.(*v1.Plan))
+	})
+
+	return ret, err
 }
 
 func (c *planCache) AddIndexer(indexName string, indexer PlanIndexer) {
@@ -299,11 +318,19 @@ func (a *planStatusHandler) sync(key string, obj *v1.Plan) (*v1.Plan, error) {
 		}
 	}
 	if !equality.Semantic.DeepEqual(origStatus, &newStatus) {
+		if a.condition != "" {
+			// Since status has changed, update the lastUpdatedTime
+			a.condition.LastUpdated(&newStatus, time.Now().UTC().Format(time.RFC3339))
+		}
+
 		var newErr error
 		obj.Status = newStatus
-		obj, newErr = a.client.UpdateStatus(obj)
+		newObj, newErr := a.client.UpdateStatus(obj)
 		if err == nil {
 			err = newErr
+		}
+		if newErr == nil {
+			obj = newObj
 		}
 	}
 	return obj, err
