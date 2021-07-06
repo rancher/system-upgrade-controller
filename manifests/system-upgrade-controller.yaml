@@ -84,6 +84,8 @@ spec:
           volumeMounts:
             - name: etc-ssl
               mountPath: /etc/ssl
+            - name: etc-pki
+              mountPath: /etc/pki
             - name: tmp
               mountPath: /tmp
       volumes:
@@ -91,5 +93,9 @@ spec:
           hostPath:
             path: /etc/ssl
             type: Directory
+        - name: etc-pki
+          hostPath:
+            path: /etc/pki
+            type: DirectoryOrCreate
         - name: tmp
           emptyDir: {}
