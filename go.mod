@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/docker/distribution v2.7.1+incompatible
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.8.1
 	github.com/rancher/lasso v0.0.0-20210408231703-9ddd9378d08d
