@@ -147,7 +147,7 @@ func SelectConcurrentNodeNames(plan *upgradeapiv1.Plan, nodeCache corectlv1.Node
 			return nil, err
 		}
 		for _, node := range applyingNodes {
-			selected = append(selected, node.Name)
+			selected = append(selected, node.Labels[corev1.LabelHostname])
 		}
 		requirementNotApplying, err := labels.NewRequirement(corev1.LabelHostname, selection.NotIn, applying)
 		if err != nil {
