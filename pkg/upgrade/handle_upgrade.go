@@ -68,15 +68,14 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 			if !upgradeapiv1.PlanLatestResolved.IsTrue(obj) {
 				return objects, status, nil
 			}
-			concurrentNodeNames, err := upgradeplan.SelectConcurrentNodeNames(obj, nodes.Cache())
+			concurrentNodes, err := upgradeplan.SelectConcurrentNodes(obj, nodes.Cache())
 			if err != nil {
 				return objects, status, err
 			}
-			logrus.Debugf("concurrentNodeNames = %q", concurrentNodeNames)
-			for _, nodeName := range concurrentNodeNames {
-				objects = append(objects, upgradejob.New(obj, nodeName, ctl.Name))
+			for _, node := range concurrentNodes {
+				objects = append(objects, upgradejob.New(obj, node, ctl.Name))
+				obj.Status.Applying = append(obj.Status.Applying, node.Name)
 			}
-			obj.Status.Applying = concurrentNodeNames
 			return objects, obj.Status, nil
 		},
 		&generic.GeneratingHandlerOptions{
