@@ -61,6 +61,7 @@ func DigestStatus(plan *upgradeapiv1.Plan, secretCache corectlv1.SecretCache) (u
 		h := sha256.New224()
 		h.Write([]byte(plan.Status.LatestVersion))
 		h.Write([]byte(plan.Spec.ServiceAccountName))
+		h.Write([]byte(getRedeployGeneration(plan)))
 		for _, s := range plan.Spec.Secrets {
 			secret, err := secretCache.Get(plan.Namespace, s.Name)
 			if err != nil {
@@ -186,4 +187,15 @@ func sha256sum(s ...string) string {
 		h.Write([]byte(s[i]))
 	}
 	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func getRedeployGeneration(obj *upgradeapiv1.Plan) string {
+	if obj.Spec.Upgrade != nil {
+		for _, env := range obj.Spec.Upgrade.Env {
+			if env.Name == "CATTLE_REDEPLOY_GENERATION" {
+				return env.Value
+			}
+		}
+	}
+	return ""
 }
