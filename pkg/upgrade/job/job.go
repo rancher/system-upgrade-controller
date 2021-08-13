@@ -90,19 +90,25 @@ var (
 	ConditionFailed   = condition.Cond(batchv1.JobFailed)
 )
 
-func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job {
+func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *batchv1.Job {
 	hostPathDirectory := corev1.HostPathDirectory
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
+	nodeHostname := node.Name
+	if node.Labels != nil {
+		if hostname, ok := node.Labels[corev1.LabelHostname]; ok {
+			nodeHostname = hostname
+		}
+	}
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name.SafeConcatName("apply", plan.Name, "on", nodeName, "with", plan.Status.LatestHash),
+			Name:      name.SafeConcatName("apply", plan.Name, "on", node.Name, "with", plan.Status.LatestHash),
 			Namespace: plan.Namespace,
 			Annotations: labels.Set{
 				upgradeapi.AnnotationTTLSecondsAfterFinished: strconv.FormatInt(int64(TTLSecondsAfterFinished), 10),
 			},
 			Labels: labels.Set{
 				upgradeapi.LabelController: controllerName,
-				upgradeapi.LabelNode:       nodeName,
+				upgradeapi.LabelNode:       node.Name,
 				upgradeapi.LabelPlan:       plan.Name,
 				upgradeapi.LabelVersion:    plan.Status.LatestVersion,
 				labelPlanName:              plan.Status.LatestHash,
@@ -115,7 +121,7 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels.Set{
 						upgradeapi.LabelController: controllerName,
-						upgradeapi.LabelNode:       nodeName,
+						upgradeapi.LabelNode:       node.Name,
 						upgradeapi.LabelPlan:       plan.Name,
 						upgradeapi.LabelVersion:    plan.Status.LatestVersion,
 						labelPlanName:              plan.Status.LatestHash,
@@ -135,7 +141,7 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 										Key:      corev1.LabelHostname,
 										Operator: corev1.NodeSelectorOpIn,
 										Values: []string{
-											nodeName,
+											nodeHostname,
 										},
 									}},
 								}},
@@ -213,7 +219,7 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 	// then we cordon/drain
 	cordon, drain := plan.Spec.Cordon, plan.Spec.Drain
 	if drain != nil {
-		args := []string{"drain", nodeName, "--pod-selector", `!` + upgradeapi.LabelController}
+		args := []string{"drain", node.Name, "--pod-selector", `!` + upgradeapi.LabelController}
 		if drain.IgnoreDaemonSets == nil || *plan.Spec.Drain.IgnoreDaemonSets {
 			args = append(args, "--ignore-daemonsets")
 		}
@@ -252,7 +258,7 @@ func New(plan *upgradeapiv1.Plan, nodeName, controllerName string) *batchv1.Job 
 		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
 			upgradectr.New("cordon", upgradeapiv1.ContainerSpec{
 				Image: KubectlImage,
-				Args:  []string{"cordon", nodeName},
+				Args:  []string{"cordon", node.Name},
 			},
 				upgradectr.WithSecrets(plan.Spec.Secrets),
 				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
