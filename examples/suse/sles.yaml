@@ -1,0 +1,37 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sles
+  namespace: system-upgrade
+type: Opaque
+stringData:
+  saltMaster: 3000-24.1
+  upgrade.sh: |
+    #!/bin/sh
+    set -e
+    secrets=$(dirname $0)
+    zypper up -y
+    zypper in -y --oldpackage salt-master-$(cat $secrets/saltMaster)
+---
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: sles
+  namespace: system-upgrade
+spec:
+  concurrency: 2
+  nodeSelector:
+    matchExpressions:
+      - {key: node-role.kubernetes.io/worker, operator: In, values: ["true"]}
+  serviceAccountName: system-upgrade
+  secrets:
+    - name: sles
+      path: /host/run/system-upgrade/secrets/sles
+  drain:
+    force: true
+  version: sles
+  upgrade:
+    image: registry.suse.com/suse/sle15:latest
+    command: ["chroot", "/host"]
+    args: ["sh", "/run/system-upgrade/secrets/sles/upgrade.sh"]
