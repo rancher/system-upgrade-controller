@@ -123,10 +123,10 @@ func ResolveChannel(ctx context.Context, url, latestVersion, clusterID string) (
 	return "", fmt.Errorf("unexpected response: %s %s", response.Proto, response.Status)
 }
 
-func SelectConcurrentNodeNames(plan *upgradeapiv1.Plan, nodeCache corectlv1.NodeCache) ([]string, error) {
+func SelectConcurrentNodes(plan *upgradeapiv1.Plan, nodeCache corectlv1.NodeCache) ([]*corev1.Node, error) {
 	var (
 		applying = plan.Status.Applying
-		selected []string
+		selected []*corev1.Node
 	)
 	nodeSelector, err := metav1.LabelSelectorAsSelector(plan.Spec.NodeSelector)
 	if err != nil {
@@ -147,7 +147,7 @@ func SelectConcurrentNodeNames(plan *upgradeapiv1.Plan, nodeCache corectlv1.Node
 			return nil, err
 		}
 		for _, node := range applyingNodes {
-			selected = append(selected, node.Name)
+			selected = append(selected, node.DeepCopy())
 		}
 		requirementNotApplying, err := labels.NewRequirement(corev1.LabelHostname, selection.NotIn, applying)
 		if err != nil {
@@ -173,10 +173,12 @@ func SelectConcurrentNodeNames(plan *upgradeapiv1.Plan, nodeCache corectlv1.Node
 		})
 
 		for i := 0; i < len(candidateNodes) && int64(len(selected)) < plan.Spec.Concurrency; i++ {
-			selected = append(selected, candidateNodes[i].Name)
+			selected = append(selected, candidateNodes[i].DeepCopy())
 		}
 	}
-	sort.Strings(selected)
+	sort.Slice(selected, func(i, j int) bool {
+		return selected[i].Name < selected[i].Name
+	})
 	return selected, nil
 }
 

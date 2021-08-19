@@ -5,6 +5,9 @@ import (
 	"testing"
 
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 func TestNew(t *testing.T) {
@@ -20,7 +23,15 @@ func TestNew(t *testing.T) {
 				Spec: upgradeapiv1.PlanSpec{Drain: &upgradeapiv1.DrainSpec{SkipWaitForDeleteTimeout: val},
 					Upgrade: &upgradeapiv1.ContainerSpec{Image: "image"}},
 			})
-			job := New(plan, "node1", "ctr")
+			node := &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "node1",
+					Labels: labels.Set{
+						corev1.LabelHostname: "node1",
+					},
+				},
+			}
+			job := New(plan, node, "ctr")
 			t.Logf("%#v", job.Spec.Template.Spec.InitContainers)
 			for _, container := range job.Spec.Template.Spec.InitContainers {
 				if container.Name == "drain" {
