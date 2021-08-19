@@ -137,16 +137,40 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 						NodeAffinity: &corev1.NodeAffinity{
 							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
 								NodeSelectorTerms: []corev1.NodeSelectorTerm{{
-									MatchExpressions: []corev1.NodeSelectorRequirement{{
-										Key:      corev1.LabelHostname,
-										Operator: corev1.NodeSelectorOpIn,
-										Values: []string{
-											nodeHostname,
+									MatchExpressions: []corev1.NodeSelectorRequirement{
+										{
+											Key:      corev1.LabelHostname,
+											Operator: corev1.NodeSelectorOpIn,
+											Values: []string{
+												nodeHostname,
+											},
 										},
-									}},
+										{
+											Key:      corev1.LabelOSStable,
+											Operator: corev1.NodeSelectorOpIn,
+											Values: []string{
+												"linux",
+											},
+										},
+									},
 								}},
 							},
+							PreferredDuringSchedulingIgnoredDuringExecution: []corev1.PreferredSchedulingTerm{
+								{
+									Weight: 1,
+									Preference: corev1.NodeSelectorTerm{
+										MatchExpressions: []corev1.NodeSelectorRequirement{
+											{
+												Key:      "node-role.kubernetes.io",
+												Operator: corev1.NodeSelectorOpIn,
+												Values: []string{
+													"control-plane",
+												},
+											}},
+									},
+								}},
 						},
+
 						PodAntiAffinity: &corev1.PodAntiAffinity{
 							RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{{
 								LabelSelector: &metav1.LabelSelector{
@@ -166,7 +190,12 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 						Key:      corev1.TaintNodeUnschedulable,
 						Operator: corev1.TolerationOpExists,
 						Effect:   corev1.TaintEffectNoSchedule,
-					}}, plan.Spec.Tolerations...),
+					},
+						{
+							Key:      "cattle.io/os",
+							Operator: corev1.TolerationOpExists,
+							Effect:   corev1.TaintEffectNoSchedule,
+						}}, plan.Spec.Tolerations...),
 					RestartPolicy: corev1.RestartPolicyNever,
 					Volumes: []corev1.Volume{{
 						Name: `host-root`,
