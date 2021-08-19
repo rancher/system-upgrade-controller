@@ -95,6 +95,15 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 			}
 			return obj, enqueueOrDelete(jobs, obj, upgradejob.ConditionComplete)
 		}
+
+		// label the node after the update
+		if plan.Spec.Label != nil {
+			node.ObjectMeta.Labels[plan.Spec.Label.Key] = plan.Spec.Label.Value
+			if _, err := ctl.kcs.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{}); err != nil {
+				return obj, err
+			}
+		}
+
 		// if the job is hasn't failed or completed but the job Node is not on the applying list, consider it running out-of-turn and delete it
 		if i := sort.SearchStrings(plan.Status.Applying, nodeName); i == len(plan.Status.Applying) ||
 			(i < len(plan.Status.Applying) && plan.Status.Applying[i] != nodeName) {

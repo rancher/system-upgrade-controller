@@ -44,6 +44,7 @@ type PlanSpec struct {
 	Prepare *ContainerSpec `json:"prepare,omitempty"`
 	Cordon  bool           `json:"cordon,omitempty"`
 	Drain   *DrainSpec     `json:"drain,omitempty"`
+	Label   *LabelSpec     `json:"label,omitempty"`
 	Upgrade *ContainerSpec `json:"upgrade,omitempty" wrangler:"required"`
 }
 
@@ -79,4 +80,10 @@ type DrainSpec struct {
 type SecretSpec struct {
 	Name string `json:"name,omitempty"`
 	Path string `json:"path,omitempty"`
+}
+
+// LabelSpec specifies which label should be added to the node after update.
+type LabelSpec struct {
+	Key   string `json:"key,omitempty"`
+	Value string `json:"value,omitempty"`
 }
