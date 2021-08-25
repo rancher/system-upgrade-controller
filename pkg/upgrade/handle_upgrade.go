@@ -7,6 +7,7 @@ import (
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	upgradectlv1 "github.com/rancher/system-upgrade-controller/pkg/generated/controllers/upgrade.cattle.io/v1"
 	upgradejob "github.com/rancher/system-upgrade-controller/pkg/upgrade/job"
+	upgradenode "github.com/rancher/system-upgrade-controller/pkg/upgrade/node"
 	upgradeplan "github.com/rancher/system-upgrade-controller/pkg/upgrade/plan"
 	"github.com/rancher/wrangler/pkg/generic"
 	"github.com/sirupsen/logrus"
@@ -72,10 +73,13 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 			if err != nil {
 				return objects, status, err
 			}
-			for _, node := range concurrentNodes {
+			concurrentNodeNames := make([]string, len(concurrentNodes))
+			for i := range concurrentNodes {
+				node := concurrentNodes[i]
 				objects = append(objects, upgradejob.New(obj, node, ctl.Name))
-				obj.Status.Applying = append(obj.Status.Applying, node.Name)
+				concurrentNodeNames[i] = upgradenode.Hostname(node)
 			}
+			obj.Status.Applying = concurrentNodeNames[:]
 			return objects, obj.Status, nil
 		},
 		&generic.GeneratingHandlerOptions{

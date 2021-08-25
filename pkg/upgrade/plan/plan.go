@@ -123,12 +123,24 @@ func ResolveChannel(ctx context.Context, url, latestVersion, clusterID string) (
 	return "", fmt.Errorf("unexpected response: %s %s", response.Proto, response.Status)
 }
 
+func NodeSelector(plan *upgradeapiv1.Plan) (labels.Selector, error) {
+	nodeSelector, err := metav1.LabelSelectorAsSelector(plan.Spec.NodeSelector)
+	if err != nil {
+		return nil, err
+	}
+	requireHostname, err := labels.NewRequirement(corev1.LabelHostname, selection.Exists, []string{})
+	if err != nil {
+		return nil, err
+	}
+	return nodeSelector.Add(*requireHostname), nil
+}
+
 func SelectConcurrentNodes(plan *upgradeapiv1.Plan, nodeCache corectlv1.NodeCache) ([]*corev1.Node, error) {
 	var (
 		applying = plan.Status.Applying
 		selected []*corev1.Node
 	)
-	nodeSelector, err := metav1.LabelSelectorAsSelector(plan.Spec.NodeSelector)
+	nodeSelector, err := NodeSelector(plan)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +189,7 @@ func SelectConcurrentNodes(plan *upgradeapiv1.Plan, nodeCache corectlv1.NodeCach
 		}
 	}
 	sort.Slice(selected, func(i, j int) bool {
-		return selected[i].Name < selected[i].Name
+		return selected[i].Name < selected[j].Name
 	})
 	return selected, nil
 }

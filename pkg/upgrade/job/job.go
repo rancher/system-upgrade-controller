@@ -8,6 +8,7 @@ import (
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	upgradectr "github.com/rancher/system-upgrade-controller/pkg/upgrade/container"
+	upgradenode "github.com/rancher/system-upgrade-controller/pkg/upgrade/node"
 	"github.com/rancher/wrangler/pkg/name"
 	"github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
@@ -93,12 +94,6 @@ var (
 func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *batchv1.Job {
 	hostPathDirectory := corev1.HostPathDirectory
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
-	nodeHostname := node.Name
-	if node.Labels != nil {
-		if hostname, ok := node.Labels[corev1.LabelHostname]; ok {
-			nodeHostname = hostname
-		}
-	}
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name.SafeConcatName("apply", plan.Name, "on", node.Name, "with", plan.Status.LatestHash),
@@ -141,7 +136,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 										Key:      corev1.LabelHostname,
 										Operator: corev1.NodeSelectorOpIn,
 										Values: []string{
-											nodeHostname,
+											upgradenode.Hostname(node),
 										},
 									}},
 								}},
