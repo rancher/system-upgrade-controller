@@ -1,13 +1,13 @@
-ARG ALPINE=alpine:3.11
-ARG GOLANG=golang:1.13-alpine
+ARG ALPINE=alpine:3.14
+ARG GOLANG=golang:1.16-alpine3.14
 
 FROM ${GOLANG} AS e2e-ginkgo
+ENV GOBIN=/bin
 RUN set -x \
  && apk add --no-cache \
     ca-certificates \
     git \
- && go get -d -v github.com/onsi/ginkgo/ginkgo \
- && go build -o /bin/ginkgo github.com/onsi/ginkgo/ginkgo
+ && go install github.com/onsi/ginkgo/ginkgo@v1.16.4
 
 FROM ${ALPINE} AS e2e-tests
 ARG ARCH
