@@ -134,7 +134,6 @@ github.com/emicklei/go-restful v2.9.5+incompatible/go.mod h1:otzb+WCGbkyDHkqmQmT
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/euank/go-kmsg-parser v2.0.0+incompatible/go.mod h1:MhmAMZ8V4CYH4ybgdRwPr2TU5ThnS43puaKEMpja1uw=
-github.com/evanphx/json-patch v4.2.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
 github.com/evanphx/json-patch v4.5.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
 github.com/evanphx/json-patch v4.9.0+incompatible h1:kLcOMZeuLAJvL2BPWLMIj5oaZQobrkAqrL+WFZwQses=
 github.com/evanphx/json-patch v4.9.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLiYLvXMP4fmwYFNcr97nuDLSk=
@@ -537,7 +536,6 @@ github.com/quasilyte/go-consistent v0.0.0-20190521200055-c6f3937de18c/go.mod h1:
 github.com/quobyte/api v0.1.2/go.mod h1:jL7lIHrmqQ7yh05OJ+eEEdHr0u/kmT1Ff9iHd+4H6VI=
 github.com/rancher/lasso v0.0.0-20210616224652-fc3ebd901c08 h1:NxR8Fh0eE7/5/5Zvlog9B5NVjWKqBSb1WYMUF7/IE5c=
 github.com/rancher/lasso v0.0.0-20210616224652-fc3ebd901c08/go.mod h1:9qZd/S8DqWzfKtjKGgSoHqGEByYmUE3qRaBaaAHwfEM=
-github.com/rancher/wrangler v0.6.1/go.mod h1:L4HtjPeX8iqLgsxfJgz+JjKMcX2q3qbRXSeTlC/CSd4=
 github.com/rancher/wrangler v0.8.5 h1:aHUVvJrOhD6CGrAELWKDpo1MBDC8vKtEQZvjMPnw2cs=
 github.com/rancher/wrangler v0.8.5/go.mod h1:dKEaHNB4izxmPUtpq1Hvr3z3Oh+9k5pCZyFO9sUhlaY=
 github.com/remyoudompheng/bigfft v0.0.0-20170806203942-52369c62f446/go.mod h1:uYEyJGbgTkfkS4+E/PavXkNJcbFIpEtjt2B0KDQ5+9M=
