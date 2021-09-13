@@ -6,8 +6,8 @@ metadata:
   namespace: system-upgrade
 type: Opaque
 stringData:
-  curl: 7.58.0-2ubuntu3.8
-  openssl: 1.1.1-1ubuntu2.1~18.04.5
+  curl: 7.58.0-2ubuntu3.14
+  openssl: 1.1.1-1ubuntu2.1~18.04.13
   upgrade.sh: |
     #!/bin/sh
     set -e
