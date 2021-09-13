@@ -6,9 +6,9 @@ require (
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.16.0
-	github.com/rancher/lasso v0.0.0-20210408231703-9ddd9378d08d
+	github.com/rancher/lasso v0.0.0-20210616224652-fc3ebd901c08
 	github.com/rancher/system-upgrade-controller/pkg/apis v0.0.0
-	github.com/rancher/wrangler v0.8.1-0.20210424045532-c389a3e0ae51
+	github.com/rancher/wrangler v0.8.5
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/cli v1.22.2
 	k8s.io/api v0.18.20
