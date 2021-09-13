@@ -11,9 +11,9 @@ require (
 	github.com/rancher/wrangler v0.8.5
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/cli v1.22.2
-	k8s.io/api v0.18.20
-	k8s.io/apimachinery v0.18.20
-	k8s.io/client-go v0.18.20
+	k8s.io/api v0.18.18
+	k8s.io/apimachinery v0.18.18
+	k8s.io/client-go v0.18.18
 	k8s.io/kubectl v0.18.20
 	k8s.io/kubernetes v1.18.20
 )
