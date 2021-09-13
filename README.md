@@ -173,7 +173,7 @@ of the controller and the resources spawned by it.
 
 ## Testing
 
-Integration tests are bundled as a [Sonobuoy plugin](https://sonobuoy.io/docs/v0.17.2/plugins/) that expects to be run within a pod.
+Integration tests are bundled as a [Sonobuoy plugin](https://sonobuoy.io/docs/v0.19.0/plugins/) that expects to be run within a pod.
 To verify locally:
 
 ```shell script

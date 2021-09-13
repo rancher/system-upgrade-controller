@@ -3,7 +3,7 @@
 ARG ALPINE="library/alpine:3.14"
 FROM ${ALPINE} AS k3s
 ARG ARCH
-ARG K3S_VERSION="v1.17.2+k3s1"
+ARG K3S_VERSION="v1.18.20+k3s1"
 RUN set -x \
  && apk --no-cache add \
     bash \
