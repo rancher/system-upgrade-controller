@@ -2,6 +2,7 @@ package job
 
 import (
 	"os"
+	"sort"
 	"strconv"
 
 	"github.com/rancher/system-upgrade-controller/pkg/apis/condition"
@@ -94,6 +95,7 @@ var (
 func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *batchv1.Job {
 	hostPathDirectory := corev1.HostPathDirectory
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
+	nodeHostname := upgradenode.Hostname(node)
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name.SafeConcatName("apply", plan.Name, "on", node.Name, "with", plan.Status.LatestHash),
@@ -136,7 +138,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 										Key:      corev1.LabelHostname,
 										Operator: corev1.NodeSelectorOpIn,
 										Values: []string{
-											upgradenode.Hostname(node),
+											nodeHostname,
 										},
 									}},
 								}},
@@ -184,8 +186,16 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 					}},
 				},
 			},
+			Completions: new(int32),
+			Parallelism: new(int32),
 		},
 	}
+
+	*job.Spec.Completions = 1
+	if i := sort.SearchStrings(plan.Status.Applying, nodeHostname); i < len(plan.Status.Applying) && plan.Status.Applying[i] == nodeHostname {
+		*job.Spec.Parallelism = 1
+	}
+
 	podTemplate := &job.Spec.Template
 	// setup secrets volumes
 	for _, secret := range plan.Spec.Secrets {
