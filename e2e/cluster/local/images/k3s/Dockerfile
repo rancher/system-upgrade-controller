@@ -1,6 +1,6 @@
 # Install the all-in-one binary so we can copy our run-time images into the image
 # which helps avoid pulling them when running e2e tests.
-ARG ALPINE="library/alpine:3.11"
+ARG ALPINE="library/alpine:3.14"
 FROM ${ALPINE} AS k3s
 ARG ARCH
 ARG K3S_VERSION="v1.17.2+k3s1"
