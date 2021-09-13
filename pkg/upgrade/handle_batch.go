@@ -47,7 +47,7 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 			return obj, deleteJob(jobs, obj, metav1.DeletePropagationBackground)
 		}
 		// get the plan being applied
-		plan, err := plans.Cache().Get(obj.Namespace, planName)
+		plan, err := plans.Get(obj.Namespace, planName, metav1.GetOptions{})
 		switch {
 		case errors.IsNotFound(err):
 			// plan is gone, delete
