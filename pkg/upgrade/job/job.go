@@ -4,6 +4,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/rancher/system-upgrade-controller/pkg/apis/condition"
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
@@ -96,9 +97,10 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	hostPathDirectory := corev1.HostPathDirectory
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
 	nodeHostname := upgradenode.Hostname(node)
+	shortNodeName := strings.SplitN(nodeHostname, ".", 2)[0]
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name.SafeConcatName("apply", plan.Name, "on", node.Name, "with", plan.Status.LatestHash),
+			Name:      name.SafeConcatName("apply", plan.Name, "on", shortNodeName, "with", plan.Status.LatestHash),
 			Namespace: plan.Namespace,
 			Annotations: labels.Set{
 				upgradeapi.AnnotationTTLSecondsAfterFinished: strconv.FormatInt(int64(TTLSecondsAfterFinished), 10),
