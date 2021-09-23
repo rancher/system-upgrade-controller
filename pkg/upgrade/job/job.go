@@ -2,6 +2,7 @@ package job
 
 import (
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -22,7 +23,7 @@ const (
 	defaultBackoffLimit            = int32(2)
 	defaultActiveDeadlineSeconds   = int64(600)
 	defaultPrivileged              = true
-	defaultKubectlImage            = "rancher/kubectl:1.18.3"
+	defaultKubectlImage            = "rancher/kubectl:v1.18.20"
 	defaultImagePullPolicy         = corev1.PullIfNotPresent
 	defaultTTLSecondsAfterFinished = int32(900)
 )
@@ -95,7 +96,8 @@ var (
 func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *batchv1.Job {
 	hostPathDirectory := corev1.HostPathDirectory
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
-	shortNodeName := strings.SplitN(upgradenode.Hostname(node), ".", 2)[0]
+	nodeHostname := upgradenode.Hostname(node)
+	shortNodeName := strings.SplitN(nodeHostname, ".", 2)[0]
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name.SafeConcatName("apply", plan.Name, "on", shortNodeName, "with", plan.Status.LatestHash),
@@ -138,7 +140,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 										Key:      corev1.LabelHostname,
 										Operator: corev1.NodeSelectorOpIn,
 										Values: []string{
-											upgradenode.Hostname(node),
+											nodeHostname,
 										},
 									}},
 								}},
@@ -186,8 +188,16 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 					}},
 				},
 			},
+			Completions: new(int32),
+			Parallelism: new(int32),
 		},
 	}
+
+	*job.Spec.Completions = 1
+	if i := sort.SearchStrings(plan.Status.Applying, nodeHostname); i < len(plan.Status.Applying) && plan.Status.Applying[i] == nodeHostname {
+		*job.Spec.Parallelism = 1
+	}
+
 	podTemplate := &job.Spec.Template
 	// setup secrets volumes
 	for _, secret := range plan.Spec.Secrets {
