@@ -9,19 +9,16 @@ metadata:
   labels:
     k3s-upgrade: server
 spec:
-  concurrency: 1
-  version: v1.18.20+k3s1
+  concurrency: 1 # Batch size (roughly maps to maximum number of unschedulable nodes)
+  version: v1.20.11+k3s1
   nodeSelector:
     matchExpressions:
       - {key: k3s-upgrade, operator: Exists}
       - {key: k3s-upgrade, operator: NotIn, values: ["disabled", "false"]}
-      - {key: k3s.io/hostname, operator: Exists}
       - {key: k3os.io/mode, operator: DoesNotExist}
-      - {key: node-role.kubernetes.io/master, operator: In, values: ["true"]}
+      - {key: node-role.kubernetes.io/control-plane, operator: Exists}
   serviceAccountName: system-upgrade
   cordon: true
-#  drain:
-#    force: true
   upgrade:
     image: rancher/k3s-upgrade
 ---
@@ -33,22 +30,21 @@ metadata:
   labels:
     k3s-upgrade: agent
 spec:
-  concurrency: 2 # in general, this should be the number of workers - 1
-  version: v1.18.20+k3s1
+  concurrency: 2 # Batch size (roughly maps to maximum number of unschedulable nodes)
+  version: v1.20.11+k3s1
   nodeSelector:
     matchExpressions:
       - {key: k3s-upgrade, operator: Exists}
       - {key: k3s-upgrade, operator: NotIn, values: ["disabled", "false"]}
-      - {key: k3s.io/hostname, operator: Exists}
       - {key: k3os.io/mode, operator: DoesNotExist}
-      - {key: node-role.kubernetes.io/master, operator: NotIn, values: ["true"]}
+      - {key: node-role.kubernetes.io/control-plane, operator: DoesNotExist}
   serviceAccountName: system-upgrade
   prepare:
-    # Since v0.5.0-m1 SUC will use the resolved version of the plan for the tag on the prepare container.
+    # Defaults to the same "resolved" tag that is used for the `upgrade` container, NOT `latest`
     image: rancher/k3s-upgrade
     args: ["prepare", "k3s-server"]
   drain:
     force: true
-    skipWaitForDeleteTimeout: 60 # set this to prevent upgrades from hanging on small clusters since k8s v1.18
+    skipWaitForDeleteTimeout: 60 # 1.18+ (honor pod disruption budgets up to 60 seconds per pod then moves on)
   upgrade:
     image: rancher/k3s-upgrade
