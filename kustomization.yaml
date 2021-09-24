@@ -4,4 +4,4 @@ resources:
 - manifests/system-upgrade-controller.yaml
 images:
 - name: rancher/system-upgrade-controller
-  newTag: v0.7.5
+  newTag: v0.7.6
