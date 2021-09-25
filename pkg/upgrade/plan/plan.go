@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	stdhash "hash"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	"github.com/rancher/wrangler/pkg/crd"
+	"github.com/rancher/wrangler/pkg/data"
 	corectlv1 "github.com/rancher/wrangler/pkg/generated/controllers/core/v1"
 	"github.com/rancher/wrangler/pkg/schemas/openapi"
 	"github.com/sirupsen/logrus"
@@ -61,6 +63,10 @@ func DigestStatus(plan *upgradeapiv1.Plan, secretCache corectlv1.SecretCache) (u
 		h := sha256.New224()
 		h.Write([]byte(plan.Status.LatestVersion))
 		h.Write([]byte(plan.Spec.ServiceAccountName))
+		if err := addToHashFromAnnotation(h, plan); err != nil {
+			return plan.Status, err
+		}
+
 		for _, s := range plan.Spec.Secrets {
 			secret, err := secretCache.Get(plan.Namespace, s.Name)
 			if err != nil {
@@ -75,6 +81,23 @@ func DigestStatus(plan *upgradeapiv1.Plan, secretCache corectlv1.SecretCache) (u
 		plan.Status.LatestHash = fmt.Sprintf("%x", h.Sum(nil))
 	}
 	return plan.Status, nil
+}
+
+func addToHashFromAnnotation(h stdhash.Hash, plan *upgradeapiv1.Plan) error {
+	if plan.Annotations[upgradeapi.AnnotationIncludeInDigest] == "" {
+		return nil
+	}
+
+	dataMap, err := data.Convert(plan)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range strings.Split(plan.Annotations[upgradeapi.AnnotationIncludeInDigest], ",") {
+		h.Write([]byte(dataMap.String(strings.Split(entry, ".")...)))
+	}
+
+	return nil
 }
 
 func MungeVersion(version string) string {
