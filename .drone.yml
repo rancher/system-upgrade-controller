@@ -8,7 +8,7 @@ platform:
 
 steps:
 - name: build
-  image: rancher/dapper:v0.4.2
+  image: rancher/dapper:v0.5.0
   commands:
   - dapper ci
   - dapper e2e-sonobuoy
@@ -18,7 +18,7 @@ steps:
     path: /var/run/docker.sock
 
 - name: upload-artifacts
-  image: ibuildthecloud/github-release:v0.0.1
+  image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token
@@ -98,7 +98,7 @@ platform:
 
 steps:
 - name: build
-  image: rancher/dapper:v0.4.2
+  image: rancher/dapper:v0.5.0
   commands:
   - dapper ci
   volumes:
@@ -106,7 +106,7 @@ steps:
     path: /var/run/docker.sock
 
 - name: upload-artifacts
-  image: ibuildthecloud/github-release:v0.0.1
+  image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token
@@ -186,7 +186,7 @@ platform:
 
 steps:
 - name: build
-  image: rancher/dapper:v0.4.2
+  image: rancher/dapper:v0.5.0
   commands:
   - dapper ci
   volumes:
@@ -194,7 +194,7 @@ steps:
     path: /var/run/docker.sock
 
 - name: upload-artifacts
-  image: ibuildthecloud/github-release:v0.0.1
+  image: plugins/github-release
   settings:
     api_key:
       from_secret: github_token
@@ -251,7 +251,7 @@ platform:
 
 steps:
 - name: controller
-  image: plugins/manifest:1.0.2
+  image: plugins/manifest
   settings:
     username:
       from_secret: docker_username
@@ -273,7 +273,7 @@ steps:
     - tag
 
 - name: e2e-tests
-  image: plugins/manifest:1.0.2
+  image: plugins/manifest
   settings:
     username:
       from_secret: docker_username
