@@ -166,7 +166,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 						Operator: corev1.TolerationOpExists,
 						Effect:   corev1.TaintEffectNoSchedule,
 					}}, plan.Spec.Tolerations...),
-					RestartPolicy: corev1.RestartPolicyNever,
+					RestartPolicy: corev1.RestartPolicyOnFailure,
 					Volumes: []corev1.Volume{{
 						Name: `host-root`,
 						VolumeSource: corev1.VolumeSource{
