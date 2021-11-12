@@ -536,8 +536,9 @@ github.com/quasilyte/go-consistent v0.0.0-20190521200055-c6f3937de18c/go.mod h1:
 github.com/quobyte/api v0.1.2/go.mod h1:jL7lIHrmqQ7yh05OJ+eEEdHr0u/kmT1Ff9iHd+4H6VI=
 github.com/rancher/lasso v0.0.0-20210616224652-fc3ebd901c08 h1:NxR8Fh0eE7/5/5Zvlog9B5NVjWKqBSb1WYMUF7/IE5c=
 github.com/rancher/lasso v0.0.0-20210616224652-fc3ebd901c08/go.mod h1:9qZd/S8DqWzfKtjKGgSoHqGEByYmUE3qRaBaaAHwfEM=
-github.com/rancher/wrangler v0.8.5 h1:aHUVvJrOhD6CGrAELWKDpo1MBDC8vKtEQZvjMPnw2cs=
 github.com/rancher/wrangler v0.8.5/go.mod h1:dKEaHNB4izxmPUtpq1Hvr3z3Oh+9k5pCZyFO9sUhlaY=
+github.com/rancher/wrangler v0.8.8 h1:3EEQmfUqZ/UG4hERHhihB+Q2F1s/W4CmfsPmXv17wS8=
+github.com/rancher/wrangler v0.8.8/go.mod h1:dKEaHNB4izxmPUtpq1Hvr3z3Oh+9k5pCZyFO9sUhlaY=
 github.com/remyoudompheng/bigfft v0.0.0-20170806203942-52369c62f446/go.mod h1:uYEyJGbgTkfkS4+E/PavXkNJcbFIpEtjt2B0KDQ5+9M=
 github.com/robfig/cron v1.1.0/go.mod h1:JGuDeoQd7Z6yL4zQhZ3OPEVHB7fL6Ka6skscFHfmt2k=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=

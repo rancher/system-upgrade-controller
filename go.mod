@@ -8,7 +8,7 @@ require (
 	github.com/onsi/gomega v1.16.0
 	github.com/rancher/lasso v0.0.0-20210616224652-fc3ebd901c08
 	github.com/rancher/system-upgrade-controller/pkg/apis v0.0.0
-	github.com/rancher/wrangler v0.8.5
+	github.com/rancher/wrangler v0.8.8
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/cli v1.22.2
 	k8s.io/api v0.18.18
