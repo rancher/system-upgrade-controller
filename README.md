@@ -16,7 +16,7 @@ For up-to-date details on defining a plan please review [v1/types.go](pkg/apis/u
 
 #### April 14, 2020
 [CNCF Member Webinar: Declarative Host Upgrades From Within Kubernetes](https://www.cncf.io/webinars/declarative-host-upgrades-from-within-kubernetes/)
-- [Slides](https://www.cncf.io/wp-content/uploads/2020/04/CNCF-Webinar-System-Upgrade-Controller-1.pdf)
+- [Slides](https://www.cncf.io/wp-content/uploads/2020/08/CNCF-Webinar-System-Upgrade-Controller-1.pdf)
 - [Video](https://www.youtube.com/watch?v=uHF6C0GKjlA)
 
 #### March 4, 2020
