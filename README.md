@@ -41,7 +41,7 @@ _Additionally, one should take care when defining upgrades by ensuring that such
 
 ## Deploying
 
-The most up-to-date manifest is always [manifests/system-upgrade-controller.yaml](manifests/system-upgrade-controller.yaml)
+The most up-to-date manifest is usually [manifests/system-upgrade-controller.yaml](manifests/system-upgrade-controller.yaml)
 but since release v0.4.0 a manifest specific to the release has been created and uploaded to the release artifacts page.
 See [releases/download/v0.4.0/system-upgrade-controller.yaml](https://github.com/rancher/system-upgrade-controller/releases/download/v0.4.0/system-upgrade-controller.yaml)
 
@@ -192,7 +192,7 @@ sonobuoy results $(sonobuoy retrieve)
 ```
 
 ## License
-Copyright (c) 2019-2020 [Rancher Labs, Inc.](http://rancher.com)
+Copyright (c) 2019-2022 [Rancher Labs, Inc.](http://rancher.com)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
