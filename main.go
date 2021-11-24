@@ -8,7 +8,6 @@ package main
 // SPDX-License-Identifier: Apache-2.0
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"time"
@@ -98,7 +97,7 @@ func Run(_ *cli.Context) {
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	ctx := signals.SetupSignalHandler(context.Background())
+	ctx := signals.SetupSignalContext()
 	if err := ctl.Start(ctx, threads); err != nil {
 		logrus.Fatalf("Error starting: %v", err)
 	}
