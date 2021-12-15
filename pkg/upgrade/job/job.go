@@ -178,10 +178,11 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 						Name: "pod-info",
 						VolumeSource: corev1.VolumeSource{
 							DownwardAPI: &corev1.DownwardAPIVolumeSource{
+								DefaultMode: &[]int32{420}[0],
 								Items: []corev1.DownwardAPIVolumeFile{{
-									Path: "labels", FieldRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.labels"},
+									Path: "labels", FieldRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.labels", APIVersion: "v1"},
 								}, {
-									Path: "annotations", FieldRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.annotations"},
+									Path: "annotations", FieldRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.annotations", APIVersion: "v1"},
 								}},
 							},
 						},
