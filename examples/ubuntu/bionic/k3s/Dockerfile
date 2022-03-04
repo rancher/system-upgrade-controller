@@ -31,7 +31,7 @@ RUN set -x \
     /var/lib/apt/lists/* \
     /var/tmp/*
 
-ARG INSTALL_K3S_VERSION=v1.18.20+k3s1
+ARG INSTALL_K3S_VERSION=v1.21.9+k3s1
 ARG INSTALL_K3S_SKIP_START=true
 ADD https://raw.githubusercontent.com/rancher/k3s/${INSTALL_K3S_VERSION}/install.sh /usr/share/rancher/k3s/
 RUN sh -x /usr/share/rancher/k3s/install.sh || true
