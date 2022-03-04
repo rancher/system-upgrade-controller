@@ -8,7 +8,7 @@ platform:
 
 steps:
 - name: build
-  image: rancher/dapper:v0.5.0
+  image: rancher/dapper:v0.5.8
   commands:
   - dapper ci
   - dapper e2e-sonobuoy
@@ -90,6 +90,80 @@ volumes:
 
 ---
 kind: pipeline
+name: s390x
+
+platform:
+  os: linux
+  arch: amd64
+
+node:
+  arch: s390x
+
+steps:
+- name: build
+  failure: ignore
+  image: rancher/dapper:v0.5.8
+  commands:
+  - dapper ci
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+
+- name: upload-artifacts
+  failure: ignore
+  image: plugins/github-release
+  settings:
+    api_key:
+      from_secret: github_token
+    prerelease: true
+    checksum:
+    - sha256
+    checksum_file: CHECKSUMsum-s390x.txt
+    checksum_flatten: true
+    files:
+    - "dist/artifacts/*"
+  when:
+    instance:
+    - drone-publish.rancher.io
+    ref:
+    - refs/head/master
+    - refs/tags/*
+    event:
+    - tag
+
+- name: push-controller
+  failure: ignore
+  image: rancher/drone-images:docker-s390x
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  settings:
+    dockerfile: package/Dockerfile
+    build_args:
+    - ARCH=s390x
+    - TAG=${DRONE_TAG}-s390x
+    password:
+      from_secret: docker_password
+    repo: "rancher/system-upgrade-controller"
+    tag: "${DRONE_TAG}-s390x"
+    username:
+      from_secret: docker_username
+  when:
+    instance:
+    - drone-publish.rancher.io
+    ref:
+    - refs/head/master
+    - refs/tags/*
+    event:
+    - tag
+
+volumes:
+- name: docker
+  host:
+    path: /var/run/docker.sock
+
+---
+kind: pipeline
 name: arm64
 
 platform:
@@ -98,7 +172,7 @@ platform:
 
 steps:
 - name: build
-  image: rancher/dapper:v0.5.0
+  image: rancher/dapper:v0.5.8
   commands:
   - dapper ci
   volumes:
@@ -261,6 +335,7 @@ steps:
       - linux/amd64
       - linux/arm64
       - linux/arm
+      - linux/s390x
     target: "rancher/system-upgrade-controller:${DRONE_TAG}"
     template: "rancher/system-upgrade-controller:${DRONE_TAG}-ARCH"
   when:
@@ -295,5 +370,6 @@ steps:
 
 depends_on:
 - amd64
+- s390x
 - arm64
 - arm

@@ -1,4 +1,4 @@
-ARG KUBECTL=rancher/kubectl:v1.18.20
+ARG KUBECTL=rancher/kubectl:v1.21.9
 FROM ${KUBECTL} AS kubectl
 
 FROM golang:1.16-alpine3.14
@@ -21,7 +21,7 @@ RUN if [ "${ARCH}" == "amd64" ]; then \
         go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4; \
     fi
 ARG SONOBUOY_VERSION=0.18.5
-RUN if [ "${ARCH}" != "arm" ]; then \
+RUN if [ "${ARCH}" != "arm" ] && [ "${ARCH}" != "s390x" ]; then \
         set -x; \
         curl -sL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_${ARCH}.tar.gz" \
         | tar -xz -C /usr/local/bin; \
