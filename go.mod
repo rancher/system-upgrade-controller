@@ -3,7 +3,7 @@ module github.com/rancher/system-upgrade-controller
 go 1.16
 
 require (
-	github.com/docker/distribution v2.7.1+incompatible
+	github.com/docker/distribution v2.8.0+incompatible
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.16.0
 	github.com/rancher/lasso v0.0.0-20210616224652-fc3ebd901c08
