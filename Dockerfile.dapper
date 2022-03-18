@@ -20,7 +20,7 @@ RUN if [ "$(go env GOARCH)" = "amd64" ]; then \
 RUN if [ "${ARCH}" == "amd64" ]; then \
         go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4; \
     fi
-ARG SONOBUOY_VERSION=0.18.5
+ARG SONOBUOY_VERSION=0.56.2
 RUN if [ "${ARCH}" != "arm" ] && [ "${ARCH}" != "s390x" ]; then \
         set -x; \
         curl -sL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_${ARCH}.tar.gz" \

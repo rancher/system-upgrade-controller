@@ -6,7 +6,7 @@ set -e
 : "${DIST?required}"
 : "${ALPINE_TAG:=3.14}"
 : "${KUBECTL_TAG:=v1.21.9}"
-: "${SONOBUOY_TAG:=v0.18.5}"
+: "${SONOBUOY_TAG:=v0.56.2}"
 
 docker-image-save() {
   echo "Pulling '$1:$2' ..."

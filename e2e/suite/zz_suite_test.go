@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 func TestSuite(t *testing.T) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
 	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "E2E SUITE", []ginkgo.Reporter{
-		reporters.NewJUnitReporter("/tmp/results/junit.xml"),
+		reporters.NewJUnitReporter("/tmp/sonobuoy/results/junit.xml"),
 	})
 }
 
