@@ -111,7 +111,7 @@ steps:
 
 - name: upload-artifacts
   failure: ignore
-  image: plugins/github-release
+  image: rancher/drone-images:github-release-s390x
   settings:
     api_key:
       from_secret: github_token
