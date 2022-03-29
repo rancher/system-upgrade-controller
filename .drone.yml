@@ -101,7 +101,6 @@ node:
 
 steps:
 - name: build
-  failure: ignore
   image: rancher/dapper:v0.5.8
   commands:
   - dapper ci
@@ -110,7 +109,6 @@ steps:
     path: /var/run/docker.sock
 
 - name: upload-artifacts
-  failure: ignore
   image: plugins/github-release
   settings:
     api_key:
@@ -132,7 +130,6 @@ steps:
     - tag
 
 - name: push-controller
-  failure: ignore
   image: rancher/drone-images:docker-s390x
   volumes:
   - name: docker
