@@ -212,6 +212,18 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		})
 	}
 
+	// add volumes from upgrade plan
+	for _, v := range plan.Spec.Upgrade.Volumes {
+		podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes, corev1.Volume{
+			Name: v.Name,
+			VolumeSource: corev1.VolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{
+					Path: v.Source,
+				},
+			},
+		})
+	}
+
 	// first, we prepare
 	if plan.Spec.Prepare != nil {
 		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
@@ -220,6 +232,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 				upgradectr.WithSecrets(plan.Spec.Secrets),
 				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
 				upgradectr.WithImagePullPolicy(ImagePullPolicy),
+				upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
 			),
 		)
 	}
@@ -260,6 +273,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 				upgradectr.WithSecrets(plan.Spec.Secrets),
 				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
 				upgradectr.WithImagePullPolicy(ImagePullPolicy),
+				upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
 			),
 		)
 	} else if cordon {
@@ -271,6 +285,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 				upgradectr.WithSecrets(plan.Spec.Secrets),
 				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
 				upgradectr.WithImagePullPolicy(ImagePullPolicy),
+				upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
 			),
 		)
 	}
@@ -290,6 +305,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 			upgradectr.WithSecrets(plan.Spec.Secrets),
 			upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
 			upgradectr.WithImagePullPolicy(ImagePullPolicy),
+			upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
 		),
 	}
 

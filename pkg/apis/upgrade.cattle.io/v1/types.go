@@ -62,6 +62,13 @@ type ContainerSpec struct {
 	Args    []string               `json:"args,omitempty"`
 	Env     []corev1.EnvVar        `json:"envs,omitempty"`
 	EnvFrom []corev1.EnvFromSource `json:"envFrom,omitempty"`
+	Volumes []VolumeSpec           `json:"volumes,omitempty"`
+}
+
+type VolumeSpec struct {
+	Name        string `json:"name,omitempty"`
+	Source      string `json:"source,omitempty"`
+	Destination string `json:"destination,omitempty"`
 }
 
 // DrainSpec encapsulates `kubectl drain` parameters minus node/pod selectors.
