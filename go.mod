@@ -3,7 +3,7 @@ module github.com/rancher/system-upgrade-controller
 go 1.16
 
 require (
-	github.com/docker/distribution v2.8.0+incompatible
+	github.com/docker/distribution v2.8.1+incompatible
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.16.0
 	github.com/rancher/lasso v0.0.0-20210616224652-fc3ebd901c08
@@ -19,6 +19,7 @@ require (
 )
 
 replace (
+	github.com/docker/distribution => github.com/distribution/distribution v2.8.1+incompatible
 	github.com/rancher/system-upgrade-controller/pkg/apis => ./pkg/apis
 	k8s.io/api => github.com/k3s-io/kubernetes/staging/src/k8s.io/api v1.18.20-k3s1
 	k8s.io/apiextensions-apiserver => github.com/k3s-io/kubernetes/staging/src/k8s.io/apiextensions-apiserver v1.18.20-k3s1
