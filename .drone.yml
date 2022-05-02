@@ -101,7 +101,6 @@ node:
 
 steps:
 - name: build
-  failure: ignore
   image: rancher/dapper:v0.5.8
   commands:
   - dapper ci
@@ -110,7 +109,6 @@ steps:
     path: /var/run/docker.sock
 
 - name: upload-artifacts
-  failure: ignore
   image: rancher/drone-images:github-release-s390x
   settings:
     api_key:
@@ -132,7 +130,6 @@ steps:
     - tag
 
 - name: push-controller
-  failure: ignore
   image: rancher/drone-images:docker-s390x
   volumes:
   - name: docker
@@ -252,71 +249,6 @@ volumes:
 
 ---
 kind: pipeline
-name: arm
-
-platform:
-  os: linux
-  arch: arm
-
-steps:
-- name: build
-  image: rancher/dapper:v0.5.0
-  commands:
-  - dapper ci
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-
-- name: upload-artifacts
-  image: plugins/github-release
-  settings:
-    api_key:
-      from_secret: github_token
-    prerelease: true
-    checksum:
-    - sha256
-    checksum_file: CHECKSUMsum-arm.txt
-    checksum_flatten: true
-    files:
-    - "dist/artifacts/*"
-  when:
-    instance:
-    - drone-publish.rancher.io
-    ref:
-    - refs/head/master
-    - refs/tags/*
-    event:
-    - tag
-
-- name: push-controller
-  image: plugins/docker
-  settings:
-    dockerfile: package/Dockerfile
-    build_args:
-    - ARCH=arm
-    - TAG=${DRONE_TAG}-arm
-    password:
-      from_secret: docker_password
-    repo: "rancher/system-upgrade-controller"
-    tag: "${DRONE_TAG}-arm"
-    username:
-      from_secret: docker_username
-  when:
-    instance:
-    - drone-publish.rancher.io
-    ref:
-    - refs/head/master
-    - refs/tags/*
-    event:
-    - tag
-
-volumes:
-- name: docker
-  host:
-    path: /var/run/docker.sock
-
----
-kind: pipeline
 name: manifest
 
 platform:
@@ -334,7 +266,6 @@ steps:
     platforms:
       - linux/amd64
       - linux/arm64
-      - linux/arm
       - linux/s390x
     target: "rancher/system-upgrade-controller:${DRONE_TAG}"
     template: "rancher/system-upgrade-controller:${DRONE_TAG}-ARCH"
@@ -372,7 +303,6 @@ depends_on:
 - amd64
 - s390x
 - arm64
-- arm
 
 ---
 kind: pipeline
@@ -387,3 +317,4 @@ steps:
     when:
       instance:
         - drone-publish.rancher.io
+---

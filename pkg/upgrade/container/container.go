@@ -76,6 +76,17 @@ func WithPlanEnvironment(planName string, planStatus upgradeapiv1.PlanStatus) Op
 	}
 }
 
+func WithVolumes(volumes []upgradeapiv1.VolumeSpec) Option {
+	return func(container *corev1.Container) {
+		for _, v := range volumes {
+			container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
+				Name:      v.Name,
+				MountPath: v.Destination,
+			})
+		}
+	}
+}
+
 func New(name string, spec upgradeapiv1.ContainerSpec, opt ...Option) corev1.Container {
 	container := corev1.Container{
 		Name:    name,
@@ -110,6 +121,7 @@ func New(name string, spec upgradeapiv1.ContainerSpec, opt ...Option) corev1.Con
 		}}, spec.Env...),
 		EnvFrom: spec.EnvFrom,
 	}
+
 	for _, fn := range opt {
 		fn(&container)
 	}

@@ -113,7 +113,7 @@ spec:
   tolerations:
   - {key: kubernetes.io/arch, effect: NoSchedule, operator: Equal, value: amd64}
   - {key: kubernetes.io/arch, effect: NoSchedule, operator: Equal, value: arm64}
-  - {key: kubernetes.io/arch, effect: NoSchedule, operator: Equal, value: arm}
+  - {key: kubernetes.io/arch, effect: NoSchedule, operator: Equal, value: s390x}
 
   # The prepare init container, if specified, is run before cordon/drain which is run before the upgrade container.
   # Shares the same format as the `upgrade` container.
