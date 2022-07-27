@@ -49,13 +49,17 @@ func CRD() (*crd.CRD, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &crd.CRD{
+	plan := crd.CRD{
 		GVK:        prototype.GroupVersionKind(),
 		PluralName: upgradeapiv1.PlanResourceName,
 		Status:     true,
 		Schema:     schema,
 		Categories: []string{"upgrade"},
-	}, nil
+	}.
+		WithColumn("Image", ".spec.upgrade.image").
+		WithColumn("Channel", ".spec.channel").
+		WithColumn("Version", ".spec.version")
+	return &plan, nil
 }
 
 func DigestStatus(plan *upgradeapiv1.Plan, secretCache corectlv1.SecretCache) (upgradeapiv1.PlanStatus, error) {
