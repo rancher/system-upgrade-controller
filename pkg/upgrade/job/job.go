@@ -240,7 +240,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	// then we cordon/drain
 	cordon, drain := plan.Spec.Cordon, plan.Spec.Drain
 	if drain != nil {
-		args := []string{"drain", node.Name, "--pod-selector", `!` + upgradeapi.LabelController}
+		args := []string{"drain", node.Name}
 		if drain.IgnoreDaemonSets == nil || *plan.Spec.Drain.IgnoreDaemonSets {
 			args = append(args, "--ignore-daemonsets")
 		}
@@ -264,7 +264,11 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 			//only available in kubectl version 1.18 or later
 			args = append(args, "--skip-wait-for-delete-timeout", strconv.FormatInt(int64(drain.SkipWaitForDeleteTimeout), 10))
 		}
-
+		if drain.PodSelector != nil {
+			args = append(args, "--pod-selector", `!`+upgradeapi.LabelController+`,`+*drain.PodSelector)
+		} else {
+			args = append(args, "--pod-selector", `!`+upgradeapi.LabelController)
+		}
 		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
 			upgradectr.New("drain", upgradeapiv1.ContainerSpec{
 				Image: KubectlImage,

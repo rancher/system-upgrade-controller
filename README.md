@@ -130,6 +130,7 @@ spec:
   drain:
     # deleteLocalData: true  # default
     # ignoreDaemonSets: true # default
+    # podSelector: !app=test 
     force: true
     # Use `disableEviction == true` and/or `skipWaitForDeleteTimeout > 0` to prevent upgrades from hanging on small clusters.
     # disableEviction: false # default, only available with kubectl >= 1.18

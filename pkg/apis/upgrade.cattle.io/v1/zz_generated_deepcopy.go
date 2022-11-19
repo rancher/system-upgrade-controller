@@ -98,6 +98,11 @@ func (in *DrainSpec) DeepCopyInto(out *DrainSpec) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.PodSelector != nil {
+		in, out := &in.PodSelector, &out.PodSelector
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 

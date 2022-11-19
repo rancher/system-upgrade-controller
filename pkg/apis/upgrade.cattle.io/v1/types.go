@@ -78,6 +78,7 @@ type DrainSpec struct {
 	DeleteLocalData          *bool          `json:"deleteLocalData,omitempty"`
 	IgnoreDaemonSets         *bool          `json:"ignoreDaemonSets,omitempty"`
 	Force                    bool           `json:"force,omitempty"`
+	PodSelector              *string        `json:"podSelector,omitempty"`
 	DisableEviction          bool           `json:"disableEviction,omitempty"`
 	SkipWaitForDeleteTimeout int            `json:"skipWaitForDeleteTimeout,omitempty"`
 }
