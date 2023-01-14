@@ -23,7 +23,7 @@ RUN if [ "$(go env GOARCH)" = "amd64" ]; then \
         curl -sL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.50.1; \
     fi
 RUN if [ "${ARCH}" == "amd64" ]; then \
-        go get sigs.k8s.io/kustomize/kustomize/v3@v4.5.7; \
+        go install sigs.k8s.io/kustomize/kustomize/v4@v4.5.7; \
     fi
 ARG SONOBUOY_VERSION=0.56.16
 RUN if [ "${ARCH}" != "arm" ] && [ "${ARCH}" != "s390x" ]; then \
