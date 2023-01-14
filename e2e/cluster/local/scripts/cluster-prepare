@@ -4,9 +4,9 @@ set -e
 
 : "${ARCH?required}"
 : "${DIST?required}"
-: "${SLES_TAG:=15.3}"
+: "${SLEBCI_TAG:=15.4}"
 : "${KUBECTL_TAG:=v1.21.9}"
-: "${SONOBUOY_TAG:=v0.56.2}"
+: "${SONOBUOY_TAG:=v0.56.14}"
 
 docker-image-save() {
   echo "Pulling '$1:$2' ..."
@@ -24,6 +24,6 @@ rm -rf $(dirname $0)/../images/*/scratch/*
 cp -vf "${DIST}/system-upgrade-controller-${ARCH}.tar" $(dirname $0)/../images/k3s/scratch/
 cp -vf "${DIST}/system-upgrade-controller-e2e-tests-${ARCH}.tar" $(dirname $0)/../images/k3s/scratch/
 
-docker-image-save "registry.suse.com/suse/sle15"    "${SLES_TAG}"
+docker-image-save "registry.suse.com/bci/bci-base"    "${SLEBCI_TAG}"
 docker-image-save "rancher/kubectl"   "${KUBECTL_TAG}"
 docker-image-save "sonobuoy/sonobuoy" "${SONOBUOY_TAG}"

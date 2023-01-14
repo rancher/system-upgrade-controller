@@ -1,11 +1,11 @@
-ARG SLES=registry.suse.com/suse/sle15:15.3
-ARG GOLANG=registry.suse.com/bci/golang:1.17-11.33
+ARG SLEBCI=registry.suse.com/bci/bci-base:15.4
+ARG GOLANG=registry.suse.com/bci/golang:1.19
 
 FROM ${GOLANG} AS e2e-ginkgo
 ENV GOBIN=/bin
 RUN go install github.com/onsi/ginkgo/ginkgo@v1.16.4
 
-FROM ${SLES} AS e2e-tests
+FROM ${SLEBCI} AS e2e-tests
 ARG ARCH
 ARG REPO=rancher
 ARG TAG

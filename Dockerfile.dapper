@@ -1,7 +1,7 @@
 ARG KUBECTL=rancher/kubectl:v1.21.9
 FROM ${KUBECTL} AS kubectl
 
-FROM registry.suse.com/bci/golang:1.17-11.33
+FROM registry.suse.com/bci/golang:1.19
 
 COPY --from=kubectl /bin/kubectl /usr/local/bin/kubectl
 # COPY --from=sonobuoy /sonobuoy /usr/local/bin/sonobuoy
@@ -15,17 +15,17 @@ RUN if [ "${ARCH}" == "amd64" ]; then \
         curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose && \
         chmod +x /usr/local/bin/docker-compose; \
     fi
-RUN go install github.com/mgechev/revive@v1.1.1 && \
+RUN go install github.com/mgechev/revive@v1.2.4 && \
     rm -rf /go/src /go/pkg
 RUN go install golang.org/x/tools/cmd/goimports@latest && \
     rm -rf /go/src /go/pkg
 RUN if [ "$(go env GOARCH)" = "amd64" ]; then \
-        curl -sL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.41.1; \
+        curl -sL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.50.1; \
     fi
 RUN if [ "${ARCH}" == "amd64" ]; then \
-        go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4; \
+        go get sigs.k8s.io/kustomize/kustomize/v3@v4.5.7; \
     fi
-ARG SONOBUOY_VERSION=0.56.2
+ARG SONOBUOY_VERSION=0.56.16
 RUN if [ "${ARCH}" != "arm" ] && [ "${ARCH}" != "s390x" ]; then \
         set -x; \
         curl -sL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_${ARCH}.tar.gz" \
