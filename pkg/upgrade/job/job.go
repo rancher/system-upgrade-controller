@@ -98,6 +98,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
 	nodeHostname := upgradenode.Hostname(node)
 	shortNodeName := strings.SplitN(nodeHostname, ".", 2)[0]
+	ownerRefController := true
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name.SafeConcatName("apply", plan.Name, "on", shortNodeName, "with", plan.Status.LatestHash),
@@ -111,6 +112,15 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 				upgradeapi.LabelPlan:       plan.Name,
 				upgradeapi.LabelVersion:    plan.Status.LatestVersion,
 				labelPlanName:              plan.Status.LatestHash,
+			},
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: plan.APIVersion,
+					Kind:       plan.Kind,
+					Name:       plan.Name,
+					UID:        plan.UID,
+					Controller: &ownerRefController,
+				},
 			},
 		},
 		Spec: batchv1.JobSpec{
