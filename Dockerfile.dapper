@@ -1,7 +1,7 @@
 ARG KUBECTL=rancher/kubectl:v1.21.9
 FROM ${KUBECTL} AS kubectl
 
-FROM registry.suse.com/bci/golang:1.17-11.33
+FROM registry.suse.com/bci/golang:1.19-20.16
 
 COPY --from=kubectl /bin/kubectl /usr/local/bin/kubectl
 # COPY --from=sonobuoy /sonobuoy /usr/local/bin/sonobuoy

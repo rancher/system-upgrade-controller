@@ -1,5 +1,5 @@
 ARG SLES=registry.suse.com/suse/sle15:15.3
-ARG GOLANG=registry.suse.com/bci/golang:1.17-11.33
+ARG GOLANG=registry.suse.com/bci/golang:1.19-20.16
 
 FROM ${GOLANG} AS e2e-ginkgo
 ENV GOBIN=/bin
