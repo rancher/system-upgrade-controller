@@ -22,8 +22,11 @@ RUN go install golang.org/x/tools/cmd/goimports@latest && \
 RUN if [ "$(go env GOARCH)" = "amd64" ]; then \
         curl -sL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.41.1; \
     fi
-RUN if [ "${ARCH}" == "amd64" ]; then \
-        go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4; \
+RUN if [ "$(go env GOARCH)" = "amd64" ]; then \
+        set -x; \
+        curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.0.0/kustomize_v5.0.0_linux_amd64.tar.gz" \
+        | tar -xz -C /usr/local/bin; \
+        chmod +x /usr/local/bin/kustomize; \
     fi
 ARG SONOBUOY_VERSION=0.56.2
 RUN if [ "${ARCH}" != "arm" ] && [ "${ARCH}" != "s390x" ]; then \
