@@ -93,10 +93,20 @@ func (in *DrainSpec) DeepCopyInto(out *DrainSpec) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.DeleteEmptydirData != nil {
+		in, out := &in.DeleteEmptydirData, &out.DeleteEmptydirData
+		*out = new(bool)
+		**out = **in
+	}
 	if in.IgnoreDaemonSets != nil {
 		in, out := &in.IgnoreDaemonSets, &out.IgnoreDaemonSets
 		*out = new(bool)
 		**out = **in
+	}
+	if in.PodSelector != nil {
+		in, out := &in.PodSelector, &out.PodSelector
+		*out = new(metav1.LabelSelector)
+		(*in).DeepCopyInto(*out)
 	}
 	return
 }

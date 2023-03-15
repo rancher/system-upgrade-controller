@@ -73,13 +73,15 @@ type VolumeSpec struct {
 
 // DrainSpec encapsulates `kubectl drain` parameters minus node/pod selectors.
 type DrainSpec struct {
-	Timeout                  *time.Duration `json:"timeout,omitempty"`
-	GracePeriod              *int32         `json:"gracePeriod,omitempty"`
-	DeleteLocalData          *bool          `json:"deleteLocalData,omitempty"`
-	IgnoreDaemonSets         *bool          `json:"ignoreDaemonSets,omitempty"`
-	Force                    bool           `json:"force,omitempty"`
-	DisableEviction          bool           `json:"disableEviction,omitempty"`
-	SkipWaitForDeleteTimeout int            `json:"skipWaitForDeleteTimeout,omitempty"`
+	Timeout                  *time.Duration        `json:"timeout,omitempty"`
+	GracePeriod              *int32                `json:"gracePeriod,omitempty"`
+	DeleteLocalData          *bool                 `json:"deleteLocalData,omitempty"`
+	DeleteEmptydirData       *bool                 `json:"deleteEmptydirData,omitempty"`
+	IgnoreDaemonSets         *bool                 `json:"ignoreDaemonSets,omitempty"`
+	Force                    bool                  `json:"force,omitempty"`
+	DisableEviction          bool                  `json:"disableEviction,omitempty"`
+	SkipWaitForDeleteTimeout int                   `json:"skipWaitForDeleteTimeout,omitempty"`
+	PodSelector              *metav1.LabelSelector `json:"podSelector,omitempty"`
 }
 
 // SecretSpec describes a secret to be mounted for prepare/upgrade containers.
