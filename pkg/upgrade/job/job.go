@@ -23,7 +23,7 @@ const (
 	defaultBackoffLimit            = int32(2)
 	defaultActiveDeadlineSeconds   = int64(600)
 	defaultPrivileged              = true
-	defaultKubectlImage            = "rancher/kubectl:v1.21.9"
+	defaultKubectlImage            = "rancher/kubectl:v1.21.14"
 	defaultImagePullPolicy         = corev1.PullIfNotPresent
 	defaultTTLSecondsAfterFinished = int32(900)
 )
@@ -240,12 +240,19 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	// then we cordon/drain
 	cordon, drain := plan.Spec.Cordon, plan.Spec.Drain
 	if drain != nil {
-		args := []string{"drain", node.Name, "--pod-selector", `!` + upgradeapi.LabelController}
+		podSelector := `!` + upgradeapi.LabelController
+		if drain.PodSelector != nil {
+			podSelector = podSelector + `,` + drain.PodSelector.String()
+		}
+
+		args := []string{"drain", node.Name, "--pod-selector", podSelector}
 		if drain.IgnoreDaemonSets == nil || *plan.Spec.Drain.IgnoreDaemonSets {
 			args = append(args, "--ignore-daemonsets")
 		}
-		if drain.DeleteLocalData == nil || *drain.DeleteLocalData {
-			args = append(args, "--delete-local-data")
+		if (drain.DeleteLocalData == nil || *drain.DeleteLocalData) && (drain.DeleteEmptydirData == nil || *drain.DeleteEmptydirData) {
+			//only available in kubectl version 1.20 or later
+			//was delete-local-data in prior versions
+			args = append(args, "--delete-emptydir-data")
 		}
 		if drain.Force {
 			args = append(args, "--force")
