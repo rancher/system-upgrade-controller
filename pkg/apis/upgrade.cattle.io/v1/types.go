@@ -15,6 +15,8 @@ import (
 var (
 	// PlanLatestResolved indicates that the latest version as per the spec has been determined.
 	PlanLatestResolved = condition.Cond("LatestResolved")
+	// PlanSpecValidated indicates that the plan spec has been validated.
+	PlanSpecValidated = condition.Cond("Validated")
 )
 
 // +genclient
