@@ -28,6 +28,16 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 				return status, nil
 			}
 			logrus.Debugf("PLAN STATUS HANDLER: plan=%s/%s@%s, status=%+v", obj.Namespace, obj.Name, obj.ResourceVersion, status)
+
+			validated := upgradeapiv1.PlanSpecValidated
+			validated.CreateUnknownIfNotExists(obj)
+			if err := upgradeplan.Validate(obj); err != nil {
+				validated.SetError(obj, "Error", err)
+				return upgradeplan.DigestStatus(obj, secretsCache)
+			}
+			validated.False(obj)
+			validated.SetError(obj, "PlanIsValid", nil)
+
 			resolved := upgradeapiv1.PlanLatestResolved
 			resolved.CreateUnknownIfNotExists(obj)
 			if obj.Spec.Version == "" && obj.Spec.Channel == "" {
@@ -66,6 +76,9 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 				return objects, status, nil
 			}
 			logrus.Debugf("PLAN GENERATING HANDLER: plan=%s/%s@%s, status=%+v", obj.Namespace, obj.Name, obj.ResourceVersion, status)
+			if !upgradeapiv1.PlanSpecValidated.IsTrue(obj) {
+				return objects, status, nil
+			}
 			if !upgradeapiv1.PlanLatestResolved.IsTrue(obj) {
 				return objects, status, nil
 			}
