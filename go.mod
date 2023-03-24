@@ -8,15 +8,18 @@ require (
 	github.com/onsi/gomega v1.16.0
 	github.com/rancher/lasso v0.0.0-20210616224652-fc3ebd901c08
 	github.com/rancher/system-upgrade-controller/pkg/apis v0.0.0
-	github.com/rancher/wrangler v0.8.11-0.20230207214913-209077f2d98f
+	github.com/rancher/wrangler v0.8.11
 	github.com/sirupsen/logrus v1.8.1
 	github.com/urfave/cli v1.22.2
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
 	k8s.io/api v0.21.14
+	k8s.io/apiextensions-apiserver v0.21.14 // indirect
 	k8s.io/apimachinery v0.21.14
 	k8s.io/client-go v0.21.14
+	k8s.io/code-generator v0.21.14 // indirect
 	k8s.io/kubectl v0.21.14
 	k8s.io/kubernetes v1.21.14
+	k8s.io/utils v0.0.0-20211116205334-6203023598ed
 )
 
 replace (
