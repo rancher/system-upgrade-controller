@@ -97,6 +97,7 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 		},
 		&generic.GeneratingHandlerOptions{
 			AllowClusterScoped: true,
+			NoOwnerReference:   true,
 		},
 	)
 
