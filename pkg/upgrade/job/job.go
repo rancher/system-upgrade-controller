@@ -233,6 +233,14 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
 				upgradectr.WithImagePullPolicy(ImagePullPolicy),
 				upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
+				upgradectr.WithSecurityContext(&corev1.SecurityContext{
+					Privileged: &Privileged,
+					Capabilities: &corev1.Capabilities{
+						Add: []corev1.Capability{
+							corev1.Capability("CAP_SYS_BOOT"),
+						},
+					},
+				}),
 			),
 		)
 	}
