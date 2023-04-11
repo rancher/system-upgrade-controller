@@ -1,9 +1,9 @@
 # Install the all-in-one binary so we can copy our run-time images into the image
 # which helps avoid pulling them when running e2e tests.
-ARG SLES="registry.suse.com/suse/sle15:15.3"
+ARG SLES="registry.suse.com/suse/sle15:15.4"
 FROM ${SLES} AS k3s
 ARG ARCH
-ARG K3S_VERSION="v1.21.9+k3s1"
+ARG K3S_VERSION="v1.23.17+k3s1"
 RUN set -x \
  && zypper -n in \
     ca-certificates \

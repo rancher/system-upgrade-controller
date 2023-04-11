@@ -22,6 +22,7 @@ e2e-sonobuoy-run() {
     --sonobuoy-image=${SONOBUOY_RUN_SONOBUOY_IMAGE} \
     --wait=${SONOBUOY_RUN_WAIT}
   mv -vf $(sonobuoy retrieve) ${DIST}/sonobuoy-results-${ARCH}.tar.gz
+  sonobuoy results --mode=dump ${DIST}/sonobuoy-results-${ARCH}.tar.gz
   sonobuoy results ${DIST}/sonobuoy-results-${ARCH}.tar.gz | tee ${DIST}/../sonobuoy-results-${ARCH}.txt
 }
 export -f e2e-sonobuoy-run
