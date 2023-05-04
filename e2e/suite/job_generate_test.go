@@ -41,6 +41,7 @@ var _ = Describe("Job Generation", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(jobs).To(HaveLen(1))
 			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 0))
+			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
 			Expect(jobs[0].Status.Failed).To(BeNumerically(">=", 1))
 
 			plan, err = e2e.GetPlan(plan.Name, metav1.GetOptions{})
@@ -57,6 +58,7 @@ var _ = Describe("Job Generation", func() {
 		It("should apply successfully after edit", func() {
 			Expect(jobs).To(HaveLen(1))
 			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 1))
+			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
 			Expect(jobs[0].Status.Failed).To(BeNumerically("==", 0))
 		})
 	})
@@ -112,9 +114,11 @@ var _ = Describe("Job Generation", func() {
 		It("should apply successfully after edit", func() {
 			Expect(jobs).To(HaveLen(1))
 			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 1))
+			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
 			Expect(jobs[0].Status.Failed).To(BeNumerically("==", 0))
 			Expect(jobs[0].Spec.Template.Spec.InitContainers).To(HaveLen(1))
-			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainSubstring("csi-attacher"))
+			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainSubstring("!upgrade.cattle.io/controller"))
+			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainSubstring("app notin (csi-attacher,csi-provisioner)"))
 		})
 	})
 })
