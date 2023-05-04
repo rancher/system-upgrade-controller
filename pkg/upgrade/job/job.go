@@ -17,6 +17,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 )
 
 const (
@@ -240,12 +241,22 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	// then we cordon/drain
 	cordon, drain := plan.Spec.Cordon, plan.Spec.Drain
 	if drain != nil {
-		podSelector := `!` + upgradeapi.LabelController
+		controllerRequirement, _ := labels.NewRequirement(upgradeapi.LabelController, selection.DoesNotExist, nil)
+		podSelector := labels.NewSelector().Add(*controllerRequirement)
+
 		if drain.PodSelector != nil {
-			podSelector = podSelector + `,` + drain.PodSelector.String()
+			if selector, err := metav1.LabelSelectorAsSelector(drain.PodSelector); err != nil {
+				logrus.Warnf("failed to convert Spec.Drain.PodSelector to selector: %v", err)
+			} else {
+				if requirements, ok := selector.Requirements(); !ok {
+					logrus.Warnf("Spec.Drain.PodSelector requirements are not selectable")
+				} else {
+					podSelector = podSelector.Add(requirements...)
+				}
+			}
 		}
 
-		args := []string{"drain", node.Name, "--pod-selector", podSelector}
+		args := []string{"drain", node.Name, "--pod-selector", podSelector.String()}
 		if drain.IgnoreDaemonSets == nil || *plan.Spec.Drain.IgnoreDaemonSets {
 			args = append(args, "--ignore-daemonsets")
 		}
