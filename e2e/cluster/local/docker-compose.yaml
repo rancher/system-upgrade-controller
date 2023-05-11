@@ -6,17 +6,17 @@ volumes:
 
 services:
 
-  leader:
-    container_name: local-leader
+  server:
+    container_name: k3s-server-1
     image: "e2e/cluster/local/k3s"
     build:
       context: ./images/k3s/.
       args:
         - ARCH=${ARCH}
-    command: server --no-deploy=traefik,metrics-server
+    command: server --disable=traefik,metrics-server --disable-helm-controller
     environment:
       - K3S_TOKEN=e2e
-    hostname: local-leader
+    hostname: k3s-server-1
     privileged: true
     ports:
       - "6443:6443" # k3s
@@ -25,17 +25,13 @@ services:
         target: /etc/rancher/k3s
         type: volume
 
-  worker:
+  agent:
     depends_on:
-      - leader
-    container_name: local-worker
+      - server
+    container_name: k3s-agent-1
     image: "e2e/cluster/local/k3s"
-#    build:
-#      context: ./images/k3s/.
-#      args:
-#        - ARCH=${ARCH}
-    command: agent --server https://local-leader:6443
+    command: agent --server https://k3s-server-1:6443
     environment:
       - K3S_TOKEN=e2e
-    hostname: local-worker
+    hostname: k3s-agent-1
     privileged: true

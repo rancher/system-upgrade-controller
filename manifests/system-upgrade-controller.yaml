@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: system-upgrade
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -33,7 +35,7 @@ data:
   SYSTEM_UPGRADE_JOB_ACTIVE_DEADLINE_SECONDS: "900"
   SYSTEM_UPGRADE_JOB_BACKOFF_LIMIT: "99"
   SYSTEM_UPGRADE_JOB_IMAGE_PULL_POLICY: "Always"
-  SYSTEM_UPGRADE_JOB_KUBECTL_IMAGE: "rancher/kubectl:v1.21.9"
+  SYSTEM_UPGRADE_JOB_KUBECTL_IMAGE: "rancher/kubectl:v1.25.4"
   SYSTEM_UPGRADE_JOB_PRIVILEGED: "true"
   SYSTEM_UPGRADE_JOB_TTL_SECONDS_AFTER_FINISH: "900"
   SYSTEM_UPGRADE_PLAN_POLLING_INTERVAL: "15m"
@@ -57,7 +59,8 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - {key: "node-role.kubernetes.io/master", operator: Exists}
+                  - key: "node-role.kubernetes.io/control-plane"
+                    operator: "Exists"
       serviceAccountName: system-upgrade
       tolerations:
         - key: "CriticalAddonsOnly"
@@ -76,8 +79,18 @@ spec:
           effect: "NoExecute"
       containers:
         - name: system-upgrade-controller
-          image: rancher/system-upgrade-controller:v0.8.0
+          image: rancher/system-upgrade-controller:v0.11.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            allowPrivilegeEscalation: false
+            seccompProfile: 
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
           envFrom:
             - configMapRef:
                 name: default-controller-env
@@ -93,17 +106,20 @@ spec:
           volumeMounts:
             - name: etc-ssl
               mountPath: /etc/ssl
+              readOnly: true
             - name: etc-pki
               mountPath: /etc/pki
+              readOnly: true
             - name: etc-ca-certificates
               mountPath: /etc/ca-certificates
+              readOnly: true
             - name: tmp
               mountPath: /tmp
       volumes:
         - name: etc-ssl
           hostPath:
             path: /etc/ssl
-            type: Directory
+            type: DirectoryOrCreate
         - name: etc-pki
           hostPath:
             path: /etc/pki

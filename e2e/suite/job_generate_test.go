@@ -1,11 +1,17 @@
 package suite_test
 
 import (
+	"context"
+	"fmt"
+	"io"
 	"time"
 
 	batchv1 "k8s.io/api/batch/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/utils/pointer"
 
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"github.com/rancher/system-upgrade-controller/e2e/framework"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,12 +27,13 @@ var _ = Describe("Job Generation", func() {
 			jobs []batchv1.Job
 		)
 		BeforeEach(func() {
-			plan = e2e.NewPlan("fail-then-succeed-", "library/alpine:3.11", []string{"sh", "-c"}, "exit 1")
+			plan = e2e.NewPlan("fail-then-succeed-", "library/alpine:3.18", []string{"sh", "-c"}, "exit 1")
 			plan.Spec.Version = "latest"
 			plan.Spec.Concurrency = 1
+			plan.Spec.ServiceAccountName = e2e.Namespace.Name
 			plan.Spec.NodeSelector = &metav1.LabelSelector{
 				MatchExpressions: []metav1.LabelSelectorRequirement{{
-					Key:      "node-role.kubernetes.io/master",
+					Key:      "node-role.kubernetes.io/control-plane",
 					Operator: metav1.LabelSelectorOpDoesNotExist,
 				}},
 			}
@@ -70,12 +77,13 @@ var _ = Describe("Job Generation", func() {
 			jobs []batchv1.Job
 		)
 		BeforeEach(func() {
-			plan = e2e.NewPlan("fail-drain-options-", "library/alpine:3.11", []string{"sh", "-c"}, "exit 0")
+			plan = e2e.NewPlan("fail-drain-options-", "library/alpine:3.18", []string{"sh", "-c"}, "exit 0")
 			plan.Spec.Version = "latest"
 			plan.Spec.Concurrency = 1
+			plan.Spec.ServiceAccountName = e2e.Namespace.Name
 			plan.Spec.NodeSelector = &metav1.LabelSelector{
 				MatchExpressions: []metav1.LabelSelectorRequirement{{
-					Key:      "node-role.kubernetes.io/master",
+					Key:      "node-role.kubernetes.io/control-plane",
 					Operator: metav1.LabelSelectorOpDoesNotExist,
 				}},
 			}
@@ -85,8 +93,8 @@ var _ = Describe("Job Generation", func() {
 				DeleteEmptydirData: pointer.Bool(true),
 				PodSelector: &metav1.LabelSelector{
 					MatchExpressions: []metav1.LabelSelectorRequirement{{
-						Key:      "app",
-						Values:   []string{"csi-attacher", "csi-provisioner"},
+						Key:      "component",
+						Values:   []string{"sonobuoy"},
 						Operator: metav1.LabelSelectorOpNotIn,
 					}},
 				},
@@ -117,8 +125,31 @@ var _ = Describe("Job Generation", func() {
 			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
 			Expect(jobs[0].Status.Failed).To(BeNumerically("==", 0))
 			Expect(jobs[0].Spec.Template.Spec.InitContainers).To(HaveLen(1))
-			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainSubstring("!upgrade.cattle.io/controller"))
-			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainSubstring("app notin (csi-attacher,csi-provisioner)"))
+			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainElement(ContainSubstring("!upgrade.cattle.io/controller")))
+			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainElement(ContainSubstring("component notin (sonobuoy)")))
+		})
+		AfterEach(func() {
+			if CurrentSpecReport().Failed() {
+				podList, _ := e2e.PodClient().List(context.Background(), metav1.ListOptions{})
+				for _, pod := range podList.Items {
+					containerNames := []string{}
+					for _, container := range pod.Spec.InitContainers {
+						containerNames = append(containerNames, container.Name)
+					}
+					for _, container := range pod.Spec.Containers {
+						containerNames = append(containerNames, container.Name)
+					}
+					for _, container := range containerNames {
+						reportName := fmt.Sprintf("podlogs-%s-%s", pod.Name, container)
+						logs := e2e.PodClient().GetLogs(pod.Name, &v1.PodLogOptions{Container: container})
+						if logStreamer, err := logs.Stream(context.Background()); err == nil {
+							if podLogs, err := io.ReadAll(logStreamer); err == nil {
+								AddReportEntry(reportName, string(podLogs))
+							}
+						}
+					}
+				}
+			}
 		})
 	})
 })
