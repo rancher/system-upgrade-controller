@@ -1,11 +1,11 @@
-ARG SLES=registry.suse.com/suse/sle15:15.3
-ARG GOLANG=registry.suse.com/bci/golang:1.17-11.33
+ARG BCI=registry.suse.com/bci/bci-base:15.4
+ARG GOLANG=registry.suse.com/bci/golang:1.19
 
 FROM ${GOLANG} AS e2e-ginkgo
 ENV GOBIN=/bin
-RUN go install github.com/onsi/ginkgo/ginkgo@v1.16.4
+RUN go install github.com/onsi/ginkgo/v2/ginkgo@v2.9.4
 
-FROM ${SLES} AS e2e-tests
+FROM ${BCI} AS e2e-tests
 ARG ARCH
 ARG REPO=rancher
 ARG TAG
@@ -22,4 +22,5 @@ ENTRYPOINT ["/run.sh"]
 FROM scratch AS controller
 ARG ARCH
 COPY dist/artifacts/system-upgrade-controller-${ARCH} /bin/system-upgrade-controller
+USER 65534:65534
 ENTRYPOINT ["/bin/system-upgrade-controller"]

@@ -119,7 +119,7 @@ spec:
   # Shares the same format as the `upgrade` container.
   prepare:
     # If not present, the tag portion of the image will be the value from `.status.latestVersion` a.k.a. the resolved version for this plan.
-    image: alpine:3.11
+    image: alpine:3.18
     command: [sh, -c]
     args: ["echo '### ENV ###'; env | sort; echo '### RUN ###'; find /run/system-upgrade | sort"]
 

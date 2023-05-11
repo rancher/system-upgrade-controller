@@ -60,7 +60,7 @@ spec:
   # The prepare init container is run before cordon/drain which is run before the upgrade container.
   # Shares the same format as the `upgrade` container
   #prepare:
-  #  image: alpine:3.11
+  #  image: alpine:3.18
   #  command: [sh, -c]
   #  args: [" echo '### ENV ###'; env | sort; echo '### RUN ###'; find /run/system-upgrade | sort"]
 

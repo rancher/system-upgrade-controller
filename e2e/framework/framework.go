@@ -2,11 +2,10 @@ package framework
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/rancher/system-upgrade-controller/e2e/framework/controller"
 	"github.com/rancher/system-upgrade-controller/pkg/apis/condition"
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
@@ -32,6 +31,7 @@ import (
 	"k8s.io/client-go/scale"
 	"k8s.io/kubernetes/test/e2e/framework"
 	frameworkauth "k8s.io/kubernetes/test/e2e/framework/auth"
+	admissionapi "k8s.io/pod-security-admission/api"
 )
 
 type Option func(*Options)
@@ -61,9 +61,10 @@ func New(name string, opt ...Option) *Client {
 	}
 	client := &Client{
 		Framework: framework.Framework{
-			BaseName:                 name,
-			AddonResourceConstraints: make(map[string]framework.ResourceConstraint),
-			Options:                  options.Options,
+			BaseName:                         name,
+			AddonResourceConstraints:         make(map[string]framework.ResourceConstraint),
+			NamespacePodSecurityEnforceLevel: admissionapi.LevelPrivileged,
+			Options:                          options.Options,
 		},
 	}
 	ginkgo.BeforeEach(client.BeforeEach)
@@ -195,15 +196,6 @@ func (c *Client) beforeFramework() {
 	ginkgo.By("Creating a kubernetes client")
 	config, err := framework.LoadConfig()
 	framework.ExpectNoError(err)
-	testDesc := ginkgo.CurrentGinkgoTestDescription()
-	if len(testDesc.ComponentTexts) > 0 {
-		componentTexts := strings.Join(testDesc.ComponentTexts, " ")
-		config.UserAgent = fmt.Sprintf(
-			"%v -- %v",
-			rest.DefaultKubernetesUserAgent(),
-			componentTexts)
-	}
-
 	config.QPS = c.Framework.Options.ClientQPS
 	config.Burst = c.Framework.Options.ClientBurst
 	if c.Framework.Options.GroupVersion != nil {

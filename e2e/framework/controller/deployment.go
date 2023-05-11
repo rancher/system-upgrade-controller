@@ -12,6 +12,7 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	e2eframework "k8s.io/kubernetes/test/e2e/framework"
 	e2edeployment "k8s.io/kubernetes/test/e2e/framework/deployment"
+	"k8s.io/utils/pointer"
 )
 
 type DeploymentOption func(*appsv1.Deployment)
@@ -19,6 +20,18 @@ type DeploymentOption func(*appsv1.Deployment)
 func NewDeployment(name string, opt ...DeploymentOption) *appsv1.Deployment {
 	labels := map[string]string{
 		upgradeapi.LabelController: name,
+	}
+	securityContext := &corev1.SecurityContext{
+		AllowPrivilegeEscalation: pointer.Bool(false),
+		RunAsNonRoot:             pointer.Bool(true),
+		SeccompProfile: &corev1.SeccompProfile{
+			Type: corev1.SeccompProfileTypeRuntimeDefault,
+		},
+		Capabilities: &corev1.Capabilities{
+			Drop: []corev1.Capability{"ALL"},
+		},
+		RunAsUser:  pointer.Int64(65534),
+		RunAsGroup: pointer.Int64(65534),
 	}
 	deployment := e2edeployment.NewDeployment(name, 1, labels, "system-upgrade-controller", "rancher/system-upgrade-controller:latest", appsv1.RecreateDeploymentStrategyType)
 	deployment.Spec.Template.Spec.Volumes = []corev1.Volume{{
@@ -29,6 +42,7 @@ func NewDeployment(name string, opt ...DeploymentOption) *appsv1.Deployment {
 	}
 	for i := range deployment.Spec.Template.Spec.Containers {
 		container := &deployment.Spec.Template.Spec.Containers[i]
+		container.SecurityContext = securityContext
 		container.Env = []corev1.EnvVar{{
 			Name:  "SYSTEM_UPGRADE_CONTROLLER_NAME",
 			Value: name,
