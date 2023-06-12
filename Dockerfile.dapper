@@ -1,7 +1,7 @@
 ARG KUBECTL=rancher/kubectl:v1.21.9
 FROM ${KUBECTL} AS kubectl
 
-FROM registry.suse.com/bci/golang:1.19-20.16
+FROM golang:1.19-alpine
 
 COPY --from=kubectl /bin/kubectl /usr/local/bin/kubectl
 # COPY --from=sonobuoy /sonobuoy /usr/local/bin/sonobuoy
@@ -9,12 +9,7 @@ COPY --from=kubectl /bin/kubectl /usr/local/bin/kubectl
 ARG DAPPER_HOST_ARCH
 ENV ARCH $DAPPER_HOST_ARCH
 
-RUN zypper -n install expect git jq  docker vim less file curl wget iproute2 gawk
-# Manual install of docker-compose, only needed for e2e tests on amd64
-RUN if [ "${ARCH}" == "amd64" ]; then \
-        curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose && \
-        chmod +x /usr/local/bin/docker-compose; \
-    fi
+RUN apk -U add coreutils bash expect git gcc jq musl-dev docker docker-compose vim less file curl wget ca-certificates iproute2
 RUN go install github.com/mgechev/revive@v1.1.1 && \
     rm -rf /go/src /go/pkg
 RUN go install golang.org/x/tools/cmd/goimports@latest && \
@@ -22,11 +17,8 @@ RUN go install golang.org/x/tools/cmd/goimports@latest && \
 RUN if [ "$(go env GOARCH)" = "amd64" ]; then \
         curl -sL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.41.1; \
     fi
-RUN if [ "$(go env GOARCH)" = "amd64" ]; then \
-        set -x; \
-        curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.0.0/kustomize_v5.0.0_linux_amd64.tar.gz" \
-        | tar -xz -C /usr/local/bin; \
-        chmod +x /usr/local/bin/kustomize; \
+RUN if [ "${ARCH}" = "amd64" ]; then \
+        go install sigs.k8s.io/kustomize/kustomize/v5@latest; \
     fi
 ARG SONOBUOY_VERSION=0.56.2
 RUN if [ "${ARCH}" != "arm" ] && [ "${ARCH}" != "s390x" ]; then \

@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+source $(dirname $0)/version
+
+cd $(dirname $0)/..
+
+mkdir -p bin
+echo "Building FIPS $PKG ..."
+LINKFLAGS="-linkmode=external -extldflags=-static -s"
+VERSIONFLAGS="-X ${PKG}/pkg/version.Version=${VERSION} -X ${PKG}/pkg/version.GitCommit=${COMMIT:0:8}"
+CGO_ENABLED=1 GOEXPERIMENT=boringcrypto go build -ldflags "$VERSIONFLAGS $LINKFLAGS" -o bin/system-upgrade-controller
