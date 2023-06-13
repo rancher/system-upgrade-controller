@@ -1,5 +1,17 @@
 TARGETS := $(shell ls scripts)
 
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
+GOPATH ?= $(shell go env GOPATH)
+TARGETARCH ?= amd64
+
+FIPS_ENABLE ?= ""
+
+IMG_PATH ?= "gcr.io/spectro-common-dev/${USER}"
+IMG_TAG ?= "latest"
+IMG_SERVICE_URL ?= ${IMG_PATH}/
+SUC_IMG ?= ${IMG_SERVICE_URL}system-upgrade-controller:${IMG_TAG}
+
 .dapper:
 	@echo Downloading dapper
 	@curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m` > .dapper.tmp
@@ -15,6 +27,9 @@ e2e: e2e-sonobuoy
 
 clean:
 	rm -rvf ./bin ./dist
+
+docker:
+	docker buildx build --platform linux/${TARGETARCH} --load . -t ${SUC_IMG} --build-arg CRYPTO_LIB=${FIPS_ENABLE} -f Dockerfile
 
 .DEFAULT_GOAL := ci
 
