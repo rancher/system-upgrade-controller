@@ -8,9 +8,8 @@ WORKDIR /workspace
 
 COPY . .
 
-RUN apk -U add coreutils bash expect git gcc musl-dev
-RUN apk --update add \
-    util-linux-dev
+RUN apk -U add coreutils gcc musl-dev
+
 RUN mkdir -p bin
 
 RUN if [ ${CRYPTO_LIB} ]; \
