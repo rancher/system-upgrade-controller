@@ -29,7 +29,7 @@ clean:
 	rm -rvf ./bin ./dist
 
 docker:
-	docker buildx build --platform linux/${TARGETARCH} --load . -t ${SUC_IMG} --build-arg CRYPTO_LIB=${FIPS_ENABLE} -f Dockerfile
+	docker buildx build --platform linux/amd64,linux/arm64 --push . -t ${SUC_IMG} --build-arg CRYPTO_LIB=${FIPS_ENABLE} -f Dockerfile
 
 .DEFAULT_GOAL := ci
 
