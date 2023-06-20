@@ -33,9 +33,10 @@ type Plan struct {
 
 // PlanSpec represents the user-configurable details of a Plan.
 type PlanSpec struct {
-	Concurrency        int64                 `json:"concurrency,omitempty"`
-	NodeSelector       *metav1.LabelSelector `json:"nodeSelector,omitempty"`
-	ServiceAccountName string                `json:"serviceAccountName,omitempty"`
+	Concurrency           int64                 `json:"concurrency,omitempty"`
+	JobActiveDeadlineSecs int64                 `json:"jobActiveDeadlineSecs,omitempty"`
+	NodeSelector          *metav1.LabelSelector `json:"nodeSelector,omitempty"`
+	ServiceAccountName    string                `json:"serviceAccountName,omitempty"`
 
 	Channel string       `json:"channel,omitempty"`
 	Version string       `json:"version,omitempty"`
