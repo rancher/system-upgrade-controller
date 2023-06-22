@@ -48,8 +48,10 @@ func (ctl *Controller) handleSecrets(ctx context.Context) error {
 		for _, plan := range planList {
 			for _, secret := range plan.Spec.Secrets {
 				if obj.Name == secret.Name {
-					plans.Enqueue(plan.Namespace, plan.Name)
-					continue
+					if !secret.IgnoreUpdates {
+						plans.Enqueue(plan.Namespace, plan.Name)
+						continue
+					}
 				}
 			}
 		}
