@@ -1,0 +1,91 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-upgrade-controller
+  namespace:  {{.Values.targetns }}
+spec:
+  selector:
+    matchLabels:
+      upgrade.cattle.io/controller: system-upgrade-controller
+  template:
+    metadata:
+      labels:
+        upgrade.cattle.io/controller: system-upgrade-controller # necessary to avoid drain
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: "node-role.kubernetes.io/control-plane"
+                    operator: "Exists"
+      serviceAccountName: system-upgrade
+      tolerations:
+        - key: "CriticalAddonsOnly"
+          operator: "Exists"
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/controlplane"
+          operator: "Exists"
+          effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/etcd"
+          operator: "Exists"
+          effect: "NoExecute"
+      containers:
+        - name: system-upgrade-controller
+          image: rancher/system-upgrade-controller:v0.11.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            allowPrivilegeEscalation: false
+            seccompProfile: 
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
+          envFrom:
+            - configMapRef:
+                name: default-controller-env
+          env:
+            - name: SYSTEM_UPGRADE_CONTROLLER_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['upgrade.cattle.io/controller']
+            - name: SYSTEM_UPGRADE_CONTROLLER_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          volumeMounts:
+            - name: etc-ssl
+              mountPath: /etc/ssl
+              readOnly: true
+            - name: etc-pki
+              mountPath: /etc/pki
+              readOnly: true
+            - name: etc-ca-certificates
+              mountPath: /etc/ca-certificates
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: etc-ssl
+          hostPath:
+            path: /etc/ssl
+            type: DirectoryOrCreate
+        - name: etc-pki
+          hostPath:
+            path: /etc/pki
+            type: DirectoryOrCreate
+        - name: etc-ca-certificates
+          hostPath:
+            path: /etc/ca-certificates
+            type: DirectoryOrCreate
+        - name: tmp
+          emptyDir: {}

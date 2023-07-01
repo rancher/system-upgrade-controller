@@ -1,0 +1,8 @@
+# Default values for system-upgrade-contoller.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Namespace created on installation
+targetns: system-upgrade
+
+installPlan: false 
