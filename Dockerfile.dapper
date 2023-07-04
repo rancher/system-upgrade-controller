@@ -9,7 +9,7 @@ ARG DAPPER_HOST_ARCH
 ENV ARCH $DAPPER_HOST_ARCH
 ARG SONOBUOY_VERSION=0.56.16
 
-RUN zypper addrepo https://download.opensuse.org/repositories/openSUSE:Factory/standard/openSUSE:Factory.repo && zypper refresh
+RUN zypper addrepo https://download.opensuse.org/repositories/home:RBrownSUSE/openSUSE_Tumbleweed/home:RBrownSUSE.repo && zypper refresh
 RUN zypper -n install expect git jq  docker vim less file curl wget iproute2 gawk buildkit
 RUN if [ "${ARCH:-$(go env GOARCH)}" = "amd64" ]; then \
         curl -sL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.51.2; \
