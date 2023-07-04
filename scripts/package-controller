@@ -5,9 +5,10 @@ source $(dirname $0)/version
 
 cd $(dirname $0)/..
 
-if [ "$ARCH" != "arm" ]; then
-    export DOCKER_BUILDKIT=1
-fi
+# disable buildkit
+#if [ "$ARCH" != "arm" ]; then
+#    export DOCKER_BUILDKIT=1
+#fi
 
 docker build \
   --build-arg ARCH=${ARCH} \
