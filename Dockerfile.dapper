@@ -15,8 +15,6 @@ RUN if [ "${ARCH:-$(go env GOARCH)}" = "amd64" ]; then \
         curl -sL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin; \
         curl -sL "https://github.com/docker/compose/releases/download/v2.17.3/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
         chmod +x /usr/local/bin/docker-compose; \
-        curl -sL "https://github.com/docker/buildx/releases/download/v0.11.0/buildx-v0.11.0.linux-amd64" -o $HOME/.docker/cli-plugins/docker-buildx && \
-        chmod +x $HOME/.docker/cli-plugins/docker-buildx; \
     fi
 ENV DAPPER_ENV REPO TAG DRONE_TAG
 ENV DAPPER_SOURCE /go/src/github.com/rancher/system-upgrade-controller/
