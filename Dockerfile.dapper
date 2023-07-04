@@ -9,7 +9,8 @@ ARG DAPPER_HOST_ARCH
 ENV ARCH $DAPPER_HOST_ARCH
 ARG SONOBUOY_VERSION=0.56.16
 
-RUN zypper -n install expect git jq  docker vim less file curl wget iproute2 gawk
+RUN zypper addrepo https://download.opensuse.org/repositories/openSUSE:Factory/standard/openSUSE:Factory.rep
+RUN zypper -n install expect git jq  docker vim less file curl wget iproute2 gawk buildkit
 RUN if [ "${ARCH:-$(go env GOARCH)}" = "amd64" ]; then \
         curl -sL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.51.2; \
         curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.0.3/kustomize_v5.0.3_linux_amd64.tar.gz" | tar -xz -C /usr/local/bin; \
