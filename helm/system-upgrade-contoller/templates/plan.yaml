@@ -1,4 +1,4 @@
-{{- if .Values.installPlan -}}
+{{- if .Values.plan.install -}}
 # Server plan
 apiVersion: upgrade.cattle.io/v1
 kind: Plan
@@ -16,8 +16,8 @@ spec:
       - "true"
   serviceAccountName: system-upgrade
   upgrade:
-    image: rancher/k3s-upgrade
-  version: v1.24.6+k3s1
+    image: {{.Values.plan.image }}
+  version: {{ .Values.plan.version}}
 ---
 # Agent plan
 apiVersion: upgrade.cattle.io/v1
@@ -39,6 +39,6 @@ spec:
     image: rancher/k3s-upgrade
   serviceAccountName: system-upgrade
   upgrade:
-    image: rancher/k3s-upgrade
-  version: v1.24.6+k3s1
+    image: {{.Values.plan.image }}
+  version: {{ .Values.plan.version}}
 {{- end -}}
