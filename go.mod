@@ -3,7 +3,7 @@ module github.com/rancher/system-upgrade-controller
 go 1.19
 
 require (
-	github.com/docker/distribution v2.8.1+incompatible
+	github.com/docker/distribution v2.8.2+incompatible
 	github.com/onsi/ginkgo/v2 v2.9.4
 	github.com/onsi/gomega v1.27.6
 	github.com/rancher/lasso v0.0.0-20221227210133-6ea88ca2fbcc
@@ -11,11 +11,12 @@ require (
 	github.com/rancher/wrangler v1.1.1-0.20230425173236-39a4707f0689
 	github.com/sirupsen/logrus v1.9.0
 	github.com/urfave/cli v1.22.2
-	k8s.io/api v0.25.4
-	k8s.io/apimachinery v0.25.4
-	k8s.io/client-go v0.25.4
-	k8s.io/kubectl v0.25.4
-	k8s.io/kubernetes v1.25.4
+	k8s.io/api v0.25.12
+	k8s.io/apimachinery v0.25.12
+	k8s.io/client-go v0.25.12
+	k8s.io/kubectl v0.25.12
+	k8s.io/kubernetes v1.25.12
+	k8s.io/pod-security-admission v0.25.12
 	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
 )
 
@@ -43,7 +44,7 @@ require (
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
-	github.com/google/uuid v1.1.2 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
@@ -91,17 +92,16 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.25.4 // indirect
-	k8s.io/apiserver v0.25.4 // indirect
-	k8s.io/code-generator v0.25.4 // indirect
-	k8s.io/component-base v0.25.4 // indirect
-	k8s.io/component-helpers v0.25.4 // indirect
+	k8s.io/apiextensions-apiserver v0.25.12 // indirect
+	k8s.io/apiserver v0.25.12 // indirect
+	k8s.io/code-generator v0.25.12 // indirect
+	k8s.io/component-base v0.25.12 // indirect
+	k8s.io/component-helpers v0.25.12 // indirect
 	k8s.io/gengo v0.0.0-20211129171323-c02415ce4185 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
-	k8s.io/kubelet v0.25.4 // indirect
-	k8s.io/pod-security-admission v0.25.4 // indirect
-	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.33 // indirect
+	k8s.io/kubelet v0.25.12 // indirect
+	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.37 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect

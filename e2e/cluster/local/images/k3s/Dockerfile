@@ -1,6 +1,6 @@
 # Install the all-in-one binary so we can copy our run-time images into the image
 # which helps avoid pulling them when running e2e tests.
-ARG BCI="registry.suse.com/bci/bci-base:15.4"
+ARG BCI="registry.suse.com/bci/bci-base:15.5"
 FROM ${BCI} AS k3s
 ARG ARCH
 ARG K3S_VERSION="v1.25.9+k3s1"
