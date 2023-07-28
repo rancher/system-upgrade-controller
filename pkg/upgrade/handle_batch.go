@@ -86,8 +86,10 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 			planLabel := upgradeapi.LabelPlanName(planName)
 			if planHash, ok := obj.Labels[planLabel]; ok {
 				node.Labels[planLabel] = planHash
-				if node.Spec.Unschedulable && (plan.Spec.Cordon || plan.Spec.Drain != nil) {
-					node.Spec.Unschedulable = false
+				if plan.Annotations["doNotUncordonAfterJobCompletes"] != "true" {
+					if node.Spec.Unschedulable && (plan.Spec.Cordon || plan.Spec.Drain != nil) {
+						node.Spec.Unschedulable = false
+					}
 				}
 				if node, err = nodes.Update(node); err != nil {
 					return obj, err
