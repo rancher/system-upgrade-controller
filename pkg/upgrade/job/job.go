@@ -21,7 +21,7 @@ import (
 
 const (
 	defaultBackoffLimit            = int32(2)
-	defaultActiveDeadlineSeconds   = int64(600)
+	defaultActiveDeadlineSeconds   = int64(0)
 	defaultPrivileged              = true
 	defaultKubectlImage            = "rancher/kubectl:v1.21.9"
 	defaultImagePullPolicy         = corev1.PullIfNotPresent
