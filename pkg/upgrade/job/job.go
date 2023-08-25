@@ -319,18 +319,31 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		)
 	}
 
+	// Check if SecurityContext from the Plan is non-nil
+	securityContext := &corev1.SecurityContext{
+		Privileged: &Privileged,
+		Capabilities: &corev1.Capabilities{
+			Add: []corev1.Capability{
+				corev1.Capability("CAP_SYS_BOOT"),
+			},
+		},
+	}
+	if plan.Spec.Upgrade.SecurityContext != nil {
+		securityContext = plan.Spec.Upgrade.SecurityContext
+	}
+
+	// Check if SELinuxOptions from the Plan is non-nil
+	seLinuxOptions := &corev1.SELinuxOptions{}
+	if plan.Spec.Upgrade.SELinuxOptions != nil {
+		seLinuxOptions = plan.Spec.Upgrade.SELinuxOptions
+	}
+
 	// and finally, we upgrade
 	podTemplate.Spec.Containers = []corev1.Container{
 		upgradectr.New("upgrade", *plan.Spec.Upgrade,
 			upgradectr.WithLatestTag(plan.Status.LatestVersion),
-			upgradectr.WithSecurityContext(&corev1.SecurityContext{
-				Privileged: &Privileged,
-				Capabilities: &corev1.Capabilities{
-					Add: []corev1.Capability{
-						corev1.Capability("CAP_SYS_BOOT"),
-					},
-				},
-			}),
+			upgradectr.WithSecurityContext(securityContext),
+			upgradectr.WithSELinuxOptions(seLinuxOptions),
 			upgradectr.WithSecrets(plan.Spec.Secrets),
 			upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
 			upgradectr.WithImagePullPolicy(ImagePullPolicy),
