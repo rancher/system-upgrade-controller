@@ -161,13 +161,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 						PodAntiAffinity: &corev1.PodAntiAffinity{
 							RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{{
 								LabelSelector: &metav1.LabelSelector{
-									MatchExpressions: []metav1.LabelSelectorRequirement{{
-										Key:      upgradeapi.LabelPlan,
-										Operator: metav1.LabelSelectorOpIn,
-										Values: []string{
-											plan.Name,
-										},
-									}},
+									MatchExpressions: onePlanPerNode(plan, node),
 								},
 								TopologyKey: corev1.LabelHostname,
 							}},
@@ -358,4 +352,31 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	}
 
 	return job
+}
+
+func onePlanPerNode(plan *upgradeapiv1.Plan, node *corev1.Node) []metav1.LabelSelectorRequirement {
+	var (
+		oppn     = plan.Spec.OnePlanPerNode
+		selector []metav1.LabelSelectorRequirement
+	)
+
+	if oppn == true {
+		selector = []metav1.LabelSelectorRequirement{{
+			Key:      upgradeapi.LabelNode,
+			Operator: metav1.LabelSelectorOpIn,
+			Values: []string{
+				node.Name,
+			},
+		}}
+	} else {
+		selector = []metav1.LabelSelectorRequirement{{
+			Key:      upgradeapi.LabelPlan,
+			Operator: metav1.LabelSelectorOpIn,
+			Values: []string{
+				plan.Name,
+			},
+		}}
+	}
+
+	return selector
 }
