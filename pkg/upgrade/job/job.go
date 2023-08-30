@@ -245,6 +245,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
 				upgradectr.WithImagePullPolicy(ImagePullPolicy),
 				upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
+				upgradectr.WithSecurityContext(plan.Spec.Upgrade.SecurityContext),
 			),
 		)
 	}
@@ -332,10 +333,8 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		securityContext = plan.Spec.Upgrade.SecurityContext
 	}
 
-	// Check if SELinuxOptions from the Plan is non-nil
-	seLinuxOptions := &corev1.SELinuxOptions{}
-	if plan.Spec.Upgrade.SELinuxOptions != nil {
-		seLinuxOptions = plan.Spec.Upgrade.SELinuxOptions
+	if plan.Spec.Upgrade.SecurityContext.SELinuxOptions != nil {
+		securityContext.SELinuxOptions = plan.Spec.Upgrade.SecurityContext.SELinuxOptions
 	}
 
 	// and finally, we upgrade
@@ -343,7 +342,6 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		upgradectr.New("upgrade", *plan.Spec.Upgrade,
 			upgradectr.WithLatestTag(plan.Status.LatestVersion),
 			upgradectr.WithSecurityContext(securityContext),
-			upgradectr.WithSELinuxOptions(seLinuxOptions),
 			upgradectr.WithSecrets(plan.Spec.Secrets),
 			upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
 			upgradectr.WithImagePullPolicy(ImagePullPolicy),

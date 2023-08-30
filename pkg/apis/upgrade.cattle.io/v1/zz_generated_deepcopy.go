@@ -67,11 +67,6 @@ func (in *ContainerSpec) DeepCopyInto(out *ContainerSpec) {
 		*out = new(corev1.SecurityContext)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.SELinuxOptions != nil {
-		in, out := &in.SELinuxOptions, &out.SELinuxOptions
-		*out = new(corev1.SELinuxOptions)
-		**out = **in
-	}
 	return
 }
 

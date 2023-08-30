@@ -67,7 +67,6 @@ type ContainerSpec struct {
 	EnvFrom         []corev1.EnvFromSource  `json:"envFrom,omitempty"`
 	Volumes         []VolumeSpec            `json:"volumes,omitempty"`
 	SecurityContext *corev1.SecurityContext `json:"securityContext,omitempty"`
-	SELinuxOptions  *corev1.SELinuxOptions  `json:"seLinuxOptions,omitempty"`
 }
 
 type VolumeSpec struct {

@@ -37,12 +37,6 @@ func WithSecurityContext(securityContext *corev1.SecurityContext) Option {
 	}
 }
 
-func WithSELinuxOptions(seLinuxoptions *corev1.SELinuxOptions) Option {
-	return func(container *corev1.Container) {
-		container.SecurityContext.SELinuxOptions = seLinuxoptions
-	}
-}
-
 func WithImagePullPolicy(pullPolicy corev1.PullPolicy) Option {
 	return func(container *corev1.Container) {
 		container.ImagePullPolicy = pullPolicy
