@@ -161,7 +161,13 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 						PodAntiAffinity: &corev1.PodAntiAffinity{
 							RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{{
 								LabelSelector: &metav1.LabelSelector{
-									MatchExpressions: onePlanPerNode(plan, node),
+									MatchExpressions: []metav1.LabelSelectorRequirement{{
+										Key:      upgradeapi.LabelPlan,
+										Operator: metav1.LabelSelectorOpIn,
+										Values: []string{
+											plan.Name,
+										},
+									}},
 								},
 								TopologyKey: corev1.LabelHostname,
 							}},
@@ -203,6 +209,21 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	*job.Spec.Completions = 1
 	if i := sort.SearchStrings(plan.Status.Applying, nodeHostname); i < len(plan.Status.Applying) && plan.Status.Applying[i] == nodeHostname {
 		*job.Spec.Parallelism = 1
+	}
+
+	if plan.Spec.OnePlanPerNode {
+		job.Spec.Template.Spec.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = []corev1.PodAffinityTerm{{
+			LabelSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{{
+					Key:      upgradeapi.LabelNode,
+					Operator: metav1.LabelSelectorOpIn,
+					Values: []string{
+						node.Name,
+					},
+				}},
+			},
+			TopologyKey: corev1.LabelHostname,
+		}}
 	}
 
 	podTemplate := &job.Spec.Template
@@ -352,31 +373,4 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	}
 
 	return job
-}
-
-func onePlanPerNode(plan *upgradeapiv1.Plan, node *corev1.Node) []metav1.LabelSelectorRequirement {
-	var (
-		oppn     = plan.Spec.OnePlanPerNode
-		selector []metav1.LabelSelectorRequirement
-	)
-
-	if oppn == true {
-		selector = []metav1.LabelSelectorRequirement{{
-			Key:      upgradeapi.LabelNode,
-			Operator: metav1.LabelSelectorOpIn,
-			Values: []string{
-				node.Name,
-			},
-		}}
-	} else {
-		selector = []metav1.LabelSelectorRequirement{{
-			Key:      upgradeapi.LabelPlan,
-			Operator: metav1.LabelSelectorOpIn,
-			Values: []string{
-				plan.Name,
-			},
-		}}
-	}
-
-	return selector
 }
