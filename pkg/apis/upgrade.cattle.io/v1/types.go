@@ -44,7 +44,7 @@ type PlanSpec struct {
 
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 
-	OnePlanPerNode bool `json:"onePlanPerNode,omitempty"`
+	Exclusive bool `json:"exclusive,omitempty"`
 
 	Prepare *ContainerSpec `json:"prepare,omitempty"`
 	Cordon  bool           `json:"cordon,omitempty"`
