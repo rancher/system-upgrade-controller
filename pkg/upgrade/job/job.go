@@ -198,9 +198,9 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		job.Spec.Template.Spec.PriorityClassName = val
 	}
 
-	if val, ok := plan.Annotations["spectrocloud.com/connection"]; ok {
-		job.Labels["spectrocloud.com/connection"] = val
-		job.Spec.Template.Labels["spectrocloud.com/connection"] = val
+	for k, v := range plan.Labels {
+		job.Labels[k] = v
+		job.Spec.Template.ObjectMeta.Labels[k] = v
 	}
 
 	*job.Spec.Completions = 1
