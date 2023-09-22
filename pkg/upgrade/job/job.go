@@ -198,6 +198,10 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		job.Spec.Template.Spec.PriorityClassName = val
 	}
 
+	if val, ok := plan.Annotations["spectrocloud.com/connection"]; ok {
+		job.Labels["spectrocloud.com/connection"] = val
+	}
+
 	*job.Spec.Completions = 1
 	if i := sort.SearchStrings(plan.Status.Applying, nodeHostname); i < len(plan.Status.Applying) && plan.Status.Applying[i] == nodeHostname {
 		*job.Spec.Parallelism = 1
