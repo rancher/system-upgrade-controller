@@ -200,6 +200,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 
 	if val, ok := plan.Annotations["spectrocloud.com/connection"]; ok {
 		job.Labels["spectrocloud.com/connection"] = val
+		job.Spec.Template.Labels["spectrocloud.com/connection"] = val
 	}
 
 	*job.Spec.Completions = 1
