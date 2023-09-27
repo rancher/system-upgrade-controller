@@ -122,6 +122,14 @@ func (c *Client) DeletePlans(options metav1.DeleteOptions, listOpts metav1.ListO
 	return c.UpgradeClientSet.UpgradeV1().Plans(c.Namespace.Name).DeleteCollection(context.TODO(), options, listOpts)
 }
 
+func (c *Client) CreateSecret(secret *corev1.Secret) (*corev1.Secret, error) {
+	return c.ClientSet.CoreV1().Secrets(c.Namespace.Name).Create(context.TODO(), secret, metav1.CreateOptions{})
+}
+
+func (c *Client) UpdateSecret(secret *corev1.Secret) (*corev1.Secret, error) {
+	return c.ClientSet.CoreV1().Secrets(c.Namespace.Name).Update(context.TODO(), secret, metav1.UpdateOptions{})
+}
+
 func (c *Client) WaitForPlanCondition(name string, cond condition.Cond, timeout time.Duration) (plan *upgradeapiv1.Plan, err error) {
 	return plan, wait.Poll(time.Second, timeout, func() (bool, error) {
 		plan, err = c.GetPlan(name, metav1.GetOptions{})
