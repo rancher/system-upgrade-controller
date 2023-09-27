@@ -89,6 +89,7 @@ type DrainSpec struct {
 
 // SecretSpec describes a secret to be mounted for prepare/upgrade containers.
 type SecretSpec struct {
-	Name string `json:"name,omitempty"`
-	Path string `json:"path,omitempty"`
+	Name          string `json:"name,omitempty"`
+	Path          string `json:"path,omitempty"`
+	IgnoreUpdates bool   `json:"ignoreUpdates,omitempty"`
 }
