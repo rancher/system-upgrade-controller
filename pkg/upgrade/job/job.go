@@ -106,6 +106,7 @@ var (
 )
 
 func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *batchv1.Job {
+	exclusiveString := strconv.FormatBool(plan.Spec.Exclusive)
 	hostPathDirectory := corev1.HostPathDirectory
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
 	nodeHostname := upgradenode.Hostname(node)
@@ -119,6 +120,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 			},
 			Labels: labels.Set{
 				upgradeapi.LabelController: controllerName,
+				upgradeapi.LabelExclusive:  exclusiveString,
 				upgradeapi.LabelNode:       node.Name,
 				upgradeapi.LabelPlan:       plan.Name,
 				upgradeapi.LabelVersion:    plan.Status.LatestVersion,
@@ -132,6 +134,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels.Set{
 						upgradeapi.LabelController: controllerName,
+						upgradeapi.LabelExclusive:  exclusiveString,
 						upgradeapi.LabelNode:       node.Name,
 						upgradeapi.LabelPlan:       plan.Name,
 						upgradeapi.LabelVersion:    plan.Status.LatestVersion,
@@ -209,6 +212,21 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	*job.Spec.Completions = 1
 	if i := sort.SearchStrings(plan.Status.Applying, nodeHostname); i < len(plan.Status.Applying) && plan.Status.Applying[i] == nodeHostname {
 		*job.Spec.Parallelism = 1
+	}
+
+	if plan.Spec.Exclusive {
+		job.Spec.Template.Spec.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = []corev1.PodAffinityTerm{{
+			LabelSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{{
+					Key:      upgradeapi.LabelExclusive,
+					Operator: metav1.LabelSelectorOpIn,
+					Values: []string{
+						exclusiveString,
+					},
+				}},
+			},
+			TopologyKey: corev1.LabelHostname,
+		}}
 	}
 
 	podTemplate := &job.Spec.Template
