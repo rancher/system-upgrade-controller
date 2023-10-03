@@ -1,0 +1,25 @@
+# Responsible for building and testing the application's Go code.
+# Runs: build, test, lint
+name: Golang Build and Unit Tests
+on:
+    push:
+    workflow_dispatch:
+jobs:
+  golang:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.17"
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: go test -v ./...
+
+      - name: Lint
+        uses: reviewdog/action-golangci-lint@v2
