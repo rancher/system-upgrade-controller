@@ -4,6 +4,16 @@ on:
   schedule:
     - cron: '*/30 * * * *' # every 30 minutes
   workflow_dispatch: # on button click
+    inputs:
+      base:
+        description: 'Base branch'
+        required: true
+        default: 'master'
+      head:
+        description: 'Head branch'
+        required: true
+        default: 'master'
+    
 
 jobs:
   sync:
@@ -13,6 +23,6 @@ jobs:
     steps:
       - uses: tgymnich/fork-sync@v1.8
         with:
-          owner: 1898andCo
-          base: master
-          head: master
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: ${{ inputs.base }}
+          head: ${{ inputs.head }}
