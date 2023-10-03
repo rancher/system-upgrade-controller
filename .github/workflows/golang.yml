@@ -19,14 +19,14 @@ jobs:
         run: go build -v ./...
 
       - name: Test Container Package
-        run: go test -timeout 30s github.com/rancher/system-upgrade-controller/pkg/upgrade/container 
+        run: go test -v -timeout 30s github.com/rancher/system-upgrade-controller/pkg/upgrade/container 
 
       - name: Test Job Package
-        run: go test -timeout 30s github.com/rancher/system-upgrade-controller/pkg/upgrade/job 
+        run: go test -v -timeout 30s github.com/rancher/system-upgrade-controller/pkg/upgrade/job 
       - name: Test Node Package
-        run: go test -timeout 30s github.com/rancher/system-upgrade-controller/pkg/upgrade/node 
+        run: go test -v -timeout 30s github.com/rancher/system-upgrade-controller/pkg/upgrade/node 
       - name: Test Plan Package
-        run: go test -timeout 30s github.com/rancher/system-upgrade-controller/pkg/upgrade/plan 
+        run: go test -v -timeout 30s github.com/rancher/system-upgrade-controller/pkg/upgrade/plan 
 
       - name: Lint
         uses: reviewdog/action-golangci-lint@v2
