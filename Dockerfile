@@ -1,4 +1,6 @@
-FROM --platform=$TARGETPLATFORM golang:1.19.10-alpine as builder
+ARG BUILDER_GOLANG_VERSION
+
+FROM --platform=$TARGETPLATFORM gcr.io/spectro-images-public/golang:${BUILDER_GOLANG_VERSION}-alpine as builder
 ARG TARGETOS
 ARG TARGETARCH
 ARG CRYPTO_LIB
@@ -14,9 +16,9 @@ RUN mkdir -p bin
 
 RUN if [ ${CRYPTO_LIB} ]; \
     then \
-      CGO_ENABLED=1 GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go build -ldflags "-linkmode=external -extldflags=-static" -a -o bin/system-upgrade-controller ;\
+      go-build-fips.sh -a -o bin/system-upgrade-controller ;\
     else \
-      CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go build -a -o bin/system-upgrade-controller ;\
+      go-build.sh -a -o bin/system-upgrade-controller ;\
     fi
 
 FROM --platform=$TARGETPLATFORM scratch AS controller

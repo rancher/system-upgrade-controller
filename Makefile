@@ -6,6 +6,8 @@ GOPATH ?= $(shell go env GOPATH)
 TARGETARCH ?= amd64
 
 FIPS_ENABLE ?= ""
+BUILDER_GOLANG_VERSION ?= 1.21
+BUILD_ARGS = --build-arg CRYPTO_LIB=${FIPS_ENABLE} --build-arg BUILDER_GOLANG_VERSION=${BUILDER_GOLANG_VERSION}
 
 IMG_PATH ?= "gcr.io/spectro-common-dev/${USER}"
 IMG_TAG ?= "latest"
@@ -29,7 +31,7 @@ clean:
 	rm -rvf ./bin ./dist
 
 docker:
-	docker buildx build --platform linux/amd64,linux/arm64 --push . -t ${SUC_IMG} --build-arg CRYPTO_LIB=${FIPS_ENABLE} -f Dockerfile
+	docker buildx build --platform linux/amd64,linux/arm64 --push . -t ${SUC_IMG} ${BUILD_ARGS} -f Dockerfile
 
 .DEFAULT_GOAL := ci
 
