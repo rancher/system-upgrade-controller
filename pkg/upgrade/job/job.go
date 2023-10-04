@@ -203,6 +203,11 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		job.Spec.Template.ObjectMeta.Labels[k] = v
 	}
 
+	for k, v := range plan.Annotations {
+		job.Annotations[k] = v
+		job.Spec.Template.ObjectMeta.Annotations[k] = v
+	}
+
 	*job.Spec.Completions = 1
 	if i := sort.SearchStrings(plan.Status.Applying, nodeHostname); i < len(plan.Status.Applying) && plan.Status.Applying[i] == nodeHostname {
 		*job.Spec.Parallelism = 1
