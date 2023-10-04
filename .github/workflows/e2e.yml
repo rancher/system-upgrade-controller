@@ -14,5 +14,7 @@ jobs:
           with:
             go-version: "1.20"
         - name: Run tests
-          run: pwd && ls && scripts/package-e2e-tests.sh
+          run: |
+            ./scripts/build
+            ./scripts/package
 
