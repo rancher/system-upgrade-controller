@@ -15,7 +15,7 @@ env:
     
 jobs:
     e2e:
-        runs-on: rancher/kubectl:v1.25.4
+        runs-on: ubuntu-latest
         steps:
         - name: Checkout
           uses: actions/checkout@v3
