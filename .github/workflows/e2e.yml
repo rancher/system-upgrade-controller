@@ -9,6 +9,7 @@ env:
     SONOBUOY_VERSION: 0.56.16
     KUBECONFIG: "/root/.kube/config"
     KUBEHOST: 172.17.0.1
+    ARCH: amd64
 jobs:
     e2e:
         runs-on: ubuntu-latest
@@ -20,8 +21,8 @@ jobs:
           with:
             go-version: "1.20"
         - name: Run tests 
+        # curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.0.3/kustomize_v5.0.3_linux_${ARCH}.tar.gz" | tar -xvz -C /usr/local/bin; \
           run: |
-            curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.0.3/kustomize_v5.0.3_linux_amd64.tar.gz" | tar -xvz -C /usr/local/bin; \
             curl -sL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_${ARCH}.tar.gz" | tar -xvz -C /usr/local/bin; \
             ./scripts/build; \
             ./scripts/package
