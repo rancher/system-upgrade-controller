@@ -10,18 +10,29 @@ env:
     KUBECONFIG: "/root/.kube/config"
     KUBEHOST: 172.17.0.1
     ARCH: amd64
+    REPO: github.com/1898andCo/
+    TAG:
+    
 jobs:
     e2e:
         runs-on: rancher/kubectl:v1.25.4
         steps:
-        - uses: actions/checkout@v3
+        - name: Checkout
+          uses: actions/checkout@v3
 
         - name: Set up Go
           uses: actions/setup-go@v4
           with:
             go-version: "1.20"
-        - name: Run tests 
+
+        - name: Run Tests 
           run: |
-            curl -sL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_${ARCH}.tar.gz" | tar -xvz -C /usr/local/bin &&
+            curl -sL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_${ARCH}.tar.gz" | tar -xvz -C /usr/local/bin;
+            curl -sL "https://github.com/docker/compose/releases/download/v2.17.3/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose ;\
+            chmod +x /usr/local/bin/docker-compose; \
+            mkdir -p /usr/local/lib/docker/cli-plugins; \
+            curl -o /usr/local/lib/docker/cli-plugins/docker-buildx -fsSL "https://github.com/docker/buildx/releases/download/v0.11.2/buildx-v0.11.2.linux-${ARCH}"; \
+            chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx; \
             ./scripts/build && 
-            ./scripts/package
+            ./scripts/package &&
+            ./scripts/e2e-verify
