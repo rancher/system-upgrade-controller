@@ -5,6 +5,10 @@ name: E2E Test
 on:
     push:
     workflow_dispatch:
+env:
+    SONOBUOY_VERSION: 0.56.16
+    KUBECONFIG: "/root/.kube/config"
+    KUBEHOST: 172.17.0.1
 jobs:
     e2e:
         runs-on: ubuntu-latest
@@ -15,18 +19,10 @@ jobs:
           uses: actions/setup-go@v4
           with:
             go-version: "1.20"
-        - name: Run tests
+        - name: Run tests 
           run: |
-            export SONOBUOY_VERSION=0.56.16 \
-            export KUBECONFIG /root/.kube/config
-            export KUBEHOST 172.17.0.1
             curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.0.3/kustomize_v5.0.3_linux_amd64.tar.gz" | tar -xz -C /usr/local/bin; \
             curl -sL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin; \
-            curl -sL "https://github.com/docker/compose/releases/download/v2.17.3/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
-            chmod +x /usr/local/bin/docker-compose; \
-            mkdir -p /usr/local/lib/docker/cli-plugins; \
-            curl -o /usr/local/lib/docker/cli-plugins/docker-buildx -fsSL "https://github.com/docker/buildx/releases/download/v0.11.2/buildx-v0.11.2.linux-${ARCH}"; \
-            chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx; \
             ./scripts/build; \
             ./scripts/package
 
