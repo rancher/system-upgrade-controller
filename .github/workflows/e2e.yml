@@ -10,7 +10,7 @@ env:
     KUBECONFIG: "/root/.kube/config"
     KUBEHOST: 172.17.0.1
     ARCH: amd64
-    REPO: github.com/1898andCo/
+    REPO: github.com/1898andCo
     TAG:
     
 jobs:
