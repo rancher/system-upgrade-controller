@@ -4,18 +4,6 @@ on:
   schedule:
     # every three hours
     - cron: '0 */3 * * *'
-  workflow_dispatch: # on button click
-    inputs:
-      base:
-        description: 'Base branch'
-        required: true
-        default: 'master'
-      head:
-        description: 'Head branch'
-        required: true
-        default: 'master'
-    
-
 jobs:
   sync:
 
@@ -25,5 +13,5 @@ jobs:
       - uses: tgymnich/fork-sync@v1.8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          base: ${{ inputs.base }}
-          head: ${{ inputs.head }}
+          base: master
+          head: master
