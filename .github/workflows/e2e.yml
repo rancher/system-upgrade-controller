@@ -22,4 +22,6 @@ jobs:
 
         - name: Run Tests 
           run: |
+            make build &&
+            make package &&
             make e2e
