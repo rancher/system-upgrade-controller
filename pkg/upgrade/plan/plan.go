@@ -79,11 +79,13 @@ func DigestStatus(plan *upgradeapiv1.Plan, secretCache corectlv1.SecretCache) (u
 			if err != nil {
 				return plan.Status, err
 			}
-			secretHash, err := hash.SecretHash(secret)
-			if err != nil {
-				return plan.Status, err
+			if !s.IgnoreUpdates {
+				secretHash, err := hash.SecretHash(secret)
+				if err != nil {
+					return plan.Status, err
+				}
+				h.Write([]byte(secretHash))
 			}
-			h.Write([]byte(secretHash))
 		}
 		plan.Status.LatestHash = fmt.Sprintf("%x", h.Sum(nil))
 	}
