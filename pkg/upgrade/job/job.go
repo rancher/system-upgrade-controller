@@ -91,8 +91,8 @@ var (
 		}
 		return defaultValue
 	}(defaultPrivileged)
-	
-	AllowUserDefinedSecurityContext = allowUserDefinedSecurityContext(true)	
+
+	AllowUserDefinedSecurityContext = allowUserDefinedSecurityContext(true)
 
 	ImagePullPolicy = func(defaultValue corev1.PullPolicy) corev1.PullPolicy {
 		if str := os.Getenv("SYSTEM_UPGRADE_JOB_IMAGE_PULL_POLICY"); str != "" {
@@ -229,16 +229,16 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 
 	if plan.Spec.Exclusive {
 		job.Spec.Template.Spec.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = []corev1.PodAffinityTerm{{
-				LabelSelector: &metav1.LabelSelector{
-					MatchExpressions: []metav1.LabelSelectorRequirement{{
-						Key:      upgradeapi.LabelExclusive,
-						Operator: metav1.LabelSelectorOpIn,
-						Values: []string{
-								exclusiveString,
-						},
-					}},
-				},
-				TopologyKey: corev1.LabelHostname,
+			LabelSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{{
+					Key:      upgradeapi.LabelExclusive,
+					Operator: metav1.LabelSelectorOpIn,
+					Values: []string{
+						exclusiveString,
+					},
+				}},
+			},
+			TopologyKey: corev1.LabelHostname,
 		}}
 	}
 
@@ -362,7 +362,8 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 				Add: []corev1.Capability{
 					corev1.Capability("CAP_SYS_BOOT"),
 				},
-		},
+			},
+		}
 	}
 
 	// and finally, we upgrade
@@ -385,16 +386,16 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 
 	// If configured with a maximum deadline via "SYSTEM_UPGRADE_JOB_ACTIVE_DEADLINE_SECONDS_MAX",
 	// clamp the Plan's given deadline to the maximum.
-			if ActiveDeadlineSecondsMax > 0 && activeDeadlineSeconds > ActiveDeadlineSecondsMax {
-				activeDeadlineSeconds = ActiveDeadlineSecondsMax
-			}
-
-			if activeDeadlineSeconds > 0 {
-				job.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
-				if drain != nil && drain.Timeout != nil && drain.Timeout.Milliseconds() > ActiveDeadlineSeconds*1000 {
-					logrus.Warnf("drain timeout exceeds active deadline seconds")
-				}
-			}
-
-			return job
+	if ActiveDeadlineSecondsMax > 0 && activeDeadlineSeconds > ActiveDeadlineSecondsMax {
+		activeDeadlineSeconds = ActiveDeadlineSecondsMax
 	}
+
+	if activeDeadlineSeconds > 0 {
+		job.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
+		if drain != nil && drain.Timeout != nil && drain.Timeout.Milliseconds() > ActiveDeadlineSeconds*1000 {
+			logrus.Warnf("drain timeout exceeds active deadline seconds")
+		}
+	}
+
+	return job
+}
