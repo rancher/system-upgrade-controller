@@ -29,6 +29,17 @@ const (
 	defaultTTLSecondsAfterFinished = int32(900)
 )
 
+func allowUserDefinedSecurityContext(defaultValue bool) bool {
+	if str, ok := os.LookupEnv("ALLOW_USER_DEFINED_SECURITY_CONTEXT"); ok {
+		if b, err := strconv.ParseBool(str); err != nil {
+			logrus.Errorf("failed to parse $%s: %v", "ALLOW_USER_DEFINED_SECURITY_CONTEXT", err)
+		} else {
+			return b
+		}
+	}
+	return defaultValue
+}
+
 var (
 	ActiveDeadlineSeconds = func(defaultValue int64) int64 {
 		if str, ok := os.LookupEnv("SYSTEM_UPGRADE_JOB_ACTIVE_DEADLINE_SECONDS"); ok {
@@ -80,6 +91,8 @@ var (
 		}
 		return defaultValue
 	}(defaultPrivileged)
+	
+	AllowUserDefinedSecurityContext = allowUserDefinedSecurityContext(true)	
 
 	ImagePullPolicy = func(defaultValue corev1.PullPolicy) corev1.PullPolicy {
 		if str := os.Getenv("SYSTEM_UPGRADE_JOB_IMAGE_PULL_POLICY"); str != "" {
@@ -216,16 +229,16 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 
 	if plan.Spec.Exclusive {
 		job.Spec.Template.Spec.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = []corev1.PodAffinityTerm{{
-			LabelSelector: &metav1.LabelSelector{
-				MatchExpressions: []metav1.LabelSelectorRequirement{{
-					Key:      upgradeapi.LabelExclusive,
-					Operator: metav1.LabelSelectorOpIn,
-					Values: []string{
-						exclusiveString,
-					},
-				}},
-			},
-			TopologyKey: corev1.LabelHostname,
+				LabelSelector: &metav1.LabelSelector{
+					MatchExpressions: []metav1.LabelSelectorRequirement{{
+						Key:      upgradeapi.LabelExclusive,
+						Operator: metav1.LabelSelectorOpIn,
+						Values: []string{
+								exclusiveString,
+						},
+					}},
+				},
+				TopologyKey: corev1.LabelHostname,
 		}}
 	}
 
@@ -339,20 +352,17 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	}
 
 	// Check if SecurityContext from the Plan is non-nil
-	securityContext := &corev1.SecurityContext{
-		Privileged: &Privileged,
-		Capabilities: &corev1.Capabilities{
-			Add: []corev1.Capability{
-				corev1.Capability("CAP_SYS_BOOT"),
-			},
-		},
-	}
+	var securityContext *corev1.SecurityContext
 	if plan.Spec.Upgrade.SecurityContext != nil {
 		securityContext = plan.Spec.Upgrade.SecurityContext
-	}
-
-	if plan.Spec.Upgrade.SecurityContext.SELinuxOptions != nil {
-		securityContext.SELinuxOptions = plan.Spec.Upgrade.SecurityContext.SELinuxOptions
+	} else {
+		securityContext = &corev1.SecurityContext{
+			Privileged: &Privileged,
+			Capabilities: &corev1.Capabilities{
+				Add: []corev1.Capability{
+					corev1.Capability("CAP_SYS_BOOT"),
+				},
+		},
 	}
 
 	// and finally, we upgrade
@@ -375,16 +385,16 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 
 	// If configured with a maximum deadline via "SYSTEM_UPGRADE_JOB_ACTIVE_DEADLINE_SECONDS_MAX",
 	// clamp the Plan's given deadline to the maximum.
-	if ActiveDeadlineSecondsMax > 0 && activeDeadlineSeconds > ActiveDeadlineSecondsMax {
-		activeDeadlineSeconds = ActiveDeadlineSecondsMax
-	}
+			if ActiveDeadlineSecondsMax > 0 && activeDeadlineSeconds > ActiveDeadlineSecondsMax {
+				activeDeadlineSeconds = ActiveDeadlineSecondsMax
+			}
 
-	if activeDeadlineSeconds > 0 {
-		job.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
-		if drain != nil && drain.Timeout != nil && drain.Timeout.Milliseconds() > ActiveDeadlineSeconds*1000 {
-			logrus.Warnf("drain timeout exceeds active deadline seconds")
-		}
-	}
+			if activeDeadlineSeconds > 0 {
+				job.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
+				if drain != nil && drain.Timeout != nil && drain.Timeout.Milliseconds() > ActiveDeadlineSeconds*1000 {
+					logrus.Warnf("drain timeout exceeds active deadline seconds")
+				}
+			}
 
-	return job
-}
+			return job
+	}
