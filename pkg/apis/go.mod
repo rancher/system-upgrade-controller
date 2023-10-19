@@ -1,6 +1,6 @@
 module github.com/rancher/system-upgrade-controller/pkg/apis
 
-go 1.19
+go 1.20
 
 require (
 	github.com/rancher/wrangler v1.1.1-0.20230425173236-39a4707f0689

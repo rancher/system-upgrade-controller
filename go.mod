@@ -1,6 +1,6 @@
 module github.com/rancher/system-upgrade-controller
 
-go 1.19
+go 1.20
 
 require (
 	github.com/docker/distribution v2.8.2+incompatible
