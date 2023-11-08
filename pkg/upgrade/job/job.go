@@ -202,6 +202,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 							},
 						},
 					}},
+					ImagePullSecrets: plan.Spec.ImagePullSecrets,
 				},
 			},
 			Completions: new(int32),
