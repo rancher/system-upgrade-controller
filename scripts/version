@@ -25,4 +25,4 @@ if echo $TAG | grep -q dirty; then
     TAG=dev
 fi
 
-PKG=github.com/rancher/system-upgrade-controller
+PKG=github.com/spectrocloud/system-upgrade-controller

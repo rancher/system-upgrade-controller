@@ -125,6 +125,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 						upgradeapi.LabelVersion:    plan.Status.LatestVersion,
 						labelPlanName:              plan.Status.LatestHash,
 					},
+					Annotations: labels.Set{},
 				},
 				Spec: corev1.PodSpec{
 					HostIPC:            true,
@@ -187,6 +188,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 							},
 						},
 					}},
+					ImagePullSecrets: plan.Spec.ImagePullSecrets,
 				},
 			},
 			Completions: new(int32),

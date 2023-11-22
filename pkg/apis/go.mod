@@ -1,4 +1,4 @@
-module github.com/rancher/system-upgrade-controller/pkg/apis
+module github.com/spectrocloud/system-upgrade-controller/pkg/apis
 
 go 1.19
 

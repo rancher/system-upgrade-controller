@@ -41,10 +41,11 @@ type PlanSpec struct {
 
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 
-	Prepare *ContainerSpec `json:"prepare,omitempty"`
-	Cordon  bool           `json:"cordon,omitempty"`
-	Drain   *DrainSpec     `json:"drain,omitempty"`
-	Upgrade *ContainerSpec `json:"upgrade,omitempty" wrangler:"required"`
+	Prepare          *ContainerSpec                `json:"prepare,omitempty"`
+	Cordon           bool                          `json:"cordon,omitempty"`
+	Drain            *DrainSpec                    `json:"drain,omitempty"`
+	Upgrade          *ContainerSpec                `json:"upgrade,omitempty" wrangler:"required"`
+	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }
 
 // PlanStatus represents the resulting state from processing Plan events.

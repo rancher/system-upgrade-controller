@@ -29,7 +29,7 @@ RUN if [ "${ARCH}" != "arm" ] && [ "${ARCH}" != "s390x" ]; then \
     fi
 # ENV DAPPER_RUN_ARGS --privileged
 ENV DAPPER_ENV REPO TAG DRONE_TAG
-ENV DAPPER_SOURCE /go/src/github.com/rancher/system-upgrade-controller/
+ENV DAPPER_SOURCE /go/src/github.com/spectrocloud/system-upgrade-controller/
 ENV DAPPER_OUTPUT ./bin ./dist
 ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_RUN_ARGS "-v suc-pkg:/go/pkg -v suc-cache:/root/.cache/go-build"
