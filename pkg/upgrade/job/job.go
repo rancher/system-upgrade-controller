@@ -29,6 +29,17 @@ const (
 	defaultTTLSecondsAfterFinished = int32(900)
 )
 
+func allowUserDefinedSecurityContext(defaultValue bool) bool {
+	if str, ok := os.LookupEnv("ALLOW_USER_DEFINED_SECURITY_CONTEXT"); ok {
+		if b, err := strconv.ParseBool(str); err != nil {
+			logrus.Errorf("failed to parse $%s: %v", "ALLOW_USER_DEFINED_SECURITY_CONTEXT", err)
+		} else {
+			return b
+		}
+	}
+	return defaultValue
+}
+
 var (
 	ActiveDeadlineSeconds = func(defaultValue int64) int64 {
 		if str, ok := os.LookupEnv("SYSTEM_UPGRADE_JOB_ACTIVE_DEADLINE_SECONDS"); ok {
@@ -80,6 +91,8 @@ var (
 		}
 		return defaultValue
 	}(defaultPrivileged)
+
+	AllowUserDefinedSecurityContext = allowUserDefinedSecurityContext(true)
 
 	ImagePullPolicy = func(defaultValue corev1.PullPolicy) corev1.PullPolicy {
 		if str := os.Getenv("SYSTEM_UPGRADE_JOB_IMAGE_PULL_POLICY"); str != "" {
@@ -263,6 +276,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
 				upgradectr.WithImagePullPolicy(ImagePullPolicy),
 				upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
+				upgradectr.WithSecurityContext(plan.Spec.Upgrade.SecurityContext),
 			),
 		)
 	}
@@ -337,18 +351,26 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		)
 	}
 
+	// Check if SecurityContext from the Plan is non-nil
+	var securityContext *corev1.SecurityContext
+	if plan.Spec.Upgrade.SecurityContext != nil {
+		securityContext = plan.Spec.Upgrade.SecurityContext
+	} else {
+		securityContext = &corev1.SecurityContext{
+			Privileged: &Privileged,
+			Capabilities: &corev1.Capabilities{
+				Add: []corev1.Capability{
+					corev1.Capability("CAP_SYS_BOOT"),
+				},
+			},
+		}
+	}
+
 	// and finally, we upgrade
 	podTemplate.Spec.Containers = []corev1.Container{
 		upgradectr.New("upgrade", *plan.Spec.Upgrade,
 			upgradectr.WithLatestTag(plan.Status.LatestVersion),
-			upgradectr.WithSecurityContext(&corev1.SecurityContext{
-				Privileged: &Privileged,
-				Capabilities: &corev1.Capabilities{
-					Add: []corev1.Capability{
-						corev1.Capability("CAP_SYS_BOOT"),
-					},
-				},
-			}),
+			upgradectr.WithSecurityContext(securityContext),
 			upgradectr.WithSecrets(plan.Spec.Secrets),
 			upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
 			upgradectr.WithImagePullPolicy(ImagePullPolicy),
