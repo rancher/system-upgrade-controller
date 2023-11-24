@@ -18,7 +18,7 @@ RUN if [ ${CRYPTO_LIB} ]; \
     then \
       go-build-fips.sh -a -o bin/system-upgrade-controller ;\
     else \
-      go-build.sh -a -o bin/system-upgrade-controller ;\
+      go-build-static.sh -a -o bin/system-upgrade-controller ;\
     fi
 
 FROM --platform=$TARGETPLATFORM scratch AS controller
