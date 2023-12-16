@@ -10,7 +10,7 @@ BUILDER_GOLANG_VERSION ?= 1.21
 BUILD_ARGS = --build-arg CRYPTO_LIB=${FIPS_ENABLE} --build-arg BUILDER_GOLANG_VERSION=${BUILDER_GOLANG_VERSION}
 
 IMG_PATH ?= gcr.io/spectro-dev-public/${USER}
-IMG_TAG ?= v0.13.3
+IMG_TAG ?= v0.11.4_spectro
 IMG_SERVICE_URL ?= ${IMG_PATH}/
 SUC_IMG ?= ${IMG_SERVICE_URL}system-upgrade-controller:${IMG_TAG}
 
