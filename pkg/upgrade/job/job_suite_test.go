@@ -89,7 +89,7 @@ var _ = Describe("Jobs", func() {
 		})
 
 		Context("When the Plan has annotations and labels", func() {
-			It("Copes the non-cattle.io metadata to the Job and Pod", func() {
+			It("Copies the non-cattle.io metadata to the Job and Pod", func() {
 				plan.Annotations = make(map[string]string)
 				plan.Annotations["cattle.io/some-annotation"] = "foo"
 				plan.Annotations["plan.cattle.io/some-annotation"] = "bar"
