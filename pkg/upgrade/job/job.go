@@ -124,35 +124,48 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
 	nodeHostname := upgradenode.Hostname(node)
 	shortNodeName := strings.SplitN(node.Name, ".", 2)[0]
+
+	jobAnnotations := labels.Set{
+		upgradeapi.AnnotationTTLSecondsAfterFinished: strconv.FormatInt(int64(TTLSecondsAfterFinished), 10),
+	}
+	podAnnotations := labels.Set{}
+
+	for key, value := range plan.Annotations {
+		if !strings.Contains(key, "cattle.io/") {
+			jobAnnotations[key] = value
+			podAnnotations[key] = value
+		}
+	}
+
+	jobLabels := labels.Set{
+		upgradeapi.LabelController: controllerName,
+		upgradeapi.LabelExclusive:  exclusiveString,
+		upgradeapi.LabelNode:       node.Name,
+		upgradeapi.LabelPlan:       plan.Name,
+		upgradeapi.LabelVersion:    plan.Status.LatestVersion,
+		labelPlanName:              plan.Status.LatestHash,
+	}
+
+	for key, value := range plan.Labels {
+		if !strings.Contains(key, "cattle.io/") {
+			jobLabels[key] = value
+		}
+	}
+
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name.SafeConcatName("apply", plan.Name, "on", shortNodeName, "with", plan.Status.LatestHash),
-			Namespace: plan.Namespace,
-			Annotations: labels.Set{
-				upgradeapi.AnnotationTTLSecondsAfterFinished: strconv.FormatInt(int64(TTLSecondsAfterFinished), 10),
-			},
-			Labels: labels.Set{
-				upgradeapi.LabelController: controllerName,
-				upgradeapi.LabelExclusive:  exclusiveString,
-				upgradeapi.LabelNode:       node.Name,
-				upgradeapi.LabelPlan:       plan.Name,
-				upgradeapi.LabelVersion:    plan.Status.LatestVersion,
-				labelPlanName:              plan.Status.LatestHash,
-			},
+			Name:        name.SafeConcatName("apply", plan.Name, "on", shortNodeName, "with", plan.Status.LatestHash),
+			Namespace:   plan.Namespace,
+			Annotations: jobAnnotations,
+			Labels:      jobLabels,
 		},
 		Spec: batchv1.JobSpec{
 			BackoffLimit:            &BackoffLimit,
 			TTLSecondsAfterFinished: &TTLSecondsAfterFinished,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels.Set{
-						upgradeapi.LabelController: controllerName,
-						upgradeapi.LabelExclusive:  exclusiveString,
-						upgradeapi.LabelNode:       node.Name,
-						upgradeapi.LabelPlan:       plan.Name,
-						upgradeapi.LabelVersion:    plan.Status.LatestVersion,
-						labelPlanName:              plan.Status.LatestHash,
-					},
+					Annotations: podAnnotations,
+					Labels:      jobLabels,
 				},
 				Spec: corev1.PodSpec{
 					HostIPC:            true,
