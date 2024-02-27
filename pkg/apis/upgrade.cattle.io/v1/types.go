@@ -17,7 +17,7 @@ var (
 	PlanLatestResolved = condition.Cond("LatestResolved")
 	// PlanSpecValidated indicates that the plan spec has been validated.
 	PlanSpecValidated = condition.Cond("Validated")
-	// Complete indicates that the latest version of the plan has completed on all selected nodes.
+	// PlanComplete indicates that the latest version of the plan has completed on all selected nodes.
 	PlanComplete = condition.Cond("Complete")
 )
 
