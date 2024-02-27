@@ -53,6 +53,7 @@ var _ = Describe("Job Generation", func() {
 
 			plan, err = e2e.GetPlan(plan.Name, metav1.GetOptions{})
 			Expect(err).ToNot(HaveOccurred())
+			Expect(upgradeapiv1.PlanComplete.IsTrue(plan)).To(BeFalse())
 
 			plan.Spec.Upgrade.Args = []string{"exit 0"}
 			plan, err = e2e.UpdatePlan(plan)
@@ -67,6 +68,10 @@ var _ = Describe("Job Generation", func() {
 			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 1))
 			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
 			Expect(jobs[0].Status.Failed).To(BeNumerically("==", 0))
+
+			plan, err = e2e.GetPlan(plan.Name, metav1.GetOptions{})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(upgradeapiv1.PlanComplete.IsTrue(plan)).To(BeTrue())
 		})
 	})
 

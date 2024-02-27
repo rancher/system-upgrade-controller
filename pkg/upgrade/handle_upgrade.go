@@ -93,6 +93,8 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 				concurrentNodeNames[i] = upgradenode.Hostname(node)
 			}
 			obj.Status.Applying = concurrentNodeNames[:]
+			isComplete := len(concurrentNodeNames) == 0 && obj.Spec.Concurrency > 0
+			upgradeapiv1.PlanComplete.SetStatusBool(obj, isComplete)
 			return objects, obj.Status, nil
 		},
 		&generic.GeneratingHandlerOptions{
