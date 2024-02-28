@@ -56,6 +56,8 @@ var _ = Describe("Job Generation", func() {
 				WithTimeout(30 * time.Second).
 				Should(WithTransform(upgradeapiv1.PlanComplete.IsTrue, BeFalse()))
 
+			plan, err = e2e.GetPlan(plan.Name, metav1.GetOptions{})
+			Expect(err).ToNot(HaveOccurred())
 			plan.Spec.Upgrade.Args = []string{"exit 0"}
 			plan, err = e2e.UpdatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
