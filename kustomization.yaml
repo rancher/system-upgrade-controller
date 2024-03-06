@@ -5,6 +5,3 @@ resources:
 - manifests/clusterrole.yaml
 - manifests/clusterrolebinding.yaml
 - manifests/system-upgrade-controller.yaml
-images:
-- name: rancher/system-upgrade-controller
-  newTag: v0.8.0
