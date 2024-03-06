@@ -49,7 +49,7 @@ But in the time-honored tradition of `curl ${script} | sudo sh -` here is a nice
 
 ```shell script
 # Y.O.L.O.
-kustomize build github.com/rancher/system-upgrade-controller | kubectl apply -f - 
+kubectl apply -k github.com/rancher/system-upgrade-controller
 ```
 
 ### Example Plans
