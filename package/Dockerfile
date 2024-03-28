@@ -1,5 +1,5 @@
-ARG BCI=registry.suse.com/bci/bci-base:15.4
-ARG GOLANG=registry.suse.com/bci/golang:1.19
+ARG BCI=registry.suse.com/bci/bci-base:15.5
+ARG GOLANG=registry.suse.com/bci/golang:1.20
 
 FROM ${GOLANG} AS e2e-ginkgo
 ENV GOBIN=/bin

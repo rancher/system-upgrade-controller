@@ -29,6 +29,17 @@ const (
 	defaultTTLSecondsAfterFinished = int32(900)
 )
 
+func allowUserDefinedSecurityContext(defaultValue bool) bool {
+	if str, ok := os.LookupEnv("ALLOW_USER_DEFINED_SECURITY_CONTEXT"); ok {
+		if b, err := strconv.ParseBool(str); err != nil {
+			logrus.Errorf("failed to parse $%s: %v", "ALLOW_USER_DEFINED_SECURITY_CONTEXT", err)
+		} else {
+			return b
+		}
+	}
+	return defaultValue
+}
+
 var (
 	ActiveDeadlineSeconds = func(defaultValue int64) int64 {
 		if str, ok := os.LookupEnv("SYSTEM_UPGRADE_JOB_ACTIVE_DEADLINE_SECONDS"); ok {
@@ -81,6 +92,8 @@ var (
 		return defaultValue
 	}(defaultPrivileged)
 
+	AllowUserDefinedSecurityContext = allowUserDefinedSecurityContext(true)
+
 	ImagePullPolicy = func(defaultValue corev1.PullPolicy) corev1.PullPolicy {
 		if str := os.Getenv("SYSTEM_UPGRADE_JOB_IMAGE_PULL_POLICY"); str != "" {
 			return corev1.PullPolicy(str)
@@ -106,37 +119,53 @@ var (
 )
 
 func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *batchv1.Job {
+	exclusiveString := strconv.FormatBool(plan.Spec.Exclusive)
 	hostPathDirectory := corev1.HostPathDirectory
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
 	nodeHostname := upgradenode.Hostname(node)
-	shortNodeName := strings.SplitN(nodeHostname, ".", 2)[0]
+	shortNodeName := strings.SplitN(node.Name, ".", 2)[0]
+
+	jobAnnotations := labels.Set{
+		upgradeapi.AnnotationTTLSecondsAfterFinished: strconv.FormatInt(int64(TTLSecondsAfterFinished), 10),
+	}
+	podAnnotations := labels.Set{}
+
+	for key, value := range plan.Annotations {
+		if !strings.Contains(key, "cattle.io/") {
+			jobAnnotations[key] = value
+			podAnnotations[key] = value
+		}
+	}
+
+	jobLabels := labels.Set{
+		upgradeapi.LabelController: controllerName,
+		upgradeapi.LabelExclusive:  exclusiveString,
+		upgradeapi.LabelNode:       node.Name,
+		upgradeapi.LabelPlan:       plan.Name,
+		upgradeapi.LabelVersion:    plan.Status.LatestVersion,
+		labelPlanName:              plan.Status.LatestHash,
+	}
+
+	for key, value := range plan.Labels {
+		if !strings.Contains(key, "cattle.io/") {
+			jobLabels[key] = value
+		}
+	}
+
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name.SafeConcatName("apply", plan.Name, "on", shortNodeName, "with", plan.Status.LatestHash),
-			Namespace: plan.Namespace,
-			Annotations: labels.Set{
-				upgradeapi.AnnotationTTLSecondsAfterFinished: strconv.FormatInt(int64(TTLSecondsAfterFinished), 10),
-			},
-			Labels: labels.Set{
-				upgradeapi.LabelController: controllerName,
-				upgradeapi.LabelNode:       node.Name,
-				upgradeapi.LabelPlan:       plan.Name,
-				upgradeapi.LabelVersion:    plan.Status.LatestVersion,
-				labelPlanName:              plan.Status.LatestHash,
-			},
+			Name:        name.SafeConcatName("apply", plan.Name, "on", shortNodeName, "with", plan.Status.LatestHash),
+			Namespace:   plan.Namespace,
+			Annotations: jobAnnotations,
+			Labels:      jobLabels,
 		},
 		Spec: batchv1.JobSpec{
 			BackoffLimit:            &BackoffLimit,
 			TTLSecondsAfterFinished: &TTLSecondsAfterFinished,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels.Set{
-						upgradeapi.LabelController: controllerName,
-						upgradeapi.LabelNode:       node.Name,
-						upgradeapi.LabelPlan:       plan.Name,
-						upgradeapi.LabelVersion:    plan.Status.LatestVersion,
-						labelPlanName:              plan.Status.LatestHash,
-					},
+					Annotations: podAnnotations,
+					Labels:      jobLabels,
 				},
 				Spec: corev1.PodSpec{
 					HostIPC:            true,
@@ -199,6 +228,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 							},
 						},
 					}},
+					ImagePullSecrets: plan.Spec.ImagePullSecrets,
 				},
 			},
 			Completions: new(int32),
@@ -209,6 +239,21 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	*job.Spec.Completions = 1
 	if i := sort.SearchStrings(plan.Status.Applying, nodeHostname); i < len(plan.Status.Applying) && plan.Status.Applying[i] == nodeHostname {
 		*job.Spec.Parallelism = 1
+	}
+
+	if plan.Spec.Exclusive {
+		job.Spec.Template.Spec.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = []corev1.PodAffinityTerm{{
+			LabelSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{{
+					Key:      upgradeapi.LabelExclusive,
+					Operator: metav1.LabelSelectorOpIn,
+					Values: []string{
+						exclusiveString,
+					},
+				}},
+			},
+			TopologyKey: corev1.LabelHostname,
+		}}
 	}
 
 	podTemplate := &job.Spec.Template
@@ -245,6 +290,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
 				upgradectr.WithImagePullPolicy(ImagePullPolicy),
 				upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
+				upgradectr.WithSecurityContext(plan.Spec.Upgrade.SecurityContext),
 			),
 		)
 	}
@@ -319,18 +365,26 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		)
 	}
 
+	// Check if SecurityContext from the Plan is non-nil
+	var securityContext *corev1.SecurityContext
+	if plan.Spec.Upgrade.SecurityContext != nil {
+		securityContext = plan.Spec.Upgrade.SecurityContext
+	} else {
+		securityContext = &corev1.SecurityContext{
+			Privileged: &Privileged,
+			Capabilities: &corev1.Capabilities{
+				Add: []corev1.Capability{
+					corev1.Capability("CAP_SYS_BOOT"),
+				},
+			},
+		}
+	}
+
 	// and finally, we upgrade
 	podTemplate.Spec.Containers = []corev1.Container{
 		upgradectr.New("upgrade", *plan.Spec.Upgrade,
 			upgradectr.WithLatestTag(plan.Status.LatestVersion),
-			upgradectr.WithSecurityContext(&corev1.SecurityContext{
-				Privileged: &Privileged,
-				Capabilities: &corev1.Capabilities{
-					Add: []corev1.Capability{
-						corev1.Capability("CAP_SYS_BOOT"),
-					},
-				},
-			}),
+			upgradectr.WithSecurityContext(securityContext),
 			upgradectr.WithSecrets(plan.Spec.Secrets),
 			upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
 			upgradectr.WithImagePullPolicy(ImagePullPolicy),

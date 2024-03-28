@@ -51,9 +51,13 @@ var _ = Describe("Job Generation", func() {
 			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
 			Expect(jobs[0].Status.Failed).To(BeNumerically(">=", 1))
 
+			Eventually(e2e.GetPlan).
+				WithArguments(plan.Name, metav1.GetOptions{}).
+				WithTimeout(30 * time.Second).
+				Should(WithTransform(upgradeapiv1.PlanComplete.IsTrue, BeFalse()))
+
 			plan, err = e2e.GetPlan(plan.Name, metav1.GetOptions{})
 			Expect(err).ToNot(HaveOccurred())
-
 			plan.Spec.Upgrade.Args = []string{"exit 0"}
 			plan, err = e2e.UpdatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
@@ -67,6 +71,11 @@ var _ = Describe("Job Generation", func() {
 			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 1))
 			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
 			Expect(jobs[0].Status.Failed).To(BeNumerically("==", 0))
+
+			Eventually(e2e.GetPlan).
+				WithArguments(plan.Name, metav1.GetOptions{}).
+				WithTimeout(30 * time.Second).
+				Should(WithTransform(upgradeapiv1.PlanComplete.IsTrue, BeTrue()))
 		})
 	})
 
@@ -150,6 +159,55 @@ var _ = Describe("Job Generation", func() {
 					}
 				}
 			}
+		})
+	})
+
+	When("updated secret should not change hash", func() {
+		var (
+			err    error
+			plan   *upgradeapiv1.Plan
+			secret *v1.Secret
+			hash   string
+		)
+		BeforeEach(func() {
+			secret, err = e2e.CreateSecret(&v1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test",
+					Namespace: e2e.Namespace.Name,
+				},
+				Data: map[string][]byte{"config": []byte("test")},
+			})
+			Expect(err).ToNot(HaveOccurred())
+
+			plan = e2e.NewPlan("updated-secret-", "library/alpine:3.18", []string{"sh", "-c"}, "exit 0")
+			plan.Spec.Version = "latest"
+			plan.Spec.Concurrency = 1
+			plan.Spec.ServiceAccountName = e2e.Namespace.Name
+			plan.Spec.NodeSelector = &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{{
+					Key:      "node-role.kubernetes.io/control-plane",
+					Operator: metav1.LabelSelectorOpDoesNotExist,
+				}},
+			}
+			plan.Spec.Secrets = []upgradeapiv1.SecretSpec{{
+				Name:          "test",
+				Path:          "/test",
+				IgnoreUpdates: true,
+			}}
+			plan, err = e2e.CreatePlan(plan)
+			Expect(err).ToNot(HaveOccurred())
+
+			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(plan.Status.LatestHash).ToNot(BeEmpty())
+			hash = plan.Status.LatestHash
+
+			secret.Data = map[string][]byte{"config": []byte("test2")}
+			secret, err = e2e.UpdateSecret(secret)
+			Expect(err).ToNot(HaveOccurred())
+		})
+		It("hash should be equal", func() {
+			Expect(plan.Status.LatestHash).Should(Equal(hash))
 		})
 	})
 })

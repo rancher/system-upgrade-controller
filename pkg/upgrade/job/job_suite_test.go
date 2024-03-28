@@ -87,5 +87,33 @@ var _ = Describe("Jobs", func() {
 				Expect(*job.Spec.ActiveDeadlineSeconds).To(Equal(int64(300)))
 			})
 		})
+
+		Context("When the Plan has annotations and labels", func() {
+			It("Copies the non-cattle.io metadata to the Job and Pod", func() {
+				plan.Annotations = make(map[string]string)
+				plan.Annotations["cattle.io/some-annotation"] = "foo"
+				plan.Annotations["plan.cattle.io/some-annotation"] = "bar"
+				plan.Annotations["some.other/annotation"] = "baz"
+				plan.Labels = make(map[string]string)
+				plan.Labels["cattle.io/some-label"] = "biz"
+				plan.Labels["plan.cattle.io/some-label"] = "buz"
+				plan.Labels["some.other/label"] = "bla"
+
+				job := sucjob.New(plan, node, "foobar")
+				Expect(job.Annotations).To(Not(HaveKey("cattle.io/some-annotation")))
+				Expect(job.Annotations).To(Not(HaveKey("plan.cattle.io/some-annotation")))
+				Expect(job.Annotations).To(HaveKeyWithValue("some.other/annotation", "baz"))
+				Expect(job.Labels).To(Not(HaveKey("cattle.io/some-label")))
+				Expect(job.Labels).To(Not(HaveKey("plan.cattle.io/some-label")))
+				Expect(job.Labels).To(HaveKeyWithValue("some.other/label", "bla"))
+
+				Expect(job.Spec.Template.Annotations).To(Not(HaveKey("cattle.io/some-annotation")))
+				Expect(job.Spec.Template.Annotations).To(Not(HaveKey("plan.cattle.io/some-annotation")))
+				Expect(job.Spec.Template.Annotations).To(HaveKeyWithValue("some.other/annotation", "baz"))
+				Expect(job.Spec.Template.Labels).To(Not(HaveKey("cattle.io/some-label")))
+				Expect(job.Spec.Template.Labels).To(Not(HaveKey("plan.cattle.io/some-label")))
+				Expect(job.Spec.Template.Labels).To(HaveKeyWithValue("some.other/label", "bla"))
+			})
+		})
 	})
 })
