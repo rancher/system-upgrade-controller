@@ -205,6 +205,26 @@ steps:
     - refs/tags/*
     event:
     - tag
+- name: controller-latest
+  image: plugins/manifest
+  settings:
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    target: "rancher/system-upgrade-controller:latest"
+    template: "rancher/system-upgrade-controller:${DRONE_TAG}-ARCH"
+  when:
+    instance:
+    - drone-publish.rancher.io
+    ref:
+    - refs/head/master
+    - refs/tags/*
+    event:
+    - tag
 
 - name: e2e-tests
   image: plugins/manifest
