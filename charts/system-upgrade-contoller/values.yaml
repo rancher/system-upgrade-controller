@@ -7,10 +7,10 @@ targetns: system-upgrade
 
 controller:
   image: rancher/system-upgrade-controller
-  version:  v0.13.0
+  version:  v0.13.4
 
 # if install eq true 2 sample plans will installed 
 plan:
   install: false
   image: rancher/k3s-upgrade
-  version: v1.24.6+k3s1
+  version: v1.25.4
