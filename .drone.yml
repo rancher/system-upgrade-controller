@@ -245,13 +245,13 @@ steps:
       - drone-publish.rancher.io
 ---
 kind: pipeline
-name: default
+name: helm
 
 steps:
 - name: publish
   image: otwld/drone-chart-releaser-github-pages
   settings:
     cr_token:
-      from_secret: github_access_token
+      from_secret: github_token
     skip_existing: true
     charts_dir: 'charts'  # Specify the charts directory
