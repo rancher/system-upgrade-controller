@@ -67,7 +67,7 @@ spec:
       containers:
         - name: system-upgrade-controller
           image: rancher/system-upgrade-controller:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534
