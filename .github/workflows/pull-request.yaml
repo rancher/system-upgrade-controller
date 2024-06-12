@@ -2,8 +2,8 @@ name: CI on Pull Request
 
 # The jobs below will execute any time a PR is created.
 on: 
+  pull_request:
   push:
-    pull_request:
     branches:
       - 'master'
 
