@@ -2,10 +2,8 @@ name: CI on Release Tag
 
 # The jobs below will execute any time a tag is pushed to any branch in the repo
 # and when master is updated.
-on: 
+on:
   push:
-    branches:
-      - 'master'
     tags:
       - '*'
 

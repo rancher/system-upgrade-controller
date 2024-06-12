@@ -4,6 +4,8 @@ name: CI on Pull Request
 on: 
   push:
     pull_request:
+    branches:
+      - 'master'
 
 jobs:
   # Runs e2e tests.

@@ -2,7 +2,7 @@ name: FOSSA Scanning
 
 on:
   push:
-    branches: ["main", "master", "release/**"]
+    branches: [ "master" ]
   # For manual scans.
   workflow_dispatch:
 
