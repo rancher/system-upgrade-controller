@@ -1,0 +1,47 @@
+name: CI on Pull Request
+
+# The jobs below will execute any time a PR is created.
+on: 
+  pull_request:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  # Runs e2e tests.
+  build-test:
+    runs-on: ubuntu-latest
+    container: rancher/dapper:v0.6.0
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        os: [linux]
+        arch: [amd64, arm64]
+    steps:
+      - name: Add Git
+        run: apk add -U git
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Fix the not-a-git-repository issue
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set environment variables
+        run: echo "DAPPER_HOST_ARCH=${{ matrix.arch }}" >> $GITHUB_ENV
+
+      - name: Run CI
+        run: dapper ci
+      
+      - name: Run e2e
+        if: ${{ matrix.arch == 'amd64' }}
+        run: |
+          dapper e2e-sonobuoy
+          dapper e2e-verify

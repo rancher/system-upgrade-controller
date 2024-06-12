@@ -1,0 +1,34 @@
+name: FOSSA Scanning
+
+on:
+  push:
+    branches: [ "master" ]
+  # For manual scans.
+  workflow_dispatch:
+
+permissions:
+  # Basic read access needed.
+  contents: read
+  # Required to authenticate in EIO's Vault.
+  id-token: write
+
+jobs:
+  fossa-scanning:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Read FOSSA token
+      uses: rancher-eio/read-vault-secrets@main
+      with:
+        secrets: |
+          secret/data/github/org/rancher/fossa/push token | FOSSA_API_KEY_PUSH_ONLY
+
+    - name: FOSSA scan
+      uses: fossas/fossa-action@main
+      with:
+        api-key: ${{ env.FOSSA_API_KEY_PUSH_ONLY }}
+        # Only runs the scan and do not provide/return any results back to the
+        # pipeline.
+        run-tests: false
