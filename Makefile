@@ -6,14 +6,14 @@ GOPATH ?= $(shell go env GOPATH)
 TARGETARCH ?= amd64
 
 FIPS_ENABLE ?= ""
-BUILDER_GOLANG_VERSION ?= 1.21
+BUILDER_GOLANG_VERSION ?= 1.22
 BUILD_ARGS = --build-arg CRYPTO_LIB=${FIPS_ENABLE} --build-arg BUILDER_GOLANG_VERSION=${BUILDER_GOLANG_VERSION}
 
 IMG_PATH ?= gcr.io/spectro-dev-public/release
 ifeq ($(FIPS_ENABLE),yes)
 	IMG_PATH = gcr.io/spectro-dev-public/release-fips
 endif
-IMG_TAG ?= v0.11.4_spectro
+IMG_TAG ?= v0.11.5_spectro
 IMG_SERVICE_URL ?= ${IMG_PATH}/
 SUC_IMG ?= ${IMG_SERVICE_URL}system-upgrade-controller:${IMG_TAG}
 
