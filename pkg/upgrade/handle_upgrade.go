@@ -57,6 +57,11 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 						return status, nil
 					}
 				}
+				// handle upgrade windows
+				if !ctl.insideUpgradeWindow() {
+					logrus.Debug("We are outside the reboot window; not labeling rebootable nodes for now")
+					return status, nil
+				}
 			}
 			latest, err := upgradeplan.ResolveChannel(ctx, obj.Spec.Channel, obj.Status.LatestVersion, ctl.clusterID)
 			if err != nil {
