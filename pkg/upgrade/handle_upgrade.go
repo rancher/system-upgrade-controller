@@ -57,11 +57,6 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 						return status, nil
 					}
 				}
-				// handle upgrade windows
-				if !ctl.insideUpgradeWindow() {
-					logrus.Debug("We are outside the reboot window; not labeling rebootable nodes for now")
-					return status, nil
-				}
 			}
 			latest, err := upgradeplan.ResolveChannel(ctx, obj.Spec.Channel, obj.Status.LatestVersion, ctl.clusterID)
 			if err != nil {
@@ -81,6 +76,14 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 				return objects, status, nil
 			}
 			logrus.Debugf("PLAN GENERATING HANDLER: plan=%s/%s@%s, status=%+v", obj.Namespace, obj.Name, obj.ResourceVersion, status)
+			// handle upgrade windows
+			if ctl.insideUpgradeWindow() {
+				logrus.Debug("We are inside the upgrade window; scheduling upgradable nodes")
+			} else {
+				logrus.Debug("We are outside the upgrade window; not scheduling upgradable nodes for now")
+				return objects, status, nil
+			}
+			// then validate plan spec
 			if !upgradeapiv1.PlanSpecValidated.IsTrue(obj) {
 				return objects, status, nil
 			}
