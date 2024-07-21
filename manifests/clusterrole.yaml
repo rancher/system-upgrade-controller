@@ -91,7 +91,7 @@ rules:
       - "pods/eviction"
     verbs:
       - "create"
-  # Needed to list pods by Node
+  # Needed to list/delete pods by Node
   - apiGroups:
       - ""
     resources:
@@ -99,6 +99,7 @@ rules:
     verbs:
       - "get"
       - "list"
+      - "delete"
   # Needed to cordon Nodes
   - apiGroups:
       - ""
