@@ -8,12 +8,13 @@ TARGETARCH ?= amd64
 FIPS_ENABLE ?= ""
 BUILDER_GOLANG_VERSION ?= 1.22
 BUILD_ARGS = --build-arg CRYPTO_LIB=${FIPS_ENABLE} --build-arg BUILDER_GOLANG_VERSION=${BUILDER_GOLANG_VERSION}
-
+PLATFORM ?= "linux/amd64,linux/arm64"
 IMG_PATH ?= gcr.io/spectro-dev-public/release
 ifeq ($(FIPS_ENABLE),yes)
 	IMG_PATH = gcr.io/spectro-dev-public/release-fips
+	PLATFORM = "linux/amd64"
 endif
-IMG_TAG ?= v0.11.5_spectro
+IMG_TAG ?= v0.11.6_spectro
 IMG_SERVICE_URL ?= ${IMG_PATH}/
 SUC_IMG ?= ${IMG_SERVICE_URL}system-upgrade-controller:${IMG_TAG}
 
@@ -34,7 +35,11 @@ clean:
 	rm -rvf ./bin ./dist
 
 docker:
-	docker buildx build --platform linux/amd64,linux/arm64 --push . -t ${SUC_IMG} ${BUILD_ARGS} -f Dockerfile
+	docker buildx build --platform ${PLATFORM} --push . -t ${SUC_IMG} ${BUILD_ARGS} -f Dockerfile
+
+all:
+	FIPS_ENABLE=yes $(MAKE) docker
+	FIPS_ENABLE=no $(MAKE) docker
 
 .DEFAULT_GOAL := ci
 

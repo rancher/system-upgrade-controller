@@ -10,7 +10,7 @@ WORKDIR /workspace
 
 COPY . .
 
-RUN apk -U add coreutils gcc musl-dev
+RUN apk update && apk upgrade && apk -U add coreutils gcc musl-dev
 
 RUN mkdir -p bin
 
