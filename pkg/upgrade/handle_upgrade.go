@@ -9,7 +9,7 @@ import (
 	upgradejob "github.com/rancher/system-upgrade-controller/pkg/upgrade/job"
 	upgradenode "github.com/rancher/system-upgrade-controller/pkg/upgrade/node"
 	upgradeplan "github.com/rancher/system-upgrade-controller/pkg/upgrade/plan"
-	"github.com/rancher/wrangler/pkg/generic"
+	"github.com/rancher/wrangler/v3/pkg/generic"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 )

@@ -13,7 +13,7 @@ func ChannelServer(location string, statusCode int) *httptest.Server {
 		Failf("cannot read hostname: %v", err)
 	}
 	server := &httptest.Server{
-		Config: &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		Config: &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Location", location)
 			w.WriteHeader(statusCode)
 		})},

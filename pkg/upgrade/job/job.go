@@ -11,7 +11,7 @@ import (
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	upgradectr "github.com/rancher/system-upgrade-controller/pkg/upgrade/container"
 	upgradenode "github.com/rancher/system-upgrade-controller/pkg/upgrade/node"
-	"github.com/rancher/wrangler/pkg/name"
+	"github.com/rancher/wrangler/v3/pkg/name"
 	"github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -24,7 +24,7 @@ const (
 	defaultBackoffLimit            = int32(2)
 	defaultActiveDeadlineSeconds   = int64(600)
 	defaultPrivileged              = true
-	defaultKubectlImage            = "rancher/kubectl:v1.25.4"
+	defaultKubectlImage            = "rancher/kubectl:v1.30.3"
 	defaultImagePullPolicy         = corev1.PullIfNotPresent
 	defaultTTLSecondsAfterFinished = int32(900)
 )

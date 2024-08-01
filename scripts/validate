@@ -15,7 +15,7 @@ fi
 echo Running validation
 
 echo Running: golangci-lint
-golangci-lint run --deadline 10m
+golangci-lint run --timeout 10m
 
 echo Running: go fmt
 test -z "$(go fmt ${PACKAGES} | tee /dev/stderr)"

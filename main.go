@@ -14,7 +14,7 @@ import (
 
 	"github.com/rancher/system-upgrade-controller/pkg/upgrade"
 	"github.com/rancher/system-upgrade-controller/pkg/version"
-	"github.com/rancher/wrangler/pkg/signals"
+	"github.com/rancher/wrangler/v3/pkg/signals"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"k8s.io/client-go/tools/clientcmd"

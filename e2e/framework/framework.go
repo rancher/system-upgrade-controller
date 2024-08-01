@@ -60,15 +60,10 @@ func New(name string, opt ...Option) *Client {
 		fn(options)
 	}
 	client := &Client{
-		Framework: framework.Framework{
-			BaseName:                         name,
-			AddonResourceConstraints:         make(map[string]framework.ResourceConstraint),
-			NamespacePodSecurityEnforceLevel: admissionapi.LevelPrivileged,
-			Options:                          options.Options,
-		},
+		Framework: *framework.NewFramework(name, options.Options, nil),
 	}
+	client.Framework.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 	ginkgo.BeforeEach(client.BeforeEach)
-	ginkgo.AfterEach(client.AfterEach)
 	return client
 }
 
@@ -161,14 +156,14 @@ func (c *Client) WaitForPlanJobs(plan *upgradeapiv1.Plan, count int, timeout tim
 	})
 }
 
-func (c *Client) BeforeEach() {
+func (c *Client) BeforeEach(ctx context.Context) {
 	c.beforeFramework()
-	c.Framework.BeforeEach()
+	c.Framework.BeforeEach(ctx)
 	c.setupController()
 }
 
-func (c *Client) AfterEach() {
-	c.Framework.AfterEach()
+func (c *Client) AfterEach(ctx context.Context) {
+	c.Framework.AfterEach(ctx)
 }
 
 func (c *Client) setupController() {
@@ -181,7 +176,7 @@ func (c *Client) setupController() {
 	}, metav1.CreateOptions{})
 	framework.ExpectNoError(err)
 
-	err = frameworkauth.BindClusterRole(c.ClientSet.RbacV1(), "cluster-admin", c.Namespace.Name, rbacv1.Subject{
+	err = frameworkauth.BindClusterRole(context.TODO(), c.ClientSet.RbacV1(), "cluster-admin", c.Namespace.Name, rbacv1.Subject{
 		Kind:      rbacv1.ServiceAccountKind,
 		Name:      c.controllerServiceAccount.Name,
 		Namespace: c.controllerServiceAccount.Namespace,

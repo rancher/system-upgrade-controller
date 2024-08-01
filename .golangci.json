@@ -11,7 +11,7 @@
 		]
 	},
 	"run": {
-		"skip-files": [
+		"exclude-files": [
 			"/zz_generated_"
 		],
 		"deadline": "5m"

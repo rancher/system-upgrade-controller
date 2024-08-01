@@ -21,8 +21,8 @@ package v1
 import (
 	"github.com/rancher/lasso/pkg/controller"
 	v1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
-	"github.com/rancher/wrangler/pkg/generic"
-	"github.com/rancher/wrangler/pkg/schemes"
+	"github.com/rancher/wrangler/v3/pkg/generic"
+	"github.com/rancher/wrangler/v3/pkg/schemes"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -45,7 +45,5 @@ type version struct {
 }
 
 func (v *version) Plan() PlanController {
-	return &PlanGenericController{
-		generic.NewController[*v1.Plan, *v1.PlanList](schema.GroupVersionKind{Group: "upgrade.cattle.io", Version: "v1", Kind: "Plan"}, "plans", true, v.controllerFactory),
-	}
+	return generic.NewController[*v1.Plan, *v1.PlanList](schema.GroupVersionKind{Group: "upgrade.cattle.io", Version: "v1", Kind: "Plan"}, "plans", true, v.controllerFactory)
 }

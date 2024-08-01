@@ -1,5 +1,3 @@
-version: "3.7"
-
 volumes:
   kubeconfig:
     name: e2e-local-kubeconfig
@@ -13,7 +11,7 @@ services:
       context: ./images/k3s/.
       args:
         - ARCH=${ARCH}
-    command: server --disable=traefik,metrics-server --disable-helm-controller
+    command: server --disable=traefik,metrics-server --disable-helm-controller --tls-san 172.17.0.1
     environment:
       - K3S_TOKEN=e2e
     hostname: k3s-server-1
