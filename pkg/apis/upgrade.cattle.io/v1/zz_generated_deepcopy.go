@@ -222,6 +222,11 @@ func (in *PlanSpec) DeepCopyInto(out *PlanSpec) {
 		*out = new(ContainerSpec)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ImagePullSecrets != nil {
+		in, out := &in.ImagePullSecrets, &out.ImagePullSecrets
+		*out = make([]corev1.LocalObjectReference, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

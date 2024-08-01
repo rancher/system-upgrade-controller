@@ -139,7 +139,7 @@ var _ = Describe("Job Generation", func() {
 		})
 		AfterEach(func() {
 			if CurrentSpecReport().Failed() {
-				podList, _ := e2e.PodClient().List(context.Background(), metav1.ListOptions{})
+				podList, _ := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).List(context.Background(), metav1.ListOptions{})
 				for _, pod := range podList.Items {
 					containerNames := []string{}
 					for _, container := range pod.Spec.InitContainers {
@@ -150,7 +150,7 @@ var _ = Describe("Job Generation", func() {
 					}
 					for _, container := range containerNames {
 						reportName := fmt.Sprintf("podlogs-%s-%s", pod.Name, container)
-						logs := e2e.PodClient().GetLogs(pod.Name, &v1.PodLogOptions{Container: container})
+						logs := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).GetLogs(pod.Name, &v1.PodLogOptions{Container: container})
 						if logStreamer, err := logs.Stream(context.Background()); err == nil {
 							if podLogs, err := io.ReadAll(logStreamer); err == nil {
 								AddReportEntry(reportName, string(podLogs))

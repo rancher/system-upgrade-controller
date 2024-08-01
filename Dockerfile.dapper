@@ -1,24 +1,24 @@
-ARG KUBECTL=rancher/kubectl:v1.25.4
+ARG KUBECTL=rancher/kubectl:v1.30.3
 FROM ${KUBECTL} AS kubectl
 
-FROM registry.suse.com/bci/golang:1.20
+FROM registry.suse.com/bci/golang:1.22
 
 COPY --from=kubectl /bin/kubectl /usr/local/bin/kubectl
 
 ARG DAPPER_HOST_ARCH
 ENV ARCH $DAPPER_HOST_ARCH
-ARG SONOBUOY_VERSION=0.56.16
-
+ARG SONOBUOY_VERSION=0.57.1
+RUN sed -i -e 's/product\//product\/?ssl_verify=no/'  /etc/zypp/repos.d/SLE_BCI.repo
 RUN zypper -n install expect git jq  docker vim less file curl wget iproute2 gawk
 RUN if [ "${ARCH:-$(go env GOARCH)}" = "amd64" ]; then \
-        curl -sL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.51.2; \
-        curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.0.3/kustomize_v5.0.3_linux_amd64.tar.gz" | tar -xz -C /usr/local/bin; \
-        curl -sL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin; \
-        curl -sL "https://github.com/docker/compose/releases/download/v2.17.3/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
-        chmod +x /usr/local/bin/docker-compose; \
+    curl -sL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.59.1; \
+    curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz" | tar -xz -C /usr/local/bin; \
+    curl -sL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin; \
+    curl -sL "https://github.com/docker/compose/releases/download/v2.29.1/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
+    chmod +x /usr/local/bin/docker-compose; \
     fi
 RUN mkdir -p /usr/local/lib/docker/cli-plugins; \
-    curl -o /usr/local/lib/docker/cli-plugins/docker-buildx -fsSL "https://github.com/docker/buildx/releases/download/v0.11.2/buildx-v0.11.2.linux-${ARCH}"; \
+    curl -o /usr/local/lib/docker/cli-plugins/docker-buildx -fsSL "https://github.com/docker/buildx/releases/download/v0.16.2/buildx-v0.16.2.linux-${ARCH}"; \
     chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx
 ENV DAPPER_ENV REPO TAG DRONE_TAG
 ENV DAPPER_SOURCE /go/src/github.com/rancher/system-upgrade-controller/
