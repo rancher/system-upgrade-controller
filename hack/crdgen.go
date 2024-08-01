@@ -5,7 +5,7 @@ import (
 
 	_ "github.com/rancher/system-upgrade-controller/pkg/generated/controllers/upgrade.cattle.io/v1"
 	"github.com/rancher/system-upgrade-controller/pkg/upgrade/plan"
-	"github.com/rancher/wrangler/pkg/crd"
+	"github.com/rancher/wrangler/v3/pkg/crd"
 )
 
 func main() {

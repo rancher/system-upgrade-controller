@@ -12,7 +12,7 @@ import (
 func (ctl *Controller) handleNodes(ctx context.Context) error {
 	plans := ctl.upgradeFactory.Upgrade().V1().Plan()
 
-	ctl.coreFactory.Core().V1().Node().OnChange(ctx, ctl.Name, func(key string, obj *corev1.Node) (*corev1.Node, error) {
+	ctl.coreFactory.Core().V1().Node().OnChange(ctx, ctl.Name, func(_ string, obj *corev1.Node) (*corev1.Node, error) {
 		if obj == nil {
 			return obj, nil
 		}
@@ -37,7 +37,7 @@ func (ctl *Controller) handleNodes(ctx context.Context) error {
 func (ctl *Controller) handleSecrets(ctx context.Context) error {
 	plans := ctl.upgradeFactory.Upgrade().V1().Plan()
 
-	ctl.coreFactory.Core().V1().Secret().OnChange(ctx, ctl.Name, func(key string, obj *corev1.Secret) (*corev1.Secret, error) {
+	ctl.coreFactory.Core().V1().Secret().OnChange(ctx, ctl.Name, func(_ string, obj *corev1.Secret) (*corev1.Secret, error) {
 		if obj == nil {
 			return obj, nil
 		}

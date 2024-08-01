@@ -11,8 +11,9 @@ fi
 export ARCH COMMIT DIST REPO TAG VERSION E2E_CLUSTER=${E2E_CLUSTER:=local} KUBECONFIG=${KUBECONFIG:-$HOME/.kube/config}
 export PATH="$PWD/e2e/cluster/${E2E_CLUSTER}/scripts:$PATH"
 
+
 e2e-sonobuoy-run() {
-  : ${SONOBUOY_RUN_SONOBUOY_IMAGE:="sonobuoy/sonobuoy:v0.56.16"}
+  : ${SONOBUOY_RUN_SONOBUOY_IMAGE:="sonobuoy/sonobuoy:v0.57.1"}
   : ${SONOBUOY_RUN_IMAGE_PULL_POLICY:=Never}
   : ${SONOBUOY_RUN_WAIT:=10}
 

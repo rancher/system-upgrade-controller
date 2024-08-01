@@ -1,9 +1,9 @@
-ARG BCI=registry.suse.com/bci/bci-base:15.5
-ARG GOLANG=registry.suse.com/bci/golang:1.20
+ARG BCI=registry.suse.com/bci/bci-base:15.6
+ARG GOLANG=registry.suse.com/bci/golang:1.22
 
 FROM ${GOLANG} AS e2e-ginkgo
 ENV GOBIN=/bin
-RUN go install github.com/onsi/ginkgo/v2/ginkgo@v2.9.4
+RUN go install github.com/onsi/ginkgo/v2/ginkgo@v2.20.0
 
 FROM ${BCI} AS e2e-tests
 ARG ARCH
@@ -14,9 +14,9 @@ COPY --from=e2e-ginkgo /bin/ginkgo /bin/ginkgo
 COPY dist/artifacts/system-upgrade-controller.test-${ARCH} /bin/system-upgrade-controller.test
 COPY e2e/plugin/run.sh /run.sh
 RUN set -x \
- && chmod +x /run.sh
+    && chmod +x /run.sh
 RUN set -x \
- && zypper -n in tar gzip
+    && zypper -n in tar gzip
 ENTRYPOINT ["/run.sh"]
 
 FROM scratch AS controller

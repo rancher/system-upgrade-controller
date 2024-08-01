@@ -10,7 +10,7 @@ import (
 	"github.com/rancher/system-upgrade-controller/pkg/apis/condition"
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradejob "github.com/rancher/system-upgrade-controller/pkg/upgrade/job"
-	batchctlv1 "github.com/rancher/wrangler/pkg/generated/controllers/batch/v1"
+	batchctlv1 "github.com/rancher/wrangler/v3/pkg/generated/controllers/batch/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +23,7 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 	nodes := ctl.coreFactory.Core().V1().Node()
 	jobs := ctl.batchFactory.Batch().V1().Job()
 
-	jobs.OnChange(ctx, ctl.Name, func(key string, obj *batchv1.Job) (*batchv1.Job, error) {
+	jobs.OnChange(ctx, ctl.Name, func(_ string, obj *batchv1.Job) (*batchv1.Job, error) {
 		if obj == nil {
 			return obj, nil
 		}

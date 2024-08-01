@@ -10,23 +10,23 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/utils/pointer"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	"github.com/rancher/system-upgrade-controller/e2e/framework"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = Describe("Job Generation", func() {
+var _ = ginkgo.Describe("Job Generation", func() {
 	e2e := framework.New("generate")
 
-	When("fails because of a bad plan", func() {
+	ginkgo.When("fails because of a bad plan", func() {
 		var (
 			err  error
 			plan *upgradeapiv1.Plan
 			jobs []batchv1.Job
 		)
-		BeforeEach(func() {
+		ginkgo.BeforeEach(func() {
 			plan = e2e.NewPlan("fail-then-succeed-", "library/alpine:3.18", []string{"sh", "-c"}, "exit 1")
 			plan.Spec.Version = "latest"
 			plan.Spec.Concurrency = 1
@@ -38,54 +38,54 @@ var _ = Describe("Job Generation", func() {
 				}},
 			}
 			plan, err = e2e.CreatePlan(plan)
-			Expect(err).ToNot(HaveOccurred())
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 
 			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(BeTrue())
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			gomega.Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(gomega.BeTrue())
 
 			jobs, err = e2e.WaitForPlanJobs(plan, 1, 120*time.Second)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(jobs).To(HaveLen(1))
-			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 0))
-			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
-			Expect(jobs[0].Status.Failed).To(BeNumerically(">=", 1))
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			gomega.Expect(jobs).To(gomega.HaveLen(1))
+			gomega.Expect(jobs[0].Status.Succeeded).To(gomega.BeNumerically("==", 0))
+			gomega.Expect(jobs[0].Status.Active).To(gomega.BeNumerically("==", 0))
+			gomega.Expect(jobs[0].Status.Failed).To(gomega.BeNumerically(">=", 1))
 
-			Eventually(e2e.GetPlan).
+			gomega.Eventually(e2e.GetPlan).
 				WithArguments(plan.Name, metav1.GetOptions{}).
 				WithTimeout(30 * time.Second).
-				Should(WithTransform(upgradeapiv1.PlanComplete.IsTrue, BeFalse()))
+				Should(gomega.WithTransform(upgradeapiv1.PlanComplete.IsTrue, gomega.BeFalse()))
 
 			plan, err = e2e.GetPlan(plan.Name, metav1.GetOptions{})
-			Expect(err).ToNot(HaveOccurred())
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 			plan.Spec.Upgrade.Args = []string{"exit 0"}
 			plan, err = e2e.UpdatePlan(plan)
-			Expect(err).ToNot(HaveOccurred())
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 
 			jobs, err = e2e.WaitForPlanJobs(plan, 1, 120*time.Second)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(jobs).To(HaveLen(1))
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			gomega.Expect(jobs).To(gomega.HaveLen(1))
 		})
-		It("should apply successfully after edit", func() {
-			Expect(jobs).To(HaveLen(1))
-			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 1))
-			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
-			Expect(jobs[0].Status.Failed).To(BeNumerically("==", 0))
+		ginkgo.It("should apply successfully after edit", func() {
+			gomega.Expect(jobs).To(gomega.HaveLen(1))
+			gomega.Expect(jobs[0].Status.Succeeded).To(gomega.BeNumerically("==", 1))
+			gomega.Expect(jobs[0].Status.Active).To(gomega.BeNumerically("==", 0))
+			gomega.Expect(jobs[0].Status.Failed).To(gomega.BeNumerically("==", 0))
 
-			Eventually(e2e.GetPlan).
+			gomega.Eventually(e2e.GetPlan).
 				WithArguments(plan.Name, metav1.GetOptions{}).
 				WithTimeout(30 * time.Second).
-				Should(WithTransform(upgradeapiv1.PlanComplete.IsTrue, BeTrue()))
+				Should(gomega.WithTransform(upgradeapiv1.PlanComplete.IsTrue, gomega.BeTrue()))
 		})
 	})
 
-	When("fails because of conflicting drain options", func() {
+	ginkgo.When("fails because of conflicting drain options", func() {
 		var (
 			err  error
 			plan *upgradeapiv1.Plan
 			jobs []batchv1.Job
 		)
-		BeforeEach(func() {
+		ginkgo.BeforeEach(func() {
 			plan = e2e.NewPlan("fail-drain-options-", "library/alpine:3.18", []string{"sh", "-c"}, "exit 0")
 			plan.Spec.Version = "latest"
 			plan.Spec.Concurrency = 1
@@ -109,37 +109,37 @@ var _ = Describe("Job Generation", func() {
 				},
 			}
 			plan, err = e2e.CreatePlan(plan)
-			Expect(err).ToNot(HaveOccurred())
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 
 			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanSpecValidated, 30*time.Second)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(BeFalse())
-			Expect(upgradeapiv1.PlanSpecValidated.GetMessage(plan)).To(ContainSubstring("cannot specify both deleteEmptydirData and deleteLocalData"))
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			gomega.Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(gomega.BeFalse())
+			gomega.Expect(upgradeapiv1.PlanSpecValidated.GetMessage(plan)).To(gomega.ContainSubstring("cannot specify both deleteEmptydirData and deleteLocalData"))
 
 			plan.Spec.Drain.DeleteLocalData = nil
 			plan, err = e2e.UpdatePlan(plan)
-			Expect(err).ToNot(HaveOccurred())
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 
 			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanSpecValidated, 30*time.Second)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(BeTrue())
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			gomega.Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(gomega.BeTrue())
 
 			jobs, err = e2e.WaitForPlanJobs(plan, 1, 120*time.Second)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(jobs).To(HaveLen(1))
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			gomega.Expect(jobs).To(gomega.HaveLen(1))
 		})
-		It("should apply successfully after edit", func() {
-			Expect(jobs).To(HaveLen(1))
-			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 1))
-			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
-			Expect(jobs[0].Status.Failed).To(BeNumerically("==", 0))
-			Expect(jobs[0].Spec.Template.Spec.InitContainers).To(HaveLen(1))
-			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainElement(ContainSubstring("!upgrade.cattle.io/controller")))
-			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainElement(ContainSubstring("component notin (sonobuoy)")))
+		ginkgo.It("should apply successfully after edit", func() {
+			gomega.Expect(jobs).To(gomega.HaveLen(1))
+			gomega.Expect(jobs[0].Status.Succeeded).To(gomega.BeNumerically("==", 1))
+			gomega.Expect(jobs[0].Status.Active).To(gomega.BeNumerically("==", 0))
+			gomega.Expect(jobs[0].Status.Failed).To(gomega.BeNumerically("==", 0))
+			gomega.Expect(jobs[0].Spec.Template.Spec.InitContainers).To(gomega.HaveLen(1))
+			gomega.Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(gomega.ContainElement(gomega.ContainSubstring("!upgrade.cattle.io/controller")))
+			gomega.Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(gomega.ContainElement(gomega.ContainSubstring("component notin (sonobuoy)")))
 		})
-		AfterEach(func() {
-			if CurrentSpecReport().Failed() {
-				podList, _ := e2e.PodClient().List(context.Background(), metav1.ListOptions{})
+		ginkgo.AfterEach(func() {
+			if ginkgo.CurrentSpecReport().Failed() {
+				podList, _ := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).List(context.Background(), metav1.ListOptions{})
 				for _, pod := range podList.Items {
 					containerNames := []string{}
 					for _, container := range pod.Spec.InitContainers {
@@ -150,10 +150,10 @@ var _ = Describe("Job Generation", func() {
 					}
 					for _, container := range containerNames {
 						reportName := fmt.Sprintf("podlogs-%s-%s", pod.Name, container)
-						logs := e2e.PodClient().GetLogs(pod.Name, &v1.PodLogOptions{Container: container})
+						logs := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).GetLogs(pod.Name, &v1.PodLogOptions{Container: container})
 						if logStreamer, err := logs.Stream(context.Background()); err == nil {
 							if podLogs, err := io.ReadAll(logStreamer); err == nil {
-								AddReportEntry(reportName, string(podLogs))
+								ginkgo.AddReportEntry(reportName, string(podLogs))
 							}
 						}
 					}
@@ -162,14 +162,14 @@ var _ = Describe("Job Generation", func() {
 		})
 	})
 
-	When("updated secret should not change hash", func() {
+	ginkgo.When("updated secret should not change hash", func() {
 		var (
 			err    error
 			plan   *upgradeapiv1.Plan
 			secret *v1.Secret
 			hash   string
 		)
-		BeforeEach(func() {
+		ginkgo.BeforeEach(func() {
 			secret, err = e2e.CreateSecret(&v1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test",
@@ -177,7 +177,7 @@ var _ = Describe("Job Generation", func() {
 				},
 				Data: map[string][]byte{"config": []byte("test")},
 			})
-			Expect(err).ToNot(HaveOccurred())
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 
 			plan = e2e.NewPlan("updated-secret-", "library/alpine:3.18", []string{"sh", "-c"}, "exit 0")
 			plan.Spec.Version = "latest"
@@ -195,19 +195,19 @@ var _ = Describe("Job Generation", func() {
 				IgnoreUpdates: true,
 			}}
 			plan, err = e2e.CreatePlan(plan)
-			Expect(err).ToNot(HaveOccurred())
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 
 			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(plan.Status.LatestHash).ToNot(BeEmpty())
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			gomega.Expect(plan.Status.LatestHash).ToNot(gomega.BeEmpty())
 			hash = plan.Status.LatestHash
 
 			secret.Data = map[string][]byte{"config": []byte("test2")}
 			secret, err = e2e.UpdateSecret(secret)
-			Expect(err).ToNot(HaveOccurred())
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 		})
-		It("hash should be equal", func() {
-			Expect(plan.Status.LatestHash).Should(Equal(hash))
+		ginkgo.It("hash should be Equal", func() {
+			gomega.Expect(plan.Status.LatestHash).Should(gomega.Equal(hash))
 		})
 	})
 })
