@@ -3,11 +3,11 @@ package container_test
 import (
 	"testing"
 
-	"github.com/onsi/ginkgo/v2"
-	"github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2" //nolint:revive
+	. "github.com/onsi/gomega"    //nolint:revive
 )
 
 func TestContainer(t *testing.T) {
-	gomega.RegisterFailHandler(ginkgo.Fail)
-	ginkgo.RunSpecs(t, "Container Suite")
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Container Suite")
 }

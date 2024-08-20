@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/onsi/ginkgo/v2"
-	"github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2" //nolint:revive
+	. "github.com/onsi/gomega"    //nolint:revive
 	"github.com/sirupsen/logrus"
 	"k8s.io/kubernetes/test/e2e/framework"
 	"k8s.io/kubernetes/test/e2e/framework/config"
@@ -25,6 +25,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestSuite(t *testing.T) {
-	gomega.RegisterFailHandler(ginkgo.Fail)
-	ginkgo.RunSpecs(t, "E2E SUITE")
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "E2E SUITE")
 }
