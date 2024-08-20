@@ -6,147 +6,147 @@ import (
 	"path"
 	"time"
 
-	"github.com/onsi/ginkgo/v2"
-	"github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2" //nolint:revive
+	. "github.com/onsi/gomega"    //nolint:revive
 	"github.com/rancher/system-upgrade-controller/e2e/framework"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 )
 
-var _ = ginkgo.Describe("Plan Resolution", func() {
+var _ = Describe("Plan Resolution", func() {
 	e2e := framework.New("resolve")
 
-	ginkgo.When("missing channel and version", func() {
+	When("missing channel and version", func() {
 		var (
 			err  error
 			plan *upgradeapiv1.Plan
 		)
-		ginkgo.BeforeEach(func() {
+		BeforeEach(func() {
 			plan = e2e.NewPlan("missing-", "", nil)
 			plan, err = e2e.CreatePlan(plan)
-			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 
 			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
-			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 		})
-		ginkgo.It("should not resolve", func() {
-			gomega.Expect(upgradeapiv1.PlanLatestResolved.MatchesError(plan, "Error", upgradeapiv1.ErrPlanUnresolvable)).To(gomega.BeTrue())
-			gomega.Expect(plan.Status.LatestVersion).To(gomega.BeEmpty())
-			gomega.Expect(plan.Status.LatestHash).To(gomega.BeEmpty())
+		It("should not resolve", func() {
+			Expect(upgradeapiv1.PlanLatestResolved.MatchesError(plan, "Error", upgradeapiv1.ErrPlanUnresolvable)).To(BeTrue())
+			Expect(plan.Status.LatestVersion).To(BeEmpty())
+			Expect(plan.Status.LatestHash).To(BeEmpty())
 		})
 	})
 
-	ginkgo.When("has version", func() {
+	When("has version", func() {
 		var (
 			err  error
 			plan *upgradeapiv1.Plan
 		)
-		ginkgo.BeforeEach(func() {
+		BeforeEach(func() {
 			plan = e2e.NewPlan("version-", "", nil)
 			plan.Spec.Version = "test"
 
 			plan, err = e2e.CreatePlan(plan)
-			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 
 			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
-			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 		})
-		ginkgo.It("should resolve", func() {
-			gomega.Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(gomega.BeTrue())
-			gomega.Expect(upgradeapiv1.PlanLatestResolved.GetReason(plan)).To(gomega.Equal("Version"))
-			gomega.Expect(plan.Status.LatestVersion).To(gomega.Equal(plan.Spec.Version))
-			gomega.Expect(plan.Status.LatestHash).ToNot(gomega.BeEmpty())
+		It("should resolve", func() {
+			Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(BeTrue())
+			Expect(upgradeapiv1.PlanLatestResolved.GetReason(plan)).To(Equal("Version"))
+			Expect(plan.Status.LatestVersion).To(Equal(plan.Spec.Version))
+			Expect(plan.Status.LatestHash).ToNot(BeEmpty())
 		})
 	})
 
-	ginkgo.When("has version with semver+metadata", func() {
+	When("has version with semver+metadata", func() {
 		var (
 			err    error
 			plan   *upgradeapiv1.Plan
 			semver = "v1.2.3+test"
 		)
-		ginkgo.BeforeEach(func() {
+		BeforeEach(func() {
 			plan = e2e.NewPlan("version-semver-metadata-", "", nil)
 			plan.Spec.Version = semver
 
 			plan, err = e2e.CreatePlan(plan)
-			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 
 			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
-			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 		})
-		ginkgo.It("should resolve", func() {
-			gomega.Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(gomega.BeTrue())
-			gomega.Expect(upgradeapiv1.PlanLatestResolved.GetReason(plan)).To(gomega.Equal("Version"))
-			gomega.Expect(plan.Status.LatestHash).ToNot(gomega.BeEmpty())
+		It("should resolve", func() {
+			Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(BeTrue())
+			Expect(upgradeapiv1.PlanLatestResolved.GetReason(plan)).To(Equal("Version"))
+			Expect(plan.Status.LatestHash).ToNot(BeEmpty())
 		})
-		ginkgo.It("should munge the semver", func() {
-			gomega.Expect(plan.Status.LatestVersion).ToNot(gomega.ContainSubstring(`+`))
+		It("should munge the semver", func() {
+			Expect(plan.Status.LatestVersion).ToNot(ContainSubstring(`+`))
 		})
 	})
 
-	ginkgo.When("has channel", func() {
+	When("has channel", func() {
 		var (
 			err        error
 			plan       *upgradeapiv1.Plan
 			channelSrv *httptest.Server
 			channelTag = "test"
 		)
-		ginkgo.BeforeEach(func() {
+		BeforeEach(func() {
 			channelSrv = framework.ChannelServer(path.Join("/local", channelTag), http.StatusFound)
 			plan = e2e.NewPlan("channel-", "", nil)
 			plan.Spec.Channel = channelSrv.URL
-			gomega.Expect(plan.Spec.Channel).ToNot(gomega.BeEmpty())
+			Expect(plan.Spec.Channel).ToNot(BeEmpty())
 
 			plan, err = e2e.CreatePlan(plan)
-			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 
 			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
-			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 		})
-		ginkgo.AfterEach(func() {
+		AfterEach(func() {
 			if channelSrv != nil {
 				channelSrv.Close()
 			}
 		})
-		ginkgo.It("should resolve", func() {
-			gomega.Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(gomega.BeTrue())
-			gomega.Expect(upgradeapiv1.PlanLatestResolved.GetReason(plan)).To(gomega.Equal("Channel"))
-			gomega.Expect(plan.Status.LatestVersion).To(gomega.Equal(channelTag))
-			gomega.Expect(plan.Status.LatestHash).ToNot(gomega.BeEmpty())
+		It("should resolve", func() {
+			Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(BeTrue())
+			Expect(upgradeapiv1.PlanLatestResolved.GetReason(plan)).To(Equal("Channel"))
+			Expect(plan.Status.LatestVersion).To(Equal(channelTag))
+			Expect(plan.Status.LatestHash).ToNot(BeEmpty())
 		})
 	})
 
-	ginkgo.When("has channel with semver+metadata", func() {
+	When("has channel with semver+metadata", func() {
 		var (
 			err        error
 			plan       *upgradeapiv1.Plan
 			channelSrv *httptest.Server
 			channelTag = "v1.2.3+test"
 		)
-		ginkgo.BeforeEach(func() {
+		BeforeEach(func() {
 			channelSrv = framework.ChannelServer(path.Join("/local/test", channelTag), http.StatusFound)
 			plan = e2e.NewPlan("channel-semver-metadata-", "", nil)
 			plan.Spec.Channel = channelSrv.URL
-			gomega.Expect(plan.Spec.Channel).ToNot(gomega.BeEmpty())
+			Expect(plan.Spec.Channel).ToNot(BeEmpty())
 
 			plan, err = e2e.CreatePlan(plan)
-			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 
 			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
-			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 		})
-		ginkgo.AfterEach(func() {
+		AfterEach(func() {
 			if channelSrv != nil {
 				channelSrv.Close()
 			}
 		})
-		ginkgo.It("should resolve", func() {
-			gomega.Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(gomega.BeTrue())
-			gomega.Expect(upgradeapiv1.PlanLatestResolved.GetReason(plan)).To(gomega.Equal("Channel"))
-			gomega.Expect(plan.Status.LatestHash).ToNot(gomega.BeEmpty())
+		It("should resolve", func() {
+			Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(BeTrue())
+			Expect(upgradeapiv1.PlanLatestResolved.GetReason(plan)).To(Equal("Channel"))
+			Expect(plan.Status.LatestHash).ToNot(BeEmpty())
 		})
-		ginkgo.It("should munge the semver", func() {
-			gomega.Expect(plan.Status.LatestVersion).ToNot(gomega.ContainSubstring(`+`))
+		It("should munge the semver", func() {
+			Expect(plan.Status.LatestVersion).ToNot(ContainSubstring(`+`))
 		})
 	})
 })
