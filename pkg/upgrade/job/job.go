@@ -27,6 +27,7 @@ const (
 	defaultKubectlImage            = "rancher/kubectl:v1.30.3"
 	defaultImagePullPolicy         = corev1.PullIfNotPresent
 	defaultTTLSecondsAfterFinished = int32(900)
+	defaultPodReplacementPolicy    = batchv1.PodReplacementPolicy("TerminatingOrFailed")
 )
 
 func allowUserDefinedSecurityContext(defaultValue bool) bool {
@@ -111,6 +112,13 @@ var (
 		}
 		return defaultValue
 	}(defaultTTLSecondsAfterFinished)
+
+	PodReplacementPolicy = func(defaultValue batchv1.PodReplacementPolicy) batchv1.PodReplacementPolicy {
+		if str := os.Getenv("SYSTEM_UPGRADE_JOB_POD_REPLACEMENT_POLICY"); str != "" {
+			return batchv1.PodReplacementPolicy(str)
+		}
+		return defaultValue
+	}(defaultPodReplacementPolicy)
 )
 
 var (
@@ -160,6 +168,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 			Labels:      jobLabels,
 		},
 		Spec: batchv1.JobSpec{
+			PodReplacementPolicy:    &PodReplacementPolicy,
 			BackoffLimit:            &BackoffLimit,
 			TTLSecondsAfterFinished: &TTLSecondsAfterFinished,
 			Template: corev1.PodTemplateSpec{
