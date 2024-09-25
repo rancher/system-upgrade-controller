@@ -3,9 +3,9 @@ set -e
 
 cd $(dirname $0)/..
 
-echo Running validation
-
 PACKAGES="$(go list ./...)"
+
+file bin/*
 
 if ! command -v golangci-lint; then
     echo Skipping validation: no golangci-lint available
