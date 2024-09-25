@@ -85,7 +85,8 @@ jobs:
           merge-multiple: true
 
       - name: Create GitHub release
-        run: gh release create "${{ env.TAG }}" --prerelease --title "${{ env.TAG }}" dist/artifacts/*
+        run: gh release create "${{ env.TAG }}" --prerelease --title "${{ env.TAG }}" dist/artifacts/* ||
+             gh release upload "${{ env.TAG }}" --clobber dist/artifacts/*
 
   # Builds Docker images using artifacts from the `build-test` job and pushes 
   # them to DockerHub.
@@ -221,4 +222,4 @@ jobs:
       
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.IMAGE }}:${{ steps.meta.outputs.version }}          
+          docker buildx imagetools inspect ${{ env.IMAGE }}:${{ steps.meta.outputs.version }}
