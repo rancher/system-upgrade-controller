@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         os: [linux]
-        arch: [amd64, arm64]
+        arch: [amd64, arm64, arm]
     steps:
       - name: Add Git
         run: apk add -U git
@@ -138,4 +138,4 @@ jobs:
           tags: rancher/system-upgrade-controller:${{ env.TAG }}
           file: package/Dockerfile
           target: controller
-          platforms: linux/amd64, linux/arm64
+          platforms: linux/amd64, linux/arm64, linux/arm

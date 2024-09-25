@@ -6,7 +6,7 @@ source $(dirname $0)/version
 cd $(dirname $0)/..
 
 docker buildx build \
-  --build-arg TARGETARCH=${ARCH} \
+  --platform linux/${ARCH} \
   --build-arg REPO=${REPO} \
   --build-arg TAG=${TAG} \
   --build-arg VERSION=${VERSION} \
