@@ -11,14 +11,13 @@ RUN set -x \
    && if [ "${ARCH?required}" != "amd64" ]; then \
    K3S_SUFFIX="-${ARCH}"; \
    fi \
-   && curl -fsSL "https://github.com/rancher/k3s/releases/download/${K3S_VERSION}/k3s${K3S_SUFFIX}" > /bin/k3s \
+   && curl -fsSL "https://github.com/k3s-io/k3s/releases/download/${K3S_VERSION}/k3s${K3S_SUFFIX}" > /bin/k3s \
    && chmod +x /bin/k3s \
    && ln -s /bin/k3s /bin/kubectl \
    && ln -s /bin/k3s /bin/ctr \
    && k3s --version
 
 COPY scratch/*-${ARCH}.tar /var/lib/rancher/k3s/agent/images/
-#ADD https://github.com/rancher/k3s/releases/download/${K3S_VERSION}/k3s-airgap-images-${ARCH}.tar /var/lib/rancher/k3s/agent/images/
 
 VOLUME /var/lib/cni
 VOLUME /var/lib/kubelet
