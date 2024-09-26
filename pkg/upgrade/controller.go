@@ -36,10 +36,12 @@ type Controller struct {
 	batchFactory   *batchctl.Factory
 	upgradeFactory *upgradectl.Factory
 
+	upgradeWindow *Periodic
+
 	apply apply.Apply
 }
 
-func NewController(cfg *rest.Config, namespace, name string, resync time.Duration) (ctl *Controller, err error) {
+func NewController(cfg *rest.Config, namespace, name string, resync time.Duration, windowStart string, windowLength string) (ctl *Controller, err error) {
 	if namespace == "" {
 		return nil, ErrControllerNamespaceRequired
 	}
@@ -54,10 +56,22 @@ func NewController(cfg *rest.Config, namespace, name string, resync time.Duratio
 		}
 	}
 
+	var upgradeWindow *Periodic
+
+	if windowStart != "" && windowLength != "" {
+		uw, err := ParsePeriodic(windowStart, windowLength)
+		if err != nil {
+			return nil, fmt.Errorf("parsing reboot window: %w", err)
+		}
+
+		upgradeWindow = uw
+	}
+
 	ctl = &Controller{
-		Namespace: namespace,
-		Name:      name,
-		cfg:       cfg,
+		Namespace:     namespace,
+		Name:          name,
+		cfg:           cfg,
+		upgradeWindow: upgradeWindow,
 	}
 
 	ctl.kcs, err = kubernetes.NewForConfig(cfg)
@@ -140,4 +154,19 @@ func (ctl *Controller) registerCRD(ctx context.Context) error {
 	}
 
 	return factory.BatchCreateCRDs(ctx, crds...).BatchWait()
+}
+
+// insideUpgradeWindow checks if process is inside reboot window at the time
+// of calling this function.
+//
+// If reboot window is not configured, true is always returned.
+func (ctl *Controller) insideUpgradeWindow() bool {
+	if ctl.upgradeWindow == nil {
+		return true
+	}
+
+	// Most recent reboot window might still be open.
+	mostRecentRebootWindow := ctl.upgradeWindow.Previous(time.Now())
+
+	return time.Now().Before(mostRecentRebootWindow.End)
 }

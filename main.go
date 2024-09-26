@@ -24,6 +24,7 @@ var (
 	debug                               bool
 	kubeConfig, masterURL               string
 	namespace, name, serviceAccountName string
+	windowStart, windowLength           string
 	threads                             int
 )
 
@@ -72,6 +73,18 @@ func main() {
 			Value:       2,
 			Destination: &threads,
 		},
+		cli.StringFlag{
+			Name:        "window-start",
+			EnvVar:      "SYSTEM_UPGRADE_WINDOW_START",
+			Required:    false,
+			Destination: &windowStart,
+		},
+		cli.StringFlag{
+			Name:        "window-length",
+			EnvVar:      "SYSTEM_UPGRADE_WINDOW_LENGTH",
+			Required:    false,
+			Destination: &windowLength,
+		},
 	}
 	app.Action = Run
 
@@ -93,7 +106,7 @@ func Run(_ *cli.Context) {
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	ctl, err := upgrade.NewController(cfg, namespace, name, 2*time.Hour)
+	ctl, err := upgrade.NewController(cfg, namespace, name, 2*time.Hour, windowStart, windowLength)
 	if err != nil {
 		logrus.Fatal(err)
 	}
