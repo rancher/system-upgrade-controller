@@ -66,7 +66,7 @@ spec:
           effect: "NoExecute"
       containers:
         - name: system-upgrade-controller
-          image: rancher/system-upgrade-controller:v0.11.0
+          image: rancher/system-upgrade-controller:v0.14.0
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsNonRoot: true
