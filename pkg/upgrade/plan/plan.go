@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kubereboot/kured/pkg/timewindow"
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	"github.com/rancher/wrangler/v3/pkg/crd"
@@ -33,6 +34,7 @@ const (
 var (
 	ErrDrainDeleteConflict           = fmt.Errorf("spec.drain cannot specify both deleteEmptydirData and deleteLocalData")
 	ErrDrainPodSelectorNotSelectable = fmt.Errorf("spec.drain.podSelector is not selectable")
+	ErrInvalidWindow                 = fmt.Errorf("spec.window is invalid")
 
 	PollingInterval = func(defaultValue time.Duration) time.Duration {
 		if str, ok := os.LookupEnv("SYSTEM_UPGRADE_PLAN_POLLING_INTERVAL"); ok {
@@ -248,6 +250,11 @@ func Validate(plan *upgradeapiv1.Plan) error {
 			if _, ok := selector.Requirements(); !ok {
 				return ErrDrainPodSelectorNotSelectable
 			}
+		}
+	}
+	if windowSpec := plan.Spec.Window; windowSpec != nil {
+		if _, err := timewindow.New(windowSpec.Days, windowSpec.StartTime, windowSpec.EndTime, windowSpec.TimeZone); err != nil {
+			return ErrInvalidWindow
 		}
 	}
 	return nil

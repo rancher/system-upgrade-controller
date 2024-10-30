@@ -29,6 +29,7 @@ import (
 
 var (
 	ErrPlanNotReady                = errors.New("plan is not valid and resolved")
+	ErrOutsideWindow               = errors.New("current time is not within configured window")
 	ErrControllerNameRequired      = errors.New("controller name is required")
 	ErrControllerNamespaceRequired = errors.New("controller namespace is required")
 )
