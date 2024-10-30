@@ -6,6 +6,7 @@ package v1
 import (
 	"time"
 
+	"github.com/kubereboot/kured/pkg/timewindow"
 	"github.com/rancher/system-upgrade-controller/pkg/apis/condition"
 	"github.com/rancher/wrangler/v3/pkg/genericcondition"
 	corev1 "k8s.io/api/core/v1"
@@ -48,6 +49,7 @@ type PlanSpec struct {
 
 	Exclusive bool `json:"exclusive,omitempty"`
 
+	Window           *TimeWindowSpec               `json:"window,omitempty"`
 	Prepare          *ContainerSpec                `json:"prepare,omitempty"`
 	Cordon           bool                          `json:"cordon,omitempty"`
 	Drain            *DrainSpec                    `json:"drain,omitempty"`
@@ -98,4 +100,20 @@ type SecretSpec struct {
 	Name          string `json:"name,omitempty"`
 	Path          string `json:"path,omitempty"`
 	IgnoreUpdates bool   `json:"ignoreUpdates,omitempty"`
+}
+
+// TimeWindowSpec describes a time window in which a Plan should be processed.
+type TimeWindowSpec struct {
+	Days      []string `json:"days,omitempty"`
+	StartTime string   `json:"startTime,omitempty"`
+	EndTime   string   `json:"endTime,omitempty"`
+	TimeZone  string   `json:"timeZone,omitempty"`
+}
+
+func (tws *TimeWindowSpec) Contains(t time.Time) bool {
+	tw, err := timewindow.New(tws.Days, tws.StartTime, tws.EndTime, tws.TimeZone)
+	if err != nil {
+		return false
+	}
+	return tw.Contains(t)
 }

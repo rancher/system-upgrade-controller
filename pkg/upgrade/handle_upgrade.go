@@ -144,6 +144,20 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 			}
 
 			if len(concurrentNodeNames) > 0 {
+				// Don't start creating Jobs for the Plan if we're outside the window; just
+				// enqueue the plan to check again in a minute to see if we're within the window yet.
+				// The Plan is allowed to continue processing as long as there are nodes in progress.
+				if window := obj.Spec.Window; window != nil {
+					if len(obj.Status.Applying) == 0 && !window.Contains(time.Now()) {
+						if complete.GetReason(obj) != "Waiting" {
+							recorder.Eventf(obj, corev1.EventTypeNormal, "Waiting", "Waiting for start of Spec.Window to sync Jobs for version %s. Hash: %s", obj.Status.LatestVersion, obj.Status.LatestHash)
+						}
+						plans.EnqueueAfter(obj.Namespace, obj.Name, time.Minute)
+						complete.SetError(obj, "Waiting", ErrOutsideWindow)
+						return nil, status, nil
+					}
+				}
+
 				// If the node list has changed, update Applying status with new node list and emit an event
 				if !slices.Equal(obj.Status.Applying, concurrentNodeNames) {
 					recorder.Eventf(obj, corev1.EventTypeNormal, "SyncJob", "Jobs synced for version %s on Nodes %s. Hash: %s",
