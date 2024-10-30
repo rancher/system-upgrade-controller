@@ -53,6 +53,13 @@ func NewDeployment(name string, opt ...DeploymentOption) *appsv1.Deployment {
 					FieldPath: "metadata.namespace",
 				},
 			},
+		}, {
+			Name: "SYSTEM_UPGRADE_CONTROLLER_NODE_NAME",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					FieldPath: "spec.nodeName",
+				},
+			},
 		}}
 		container.VolumeMounts = []corev1.VolumeMount{{
 			Name:      `tmp`,

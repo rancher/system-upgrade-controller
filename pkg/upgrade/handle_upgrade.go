@@ -2,6 +2,8 @@ package upgrade
 
 import (
 	"context"
+	"slices"
+	"strings"
 	"time"
 
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
@@ -11,6 +13,7 @@ import (
 	upgradeplan "github.com/rancher/system-upgrade-controller/pkg/upgrade/plan"
 	"github.com/rancher/wrangler/v3/pkg/generic"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -20,6 +23,7 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 	plans := ctl.upgradeFactory.Upgrade().V1().Plan()
 	secrets := ctl.coreFactory.Core().V1().Secret()
 	secretsCache := secrets.Cache()
+	recorder := ctl.recorder
 
 	// process plan events, mutating status accordingly
 	upgradectlv1.RegisterPlanStatusHandler(ctx, plans, "", ctl.Name,
@@ -29,27 +33,52 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 			}
 			logrus.Debugf("PLAN STATUS HANDLER: plan=%s/%s@%s, status=%+v", obj.Namespace, obj.Name, obj.ResourceVersion, status)
 
+			// ensure that the complete status is present
+			complete := upgradeapiv1.PlanComplete
+			complete.CreateUnknownIfNotExists(obj)
+
+			// validate plan, and generate events for transitions
 			validated := upgradeapiv1.PlanSpecValidated
 			validated.CreateUnknownIfNotExists(obj)
 			if err := upgradeplan.Validate(obj); err != nil {
+				if !validated.IsFalse(obj) {
+					recorder.Eventf(obj, corev1.EventTypeWarning, "ValidateFailed", "Failed to validate plan: %v", err)
+				}
 				validated.SetError(obj, "Error", err)
 				return upgradeplan.DigestStatus(obj, secretsCache)
 			}
-			validated.False(obj)
+			if !validated.IsTrue(obj) {
+				recorder.Event(obj, corev1.EventTypeNormal, "Validated", "Plan is valid")
+			}
 			validated.SetError(obj, "PlanIsValid", nil)
 
+			// resolve version from spec or channel, and generate events for transitions
 			resolved := upgradeapiv1.PlanLatestResolved
 			resolved.CreateUnknownIfNotExists(obj)
+			// raise error if neither version nor channel are set. this is handled separate from other validation.
 			if obj.Spec.Version == "" && obj.Spec.Channel == "" {
+				if !resolved.IsFalse(obj) {
+					recorder.Event(obj, corev1.EventTypeWarning, "ResolveFailed", upgradeapiv1.ErrPlanUnresolvable.Error())
+				}
 				resolved.SetError(obj, "Error", upgradeapiv1.ErrPlanUnresolvable)
 				return upgradeplan.DigestStatus(obj, secretsCache)
 			}
+			// use static version from spec if set
 			if obj.Spec.Version != "" {
-				resolved.False(obj)
+				latest := upgradeplan.MungeVersion(obj.Spec.Version)
+				if !resolved.IsTrue(obj) || obj.Status.LatestVersion != latest {
+					// Version has changed, set complete to false and emit event
+					recorder.Eventf(obj, corev1.EventTypeNormal, "Resolved", "Resolved latest version from Spec.Version: %s", latest)
+					complete.False(obj)
+					complete.Message(obj, "")
+					complete.Reason(obj, "Resolved")
+				}
+				obj.Status.LatestVersion = latest
 				resolved.SetError(obj, "Version", nil)
-				obj.Status.LatestVersion = upgradeplan.MungeVersion(obj.Spec.Version)
 				return upgradeplan.DigestStatus(obj, secretsCache)
 			}
+			// re-enqueue a sync at the next channel polling interval, if the LastUpdated time
+			// on the resolved status indicates that the interval has not been reached.
 			if resolved.IsTrue(obj) {
 				if lastUpdated, err := time.Parse(time.RFC3339, resolved.GetLastUpdated(obj)); err == nil {
 					if interval := time.Now().Sub(lastUpdated); interval < upgradeplan.PollingInterval {
@@ -58,13 +87,24 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 					}
 				}
 			}
+			// no static version, poll the channel to get latest version
 			latest, err := upgradeplan.ResolveChannel(ctx, obj.Spec.Channel, obj.Status.LatestVersion, ctl.clusterID)
 			if err != nil {
+				if !resolved.IsFalse(obj) {
+					recorder.Eventf(obj, corev1.EventTypeWarning, "ResolveFailed", "Failed to resolve latest version from Spec.Channel: %v", err)
+				}
 				return status, err
 			}
-			resolved.False(obj)
+			latest = upgradeplan.MungeVersion(latest)
+			if !resolved.IsTrue(obj) || obj.Status.LatestVersion != latest {
+				// Version has changed, set complete to false and emit event
+				recorder.Eventf(obj, corev1.EventTypeNormal, "Resolved", "Resolved latest version from Spec.Channel: %s", latest)
+				complete.False(obj)
+				complete.Message(obj, "")
+				complete.Reason(obj, "Resolved")
+			}
+			obj.Status.LatestVersion = latest
 			resolved.SetError(obj, "Channel", nil)
-			obj.Status.LatestVersion = upgradeplan.MungeVersion(latest)
 			return upgradeplan.DigestStatus(obj, secretsCache)
 		},
 	)
@@ -75,30 +115,61 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 			if obj == nil {
 				return objects, status, nil
 			}
+
 			logrus.Debugf("PLAN GENERATING HANDLER: plan=%s/%s@%s, status=%+v", obj.Namespace, obj.Name, obj.ResourceVersion, status)
-			if !upgradeapiv1.PlanSpecValidated.IsTrue(obj) {
+			// return early without selecting nodes if the plan is not validated and resolved
+			complete := upgradeapiv1.PlanComplete
+			if !upgradeapiv1.PlanSpecValidated.IsTrue(obj) || !upgradeapiv1.PlanLatestResolved.IsTrue(obj) {
+				complete.SetError(obj, "NotReady", ErrPlanNotReady)
 				return objects, status, nil
 			}
-			if !upgradeapiv1.PlanLatestResolved.IsTrue(obj) {
-				return objects, status, nil
-			}
+
+			// select nodes to apply the plan on based on nodeSelector, plan hash, and concurrency
 			concurrentNodes, err := upgradeplan.SelectConcurrentNodes(obj, nodes.Cache())
 			if err != nil {
+				recorder.Eventf(obj, corev1.EventTypeWarning, "SelectNodesFailed", "Failed to select Nodes: %v", err)
+				complete.SetError(obj, "SelectNodesFailed", err)
 				return objects, status, err
 			}
+
+			// Create an upgrade job for each node, and add the node name to Status.Applying
+			// Note that this initially creates paused jobs, and then on a second pass once
+			// the node has been added to Status.Applying the job parallelism is patched to 1
+			// to unpause the job. Ref: https://github.com/rancher/system-upgrade-controller/issues/134
 			concurrentNodeNames := make([]string, len(concurrentNodes))
 			for i := range concurrentNodes {
 				node := concurrentNodes[i]
 				objects = append(objects, upgradejob.New(obj, node, ctl.Name))
 				concurrentNodeNames[i] = upgradenode.Hostname(node)
 			}
-			obj.Status.Applying = concurrentNodeNames[:]
-			upgradeapiv1.PlanComplete.SetStatusBool(obj, len(concurrentNodeNames) == 0)
+
+			if len(concurrentNodeNames) > 0 {
+				// If the node list has changed, update Applying status with new node list and emit an event
+				if !slices.Equal(obj.Status.Applying, concurrentNodeNames) {
+					recorder.Eventf(obj, corev1.EventTypeNormal, "SyncJob", "Jobs synced for version %s on Nodes %s. Hash: %s",
+						obj.Status.LatestVersion, strings.Join(concurrentNodeNames, ","), obj.Status.LatestHash)
+				}
+				obj.Status.Applying = concurrentNodeNames[:]
+				complete.False(obj)
+				complete.Message(obj, "")
+				complete.Reason(obj, "SyncJob")
+			} else {
+				// set PlanComplete to true when no nodes have been selected,
+				// and emit an event if the plan just completed
+				if !complete.IsTrue(obj) {
+					recorder.Eventf(obj, corev1.EventTypeNormal, "Complete", "Jobs complete for version %s. Hash: %s",
+						obj.Status.LatestVersion, obj.Status.LatestHash)
+				}
+				obj.Status.Applying = nil
+				complete.SetError(obj, "Complete", nil)
+			}
+
 			return objects, obj.Status, nil
 		},
 		&generic.GeneratingHandlerOptions{
-			AllowClusterScoped: true,
-			NoOwnerReference:   true,
+			AllowClusterScoped:            true,
+			NoOwnerReference:              true,
+			UniqueApplyForResourceVersion: true,
 		},
 	)
 
