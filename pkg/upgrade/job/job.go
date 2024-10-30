@@ -2,7 +2,7 @@ package job
 
 import (
 	"os"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -18,6 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/utils/pointer"
 )
 
 const (
@@ -240,13 +241,14 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 					ImagePullSecrets: plan.Spec.ImagePullSecrets,
 				},
 			},
-			Completions: new(int32),
-			Parallelism: new(int32),
+			Completions: pointer.Int32(1), // Run only once
+			Parallelism: pointer.Int32(0), // Create Job paused
 		},
 	}
 
-	*job.Spec.Completions = 1
-	if i := sort.SearchStrings(plan.Status.Applying, nodeHostname); i < len(plan.Status.Applying) && plan.Status.Applying[i] == nodeHostname {
+	// After the Job has been created and registered as in-progress in the Plan Status,
+	// update parallelism to 1 to unpause it.  Ref: https://github.com/rancher/system-upgrade-controller/issues/134
+	if slices.Contains(plan.Status.Applying, nodeHostname) {
 		*job.Spec.Parallelism = 1
 	}
 

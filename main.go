@@ -21,15 +21,15 @@ import (
 )
 
 var (
-	debug                               bool
-	kubeConfig, masterURL               string
+	debug, leaderElect                  bool
+	kubeConfig, masterURL, nodeName     string
 	namespace, name, serviceAccountName string
 	threads                             int
 )
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "system-upgrade-controller"
+	app.Name = version.Program
 	app.Usage = "in ur system controllin ur upgradez"
 	app.Version = fmt.Sprintf("%s (%s)", version.Version, version.GitCommit)
 	app.Flags = []cli.Flag{
@@ -37,6 +37,11 @@ func main() {
 			Name:        "debug",
 			EnvVar:      "SYSTEM_UPGRADE_CONTROLLER_DEBUG",
 			Destination: &debug,
+		},
+		cli.BoolFlag{
+			Name:        "leader-elect",
+			EnvVar:      "SYSTEM_UPGRADE_CONTROLLER_LEADER_ELECT",
+			Destination: &leaderElect,
 		},
 		cli.StringFlag{
 			Name:   "kubeconfig",
@@ -54,6 +59,12 @@ func main() {
 			EnvVar:      "SYSTEM_UPGRADE_CONTROLLER_NAME",
 			Required:    true,
 			Destination: &name,
+		},
+		cli.StringFlag{
+			Name:        "node-name",
+			EnvVar:      "SYSTEM_UPGRADE_CONTROLLER_NODE_NAME",
+			Required:    false,
+			Destination: &nodeName,
 		},
 		cli.StringFlag{
 			Name:        "namespace",
@@ -93,7 +104,7 @@ func Run(_ *cli.Context) {
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	ctl, err := upgrade.NewController(cfg, namespace, name, 2*time.Hour)
+	ctl, err := upgrade.NewController(cfg, namespace, name, nodeName, leaderElect, 2*time.Hour)
 	if err != nil {
 		logrus.Fatal(err)
 	}

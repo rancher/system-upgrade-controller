@@ -38,6 +38,30 @@ rules:
   verbs:
   - update
 - apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - get
+  - create
+  - patch
+  - update
+- apiGroups:
+  - "coordination.k8s.io"
+  resources:
+  - leases
+  verbs:
+  - create
+- apiGroups:
+  - "coordination.k8s.io"
+  resources:
+  - leases
+  resourceNames:
+  - "system-upgrade-controller"
+  verbs:
+  - get
+  - update
+- apiGroups:
   - upgrade.cattle.io
   resources:
   - plans

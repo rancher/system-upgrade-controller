@@ -3,6 +3,7 @@ package upgrade
 import (
 	"context"
 
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -24,6 +25,7 @@ func (ctl *Controller) handleNodes(ctx context.Context) error {
 			if selector, err := metav1.LabelSelectorAsSelector(plan.Spec.NodeSelector); err != nil {
 				return obj, err
 			} else if selector.Matches(labels.Set(obj.Labels)) {
+				logrus.Debugf("Enqueing sync of Plan %s/%s from Node %s", plan.Namespace, plan.Name, obj.Name)
 				plans.Enqueue(plan.Namespace, plan.Name)
 			}
 		}
@@ -49,6 +51,7 @@ func (ctl *Controller) handleSecrets(ctx context.Context) error {
 			for _, secret := range plan.Spec.Secrets {
 				if obj.Name == secret.Name {
 					if !secret.IgnoreUpdates {
+						logrus.Debugf("Enqueing sync of Plan %s/%s from Secret %s/%s", plan.Namespace, plan.Name, obj.Namespace, obj.Name)
 						plans.Enqueue(plan.Namespace, plan.Name)
 						continue
 					}

@@ -11,6 +11,7 @@ import (
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradejob "github.com/rancher/system-upgrade-controller/pkg/upgrade/job"
 	batchctlv1 "github.com/rancher/wrangler/v3/pkg/generated/controllers/batch/v1"
+	"github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,6 +62,7 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 			return obj, deleteJob(jobs, obj, metav1.DeletePropagationBackground)
 		}
 		// trigger the plan when we're done, might free up a concurrency slot
+		logrus.Debugf("Enqueing sync of Plan %s/%s from Job %s/%s", obj.Namespace, planName, obj.Namespace, obj.Name)
 		defer plans.Enqueue(obj.Namespace, planName)
 		// identify the node that this job is targeting
 		nodeName, ok := obj.Labels[upgradeapi.LabelNode]
@@ -127,6 +129,7 @@ func enqueueOrDelete(jobController batchctlv1.JobController, job *batchv1.Job, d
 		ttlSecondsAfterFinished = time.Second * time.Duration(*job.Spec.TTLSecondsAfterFinished)
 	}
 	if interval := time.Now().Sub(lastTransitionTime); interval < ttlSecondsAfterFinished {
+		logrus.Debugf("Enqueing sync of Job %s/%s in %v", job.Namespace, job.Name, ttlSecondsAfterFinished-interval)
 		jobController.EnqueueAfter(job.Namespace, job.Name, ttlSecondsAfterFinished-interval)
 		return nil
 	}
