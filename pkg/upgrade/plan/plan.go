@@ -35,6 +35,7 @@ var (
 	ErrDrainDeleteConflict           = fmt.Errorf("spec.drain cannot specify both deleteEmptydirData and deleteLocalData")
 	ErrDrainPodSelectorNotSelectable = fmt.Errorf("spec.drain.podSelector is not selectable")
 	ErrInvalidWindow                 = fmt.Errorf("spec.window is invalid")
+	ErrInvalidDelay                  = fmt.Errorf("spec.postCompleteDelay is negative")
 
 	PollingInterval = func(defaultValue time.Duration) time.Duration {
 		if str, ok := os.LookupEnv("SYSTEM_UPGRADE_PLAN_POLLING_INTERVAL"); ok {
@@ -256,6 +257,9 @@ func Validate(plan *upgradeapiv1.Plan) error {
 		if _, err := timewindow.New(windowSpec.Days, windowSpec.StartTime, windowSpec.EndTime, windowSpec.TimeZone); err != nil {
 			return ErrInvalidWindow
 		}
+	}
+	if delay := plan.Spec.PostCompleteDelay; delay != nil && delay.Duration < 0 {
+		return ErrInvalidDelay
 	}
 	return nil
 }
