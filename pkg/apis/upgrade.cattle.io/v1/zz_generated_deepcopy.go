@@ -232,6 +232,11 @@ func (in *PlanSpec) DeepCopyInto(out *PlanSpec) {
 		*out = make([]corev1.LocalObjectReference, len(*in))
 		copy(*out, *in)
 	}
+	if in.PostCompleteDelay != nil {
+		in, out := &in.PostCompleteDelay, &out.PostCompleteDelay
+		*out = new(metav1.Duration)
+		**out = **in
+	}
 	return
 }
 

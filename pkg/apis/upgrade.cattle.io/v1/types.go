@@ -49,12 +49,13 @@ type PlanSpec struct {
 
 	Exclusive bool `json:"exclusive,omitempty"`
 
-	Window           *TimeWindowSpec               `json:"window,omitempty"`
-	Prepare          *ContainerSpec                `json:"prepare,omitempty"`
-	Cordon           bool                          `json:"cordon,omitempty"`
-	Drain            *DrainSpec                    `json:"drain,omitempty"`
-	Upgrade          *ContainerSpec                `json:"upgrade,omitempty" wrangler:"required"`
-	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+	Window            *TimeWindowSpec               `json:"window,omitempty"`
+	Prepare           *ContainerSpec                `json:"prepare,omitempty"`
+	Cordon            bool                          `json:"cordon,omitempty"`
+	Drain             *DrainSpec                    `json:"drain,omitempty"`
+	Upgrade           *ContainerSpec                `json:"upgrade,omitempty" wrangler:"required"`
+	ImagePullSecrets  []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+	PostCompleteDelay *metav1.Duration              `json:"postCompleteDelay,omitempty"`
 }
 
 // PlanStatus represents the resulting state from processing Plan events.

@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rancher/system-upgrade-controller/pkg/apis/condition"
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
@@ -133,9 +134,21 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	labelPlanName := upgradeapi.LabelPlanName(plan.Name)
 	nodeHostname := upgradenode.Hostname(node)
 	shortNodeName := strings.SplitN(node.Name, ".", 2)[0]
+	ttlSecondsAfterFinished := TTLSecondsAfterFinished
+
+	// Ensure that the job's TTLSecondsAfterFinished is at least 1 minute longer than
+	// the requested post-upgrade delay, so that the controller has time to see that
+	// it has been completed for the requested duration.
+	if delay := plan.Spec.PostCompleteDelay; delay != nil {
+		ttlPostCompleteDelay := delay.Duration + time.Minute
+		ttlAfterFinished := time.Duration(ttlSecondsAfterFinished) * time.Second
+		if ttlAfterFinished < ttlPostCompleteDelay {
+			ttlSecondsAfterFinished = int32(ttlPostCompleteDelay.Seconds())
+		}
+	}
 
 	jobAnnotations := labels.Set{
-		upgradeapi.AnnotationTTLSecondsAfterFinished: strconv.FormatInt(int64(TTLSecondsAfterFinished), 10),
+		upgradeapi.AnnotationTTLSecondsAfterFinished: strconv.FormatInt(int64(ttlSecondsAfterFinished), 10),
 	}
 	podAnnotations := labels.Set{}
 
@@ -171,7 +184,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		Spec: batchv1.JobSpec{
 			PodReplacementPolicy:    &PodReplacementPolicy,
 			BackoffLimit:            &BackoffLimit,
-			TTLSecondsAfterFinished: &TTLSecondsAfterFinished,
+			TTLSecondsAfterFinished: &ttlSecondsAfterFinished,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: podAnnotations,
