@@ -114,9 +114,158 @@ var _ = Describe("Job Generation", func() {
 			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanSpecValidated, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(BeFalse())
-			Expect(upgradeapiv1.PlanSpecValidated.GetMessage(plan)).To(ContainSubstring("cannot specify both deleteEmptydirData and deleteLocalData"))
+			Expect(upgradeapiv1.PlanSpecValidated.GetMessage(plan)).To(ContainSubstring("spec.drain cannot specify both deleteEmptydirData and deleteLocalData"))
 
 			plan.Spec.Drain.DeleteLocalData = nil
+			plan, err = e2e.UpdatePlan(plan)
+			Expect(err).ToNot(HaveOccurred())
+
+			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanSpecValidated, 30*time.Second)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(BeTrue())
+
+			jobs, err = e2e.WaitForPlanJobs(plan, 1, 120*time.Second)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(jobs).To(HaveLen(1))
+		})
+		It("should apply successfully after edit", func() {
+			Expect(jobs).To(HaveLen(1))
+			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 1))
+			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
+			Expect(jobs[0].Status.Failed).To(BeNumerically("==", 0))
+			Expect(jobs[0].Spec.Template.Spec.InitContainers).To(HaveLen(1))
+			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainElement(ContainSubstring("!upgrade.cattle.io/controller")))
+			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainElement(ContainSubstring("component notin (sonobuoy)")))
+		})
+		AfterEach(func() {
+			if CurrentSpecReport().Failed() {
+				podList, _ := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).List(context.Background(), metav1.ListOptions{})
+				for _, pod := range podList.Items {
+					containerNames := []string{}
+					for _, container := range pod.Spec.InitContainers {
+						containerNames = append(containerNames, container.Name)
+					}
+					for _, container := range pod.Spec.Containers {
+						containerNames = append(containerNames, container.Name)
+					}
+					for _, container := range containerNames {
+						reportName := fmt.Sprintf("podlogs-%s-%s", pod.Name, container)
+						logs := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).GetLogs(pod.Name, &v1.PodLogOptions{Container: container})
+						if logStreamer, err := logs.Stream(context.Background()); err == nil {
+							if podLogs, err := io.ReadAll(logStreamer); err == nil {
+								AddReportEntry(reportName, string(podLogs))
+							}
+						}
+					}
+				}
+			}
+		})
+	})
+
+	When("fails because of invalid time window", func() {
+		var (
+			err  error
+			plan *upgradeapiv1.Plan
+			jobs []batchv1.Job
+		)
+		BeforeEach(func() {
+			plan = e2e.NewPlan("fail-window-", "library/alpine:3.18", []string{"sh", "-c"}, "exit 0")
+			plan.Spec.Version = "latest"
+			plan.Spec.Concurrency = 1
+			plan.Spec.ServiceAccountName = e2e.Namespace.Name
+			plan.Spec.Window = &upgradeapiv1.TimeWindowSpec{
+				Days:      []string{"never"},
+				StartTime: "00:00:00",
+				EndTime:   "23:59:59",
+				TimeZone:  "UTC",
+			}
+			plan.Spec.NodeSelector = &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{{
+					Key:      "node-role.kubernetes.io/control-plane",
+					Operator: metav1.LabelSelectorOpDoesNotExist,
+				}},
+			}
+			plan, err = e2e.CreatePlan(plan)
+			Expect(err).ToNot(HaveOccurred())
+
+			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanSpecValidated, 30*time.Second)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(BeFalse())
+			Expect(upgradeapiv1.PlanSpecValidated.GetMessage(plan)).To(ContainSubstring("spec.window is invalid"))
+
+			plan.Spec.Window.Days = []string{"su", "mo", "tu", "we", "th", "fr", "sa"}
+			plan, err = e2e.UpdatePlan(plan)
+			Expect(err).ToNot(HaveOccurred())
+
+			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanSpecValidated, 30*time.Second)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(BeTrue())
+
+			jobs, err = e2e.WaitForPlanJobs(plan, 1, 120*time.Second)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(jobs).To(HaveLen(1))
+		})
+		It("should apply successfully after edit", func() {
+			Expect(jobs).To(HaveLen(1))
+			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 1))
+			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
+			Expect(jobs[0].Status.Failed).To(BeNumerically("==", 0))
+			Expect(jobs[0].Spec.Template.Spec.InitContainers).To(HaveLen(1))
+			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainElement(ContainSubstring("!upgrade.cattle.io/controller")))
+			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainElement(ContainSubstring("component notin (sonobuoy)")))
+		})
+		AfterEach(func() {
+			if CurrentSpecReport().Failed() {
+				podList, _ := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).List(context.Background(), metav1.ListOptions{})
+				for _, pod := range podList.Items {
+					containerNames := []string{}
+					for _, container := range pod.Spec.InitContainers {
+						containerNames = append(containerNames, container.Name)
+					}
+					for _, container := range pod.Spec.Containers {
+						containerNames = append(containerNames, container.Name)
+					}
+					for _, container := range containerNames {
+						reportName := fmt.Sprintf("podlogs-%s-%s", pod.Name, container)
+						logs := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).GetLogs(pod.Name, &v1.PodLogOptions{Container: container})
+						if logStreamer, err := logs.Stream(context.Background()); err == nil {
+							if podLogs, err := io.ReadAll(logStreamer); err == nil {
+								AddReportEntry(reportName, string(podLogs))
+							}
+						}
+					}
+				}
+			}
+		})
+	})
+
+	When("fails because of invalid post complete delay", func() {
+		var (
+			err  error
+			plan *upgradeapiv1.Plan
+			jobs []batchv1.Job
+		)
+		BeforeEach(func() {
+			plan = e2e.NewPlan("fail-post-complete-delay-", "library/alpine:3.18", []string{"sh", "-c"}, "exit 0")
+			plan.Spec.Version = "latest"
+			plan.Spec.Concurrency = 1
+			plan.Spec.ServiceAccountName = e2e.Namespace.Name
+			plan.Spec.PostCompleteDelay = &metav1.Duration{Duration: -30 * time.Second}
+			plan.Spec.NodeSelector = &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{{
+					Key:      "node-role.kubernetes.io/control-plane",
+					Operator: metav1.LabelSelectorOpDoesNotExist,
+				}},
+			}
+			plan, err = e2e.CreatePlan(plan)
+			Expect(err).ToNot(HaveOccurred())
+
+			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanSpecValidated, 30*time.Second)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(BeFalse())
+			Expect(upgradeapiv1.PlanSpecValidated.GetMessage(plan)).To(ContainSubstring("spec.postCompleteDelay is negative"))
+
+			plan.Spec.PostCompleteDelay.Duration = time.Second
 			plan, err = e2e.UpdatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
