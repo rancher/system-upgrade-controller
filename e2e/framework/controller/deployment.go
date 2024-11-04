@@ -19,7 +19,9 @@ type DeploymentOption func(*appsv1.Deployment)
 
 func NewDeployment(name string, opt ...DeploymentOption) *appsv1.Deployment {
 	labels := map[string]string{
-		upgradeapi.LabelController: name,
+		upgradeapi.LabelController:    name,
+		"app.kubernetes.io/name":      name,
+		"app.kubernetes.io/component": "controller",
 	}
 	securityContext := &corev1.SecurityContext{
 		AllowPrivilegeEscalation: pointer.Bool(false),
@@ -46,6 +48,9 @@ func NewDeployment(name string, opt ...DeploymentOption) *appsv1.Deployment {
 		container.Env = []corev1.EnvVar{{
 			Name:  "SYSTEM_UPGRADE_CONTROLLER_NAME",
 			Value: name,
+		}, {
+			Name:  "SYSTEM_UPGRADE_CONTROLLER_LEADER_ELECT",
+			Value: "true",
 		}, {
 			Name: "SYSTEM_UPGRADE_CONTROLLER_NAMESPACE",
 			ValueFrom: &corev1.EnvVarSource{
