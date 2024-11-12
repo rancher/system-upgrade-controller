@@ -81,6 +81,7 @@ type VolumeSpec struct {
 	Name        string `json:"name,omitempty"`
 	Source      string `json:"source,omitempty"`
 	Destination string `json:"destination,omitempty"`
+	DefaultMode *int32 `json:"defaultMode,omitempty"`
 }
 
 // DrainSpec encapsulates `kubectl drain` parameters minus node/pod selectors.
@@ -101,6 +102,7 @@ type SecretSpec struct {
 	Name          string `json:"name,omitempty"`
 	Path          string `json:"path,omitempty"`
 	IgnoreUpdates bool   `json:"ignoreUpdates,omitempty"`
+	DefaultMode   *int32 `json:"defaultMode,omitempty"`
 }
 
 // TimeWindowSpec describes a time window in which a Plan should be processed.

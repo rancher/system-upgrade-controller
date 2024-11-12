@@ -287,7 +287,8 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 			Name: name.SafeConcatName("secret", secret.Name),
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: secret.Name,
+					SecretName:  secret.Name,
+					DefaultMode: secret.DefaultMode,
 				},
 			},
 		})
