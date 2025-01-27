@@ -18,6 +18,7 @@ import (
 	"github.com/rancher/wrangler/v3/pkg/crd"
 	"github.com/rancher/wrangler/v3/pkg/data"
 	corectlv1 "github.com/rancher/wrangler/v3/pkg/generated/controllers/core/v1"
+	"github.com/rancher/wrangler/v3/pkg/merr"
 	"github.com/rancher/wrangler/v3/pkg/schemas/openapi"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -255,7 +256,7 @@ func Validate(plan *upgradeapiv1.Plan) error {
 	}
 	if windowSpec := plan.Spec.Window; windowSpec != nil {
 		if _, err := timewindow.New(windowSpec.Days, windowSpec.StartTime, windowSpec.EndTime, windowSpec.TimeZone); err != nil {
-			return ErrInvalidWindow
+			return merr.NewErrors(ErrInvalidWindow, err)
 		}
 	}
 	if delay := plan.Spec.PostCompleteDelay; delay != nil && delay.Duration < 0 {
