@@ -1,5 +1,6 @@
 ARG BCI=registry.suse.com/bci/bci-base:15.6
 ARG GOLANG=registry.suse.com/bci/golang:1.23
+ARG ALPINE=alpine:3.21
 
 FROM ${GOLANG} AS e2e-ginkgo
 ENV GOBIN=/bin
@@ -19,8 +20,12 @@ RUN set -x \
     && zypper -n in tar gzip
 ENTRYPOINT ["/run.sh"]
 
+FROM ${ALPINE} AS zoneinfo
+RUN apk add -U tzdata
+
 FROM scratch AS controller
 ARG TARGETARCH
 COPY dist/artifacts/system-upgrade-controller-${TARGETARCH} /bin/system-upgrade-controller
+COPY --from=zoneinfo /usr/share/zoneinfo /usr/share/zoneinfo
 USER 65534:65534
 ENTRYPOINT ["/bin/system-upgrade-controller"]
