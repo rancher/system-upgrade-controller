@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-docker ps \
-  --filter label=com.docker.compose.project=local \
-  --format='{{.Image}} ' \
-| grep 'e2e/cluster/local/k3s' | wc -l | awk '{print $1}' | tr -d '[:space:]'

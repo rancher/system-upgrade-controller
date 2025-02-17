@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: system-upgrade-controller-config
+  namespace: cattle-system
+data:
+  SYSTEM_UPGRADE_CONTROLLER_DEBUG: {{ .Values.systemUpgradeControllerDebug | default "false" | quote }}
+  SYSTEM_UPGRADE_CONTROLLER_THREADS: {{ .Values.systemUpgradeControllerThreads | default "2" | quote }}
+  SYSTEM_UPGRADE_JOB_ACTIVE_DEADLINE_SECONDS: {{ .Values.systemUpgradeJobActiveDeadlineSeconds | default "900" | quote }}
+  SYSTEM_UPGRADE_JOB_BACKOFF_LIMIT: {{ .Values.systemUpgradeJobBackoffLimit | default "99" | quote }}
+  SYSTEM_UPGRADE_JOB_IMAGE_PULL_POLICY: {{ .Values.systemUpgradeJobImagePullPolicy | default "IfNotPresent" | quote }}
+  SYSTEM_UPGRADE_JOB_KUBECTL_IMAGE: {{ template "system_default_registry" . }}{{ .Values.kubectl.image.repository }}:{{ .Values.kubectl.image.tag }}
+  SYSTEM_UPGRADE_JOB_PRIVILEGED: {{ .Values.systemUpgradeJobPrivileged | default "true" | quote }}
+  SYSTEM_UPGRADE_JOB_TTL_SECONDS_AFTER_FINISH: {{ .Values.systemUpgradeJobTTLSecondsAfterFinish | default "900" | quote }}
+  SYSTEM_UPGRADE_PLAN_POLLING_INTERVAL: {{ .Values.systemUpgradePlanRollingInterval | default "15m" | quote }}
+

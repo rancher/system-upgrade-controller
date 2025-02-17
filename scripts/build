@@ -1,6 +1,0 @@
-#!/bin/bash
-set -e
-
-$(dirname $0)/build-controller
-$(dirname $0)/build-e2e-tests
-#$(dirname $0)/build-source
