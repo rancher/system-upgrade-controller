@@ -24,6 +24,7 @@ FROM ${ALPINE} AS zoneinfo
 RUN apk add -U tzdata
 
 FROM scratch AS controller
+LABEL org.opencontainers.image.source="https://github.com/rancher/system-upgrade-controller"
 ARG TARGETARCH
 COPY dist/artifacts/system-upgrade-controller-${TARGETARCH} /bin/system-upgrade-controller
 COPY --from=zoneinfo /usr/share/zoneinfo /usr/share/zoneinfo
