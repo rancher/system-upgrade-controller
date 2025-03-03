@@ -40,7 +40,7 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 			// validate plan, and generate events for transitions
 			validated := upgradeapiv1.PlanSpecValidated
 			validated.CreateUnknownIfNotExists(obj)
-			if err := upgradeplan.Validate(obj); err != nil {
+			if err := upgradeplan.Validate(obj, secretsCache); err != nil {
 				if !validated.IsFalse(obj) {
 					recorder.Eventf(obj, corev1.EventTypeWarning, "ValidateFailed", "Failed to validate plan: %v", err)
 				}

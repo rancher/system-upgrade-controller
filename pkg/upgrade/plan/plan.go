@@ -79,15 +79,17 @@ func DigestStatus(plan *upgradeapiv1.Plan, secretCache corectlv1.SecretCache) (u
 		}
 
 		for _, s := range plan.Spec.Secrets {
-			secret, err := secretCache.Get(plan.Namespace, s.Name)
-			if err != nil {
-				return plan.Status, err
-			}
 			if !s.IgnoreUpdates {
+				secret, err := secretCache.Get(plan.Namespace, s.Name)
+				if err != nil {
+					return plan.Status, err
+				}
+
 				secretHash, err := hash.SecretHash(secret)
 				if err != nil {
 					return plan.Status, err
 				}
+
 				h.Write([]byte(secretHash))
 			}
 		}
@@ -239,7 +241,7 @@ func sha256sum(s ...string) string {
 }
 
 // Validate performs validation of the plan spec, raising errors for any conflicting or invalid settings.
-func Validate(plan *upgradeapiv1.Plan) error {
+func Validate(plan *upgradeapiv1.Plan, secretCache corectlv1.SecretCache) error {
 	if drainSpec := plan.Spec.Drain; drainSpec != nil {
 		if drainSpec.DeleteEmptydirData != nil && drainSpec.DeleteLocalData != nil {
 			return ErrDrainDeleteConflict
@@ -262,5 +264,16 @@ func Validate(plan *upgradeapiv1.Plan) error {
 	if delay := plan.Spec.PostCompleteDelay; delay != nil && delay.Duration < 0 {
 		return ErrInvalidDelay
 	}
-	return nil
+
+	sErrs := []error{}
+	for _, secret := range plan.Spec.Secrets {
+		if secret.IgnoreUpdates {
+			continue
+		}
+		if _, err := secretCache.Get(plan.Namespace, secret.Name); err != nil {
+			sErrs = append(sErrs, err)
+		}
+	}
+
+	return merr.NewErrors(sErrs...)
 }
