@@ -288,6 +288,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: secret.Name,
+					Optional:   pointer.Bool(secret.IgnoreUpdates),
 				},
 			},
 		})
