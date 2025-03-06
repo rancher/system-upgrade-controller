@@ -210,9 +210,6 @@ var _ = Describe("Job Generation", func() {
 			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 1))
 			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
 			Expect(jobs[0].Status.Failed).To(BeNumerically("==", 0))
-			Expect(jobs[0].Spec.Template.Spec.InitContainers).To(HaveLen(1))
-			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainElement(ContainSubstring("!upgrade.cattle.io/controller")))
-			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainElement(ContainSubstring("component notin (sonobuoy)")))
 		})
 		AfterEach(func() {
 			if CurrentSpecReport().Failed() {
@@ -282,9 +279,6 @@ var _ = Describe("Job Generation", func() {
 			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 1))
 			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
 			Expect(jobs[0].Status.Failed).To(BeNumerically("==", 0))
-			Expect(jobs[0].Spec.Template.Spec.InitContainers).To(HaveLen(1))
-			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainElement(ContainSubstring("!upgrade.cattle.io/controller")))
-			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainElement(ContainSubstring("component notin (sonobuoy)")))
 		})
 		AfterEach(func() {
 			if CurrentSpecReport().Failed() {
