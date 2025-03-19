@@ -1,0 +1,13 @@
+global:
+  cattle:
+    systemDefaultRegistry: ""
+
+systemUpgradeController:
+  image:
+    repository: rancher/system-upgrade-controller
+    tag: v0.15.2
+
+kubectl:
+  image:
+    repository: rancher/kubectl
+    tag: v1.32.2
