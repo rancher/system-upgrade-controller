@@ -314,8 +314,8 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 				upgradectr.WithSecrets(plan.Spec.Secrets),
 				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
 				upgradectr.WithImagePullPolicy(ImagePullPolicy),
-				upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
-				upgradectr.WithSecurityContext(plan.Spec.Upgrade.SecurityContext),
+				upgradectr.WithVolumes(plan.Spec.Prepare.Volumes),
+				upgradectr.WithSecurityContext(plan.Spec.Prepare.SecurityContext),
 			),
 		)
 	}
