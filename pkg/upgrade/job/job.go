@@ -153,7 +153,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	podAnnotations := labels.Set{}
 
 	for key, value := range plan.Annotations {
-		if !strings.Contains(key, "cattle.io/") {
+		if !strings.Contains(key, "cattle.io/") && !strings.Contains(key, "kubectl.kubernetes.io/") {
 			jobAnnotations[key] = value
 			podAnnotations[key] = value
 		}
