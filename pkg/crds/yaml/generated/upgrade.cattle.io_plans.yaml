@@ -52,7 +52,7 @@ spec:
             properties:
               channel:
                 description: A URL that returns HTTP 302 with the last path element
-                  of the value  returned in the Location header assumed to be an image
+                  of the value returned in the Location header assumed to be an image
                   tag (after munging "+" to "-").
                 type: string
               concurrency:
@@ -62,14 +62,13 @@ spec:
                 type: integer
               cordon:
                 description: |-
-                  If drain is specified, the value for cordon is ignored.
+                  If Cordon is true, the node is cordoned before the upgrade container is run.
+                  If drain is specified, the value for cordon is ignored, and the node is cordoned.
                   If neither drain nor cordon are specified and the node is marked as schedulable=false it will not be marked as schedulable=true when the Job completes.
                 type: boolean
               drain:
-                description: |-
-                  If left unspecified, no drain will be performed. See:
-                  - https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/
-                  - https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#drain
+                description: Configuration for draining nodes prior to upgrade. If
+                  left unspecified, no drain will be performed.
                 properties:
                   deleteEmptydirData:
                     type: boolean
@@ -224,10 +223,8 @@ spec:
                   Job will be created for the next Node.
                 type: string
               prepare:
-                description: |-
-                  The prepare init container, if specified, is run before cordon/drain which is run before the upgrade container.
-                  Shares the same format as the upgrade container.
-                  If no tag is included in the image name, the tag portion of the image will be the value from .status.latestVersion a.k.a. the resolved version for this plan.
+                description: The prepare init container, if specified, is run before
+                  cordon/drain which is run before the upgrade container.
                 properties:
                   args:
                     items:
@@ -614,13 +611,19 @@ spec:
                         source:
                           description: Path on the host to mount.
                           type: string
+                      required:
+                      - destination
+                      - name
+                      - source
                       type: object
                     type: array
+                required:
+                - image
                 type: object
               secrets:
                 description: Secrets to be mounted into the Job Pod.
                 items:
-                  description: SecretSpec describes a secret to be mounted for prepare/upgrade
+                  description: SecretSpec describes a Secret to be mounted for prepare/upgrade
                     containers.
                   properties:
                     ignoreUpdates:
@@ -634,6 +637,9 @@ spec:
                     path:
                       description: Path to mount the Secret volume within the Pod.
                       type: string
+                  required:
+                  - name
+                  - path
                   type: object
                 type: array
               serviceAccountName:
@@ -645,7 +651,7 @@ spec:
                 description: |-
                   Specify which node taints should be tolerated by pods applying the upgrade.
                   Anything specified here is appended to the default of:
-                  - {key: node.kubernetes.io/unschedulable, effect: NoSchedule, operator: Exists}
+                  - `{key: node.kubernetes.io/unschedulable, effect: NoSchedule, operator: Exists}`
                 items:
                   description: |-
                     The pod this Toleration is attached to tolerates any taint that matches
@@ -684,9 +690,7 @@ spec:
                   type: object
                 type: array
               upgrade:
-                description: |-
-                  The upgrade container.
-                  If no tag is included in the image name, the tag portion of the image will be the value from .status.latestVersion a.k.a. the resolved version for this plan.
+                description: The upgrade container; must be specified.
                 properties:
                   args:
                     items:
@@ -1073,8 +1077,14 @@ spec:
                         source:
                           description: Path on the host to mount.
                           type: string
+                      required:
+                      - destination
+                      - name
+                      - source
                       type: object
                     type: array
+                required:
+                - image
                 type: object
               version:
                 description: Providing a value for version will prevent polling/resolution
@@ -1118,6 +1128,7 @@ spec:
                       - sat
                       - saturday
                       type: string
+                    minItems: 1
                     type: array
                   endTime:
                     description: End of the time window.
@@ -1130,6 +1141,8 @@ spec:
                       will be used.
                     type: string
                 type: object
+            required:
+            - upgrade
             type: object
           status:
             description: PlanStatus represents the resulting state from processing

@@ -20,7 +20,7 @@ var _ = Describe("Plan Creation", func() {
 			plan, err = e2e.CreatePlan(plan)
 		})
 		It("should return an error if upgrade in nil", func() {
-			Expect(err).Should(HaveOccurred())
+			Expect(err).To(HaveOccurred())
 		})
 	})
 })

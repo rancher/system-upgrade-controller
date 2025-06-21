@@ -1,0 +1,5 @@
+processor:
+  ignoreFields:
+    - "TypeMeta$"
+render:
+  kubernetesVersion: 1.32
