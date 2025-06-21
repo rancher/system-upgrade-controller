@@ -19,7 +19,8 @@ RUN if [ "${ARCH:-$(go env GOARCH)}" = "amd64" ]; then \
 RUN mkdir -p /usr/local/lib/docker/cli-plugins; \
     curl -o /usr/local/lib/docker/cli-plugins/docker-buildx -fsSL "https://github.com/docker/buildx/releases/download/v0.17.1/buildx-v0.17.1.linux-amd64"; \
     chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx
-RUN go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.17.3
+RUN go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.17.3 && \
+    go install github.com/elastic/crd-ref-docs@v0.1.0
 ENV DAPPER_ENV REPO TAG DRONE_TAG
 ENV DAPPER_SOURCE /go/src/github.com/rancher/system-upgrade-controller/
 ENV DAPPER_OUTPUT ./bin ./dist

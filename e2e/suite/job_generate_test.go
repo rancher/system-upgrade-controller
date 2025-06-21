@@ -185,16 +185,11 @@ var _ = Describe("Job Generation", func() {
 					Operator: metav1.LabelSelectorOpDoesNotExist,
 				}},
 			}
-			plan, err = e2e.CreatePlan(plan)
-			Expect(err).ToNot(HaveOccurred())
-
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanSpecValidated, 30*time.Second)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(BeFalse())
-			Expect(upgradeapiv1.PlanSpecValidated.GetMessage(plan)).To(ContainSubstring("spec.window is invalid"))
+			_, err = e2e.CreatePlan(plan)
+			Expect(err).To(MatchError(ContainSubstring("invalid: spec.window.days")))
 
 			plan.Spec.Window.Days = []upgradeapiv1.Day{"su", "mo", "tu", "we", "th", "fr", "sa"}
-			plan, err = e2e.UpdatePlan(plan)
+			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
 			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanSpecValidated, 30*time.Second)
@@ -205,7 +200,7 @@ var _ = Describe("Job Generation", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(jobs).To(HaveLen(1))
 		})
-		It("should apply successfully after edit", func() {
+		It("should apply successfully when valid", func() {
 			Expect(jobs).To(HaveLen(1))
 			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 1))
 			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))

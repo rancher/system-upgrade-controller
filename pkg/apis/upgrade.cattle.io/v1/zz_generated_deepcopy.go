@@ -222,14 +222,14 @@ func (in *PlanSpec) DeepCopyInto(out *PlanSpec) {
 		*out = new(ContainerSpec)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.Drain != nil {
-		in, out := &in.Drain, &out.Drain
-		*out = new(DrainSpec)
-		(*in).DeepCopyInto(*out)
-	}
 	if in.Upgrade != nil {
 		in, out := &in.Upgrade, &out.Upgrade
 		*out = new(ContainerSpec)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Drain != nil {
+		in, out := &in.Drain, &out.Drain
+		*out = new(DrainSpec)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.ImagePullSecrets != nil {

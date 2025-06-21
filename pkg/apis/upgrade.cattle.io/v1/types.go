@@ -50,7 +50,7 @@ type PlanSpec struct {
 	NodeSelector *metav1.LabelSelector `json:"nodeSelector,omitempty"`
 	// The service account for the pod to use. As with normal pods, if not specified the default service account from the namespace will be assigned.
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
-	// A URL that returns HTTP 302 with the last path element of the value  returned in the Location header assumed to be an image tag (after munging "+" to "-").
+	// A URL that returns HTTP 302 with the last path element of the value returned in the Location header assumed to be an image tag (after munging "+" to "-").
 	Channel string `json:"channel,omitempty"`
 	// Providing a value for version will prevent polling/resolution of the channel if specified.
 	Version string `json:"version,omitempty"`
@@ -58,7 +58,7 @@ type PlanSpec struct {
 	Secrets []SecretSpec `json:"secrets,omitempty"`
 	// Specify which node taints should be tolerated by pods applying the upgrade.
 	// Anything specified here is appended to the default of:
-	// - {key: node.kubernetes.io/unschedulable, effect: NoSchedule, operator: Exists}
+	// - `{key: node.kubernetes.io/unschedulable, effect: NoSchedule, operator: Exists}`
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 	// Jobs for exclusive plans cannot be run alongside any other exclusive plan.
 	Exclusive bool `json:"exclusive,omitempty"`
@@ -66,19 +66,15 @@ type PlanSpec struct {
 	// Jobs will not be generated outside this time window, but may continue executing into the window once started.
 	Window *TimeWindowSpec `json:"window,omitempty"`
 	// The prepare init container, if specified, is run before cordon/drain which is run before the upgrade container.
-	// Shares the same format as the upgrade container.
-	// If no tag is included in the image name, the tag portion of the image will be the value from .status.latestVersion a.k.a. the resolved version for this plan.
 	Prepare *ContainerSpec `json:"prepare,omitempty"`
-	// If drain is specified, the value for cordon is ignored.
+	// The upgrade container; must be specified.
+	Upgrade *ContainerSpec `json:"upgrade"`
+	// If Cordon is true, the node is cordoned before the upgrade container is run.
+	// If drain is specified, the value for cordon is ignored, and the node is cordoned.
 	// If neither drain nor cordon are specified and the node is marked as schedulable=false it will not be marked as schedulable=true when the Job completes.
 	Cordon bool `json:"cordon,omitempty"`
-	// If left unspecified, no drain will be performed. See:
-	// - https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/
-	// - https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#drain
+	// Configuration for draining nodes prior to upgrade. If left unspecified, no drain will be performed.
 	Drain *DrainSpec `json:"drain,omitempty"`
-	// The upgrade container.
-	// If no tag is included in the image name, the tag portion of the image will be the value from .status.latestVersion a.k.a. the resolved version for this plan.
-	Upgrade *ContainerSpec `json:"upgrade,omitempty"`
 	// Image Pull Secrets, used to pull images for the Job.
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 	// Time after a Job for one Node is complete before a new Job will be created for the next Node.
@@ -102,10 +98,12 @@ type PlanStatus struct {
 	Applying []string `json:"applying,omitempty"`
 }
 
-// ContainerSpec is a simplified container template.
+// ContainerSpec is a simplified container template spec, used to configure the prepare and upgrade
+// containers of the Job Pod.
 type ContainerSpec struct {
 	// Image name. If the tag is omitted, the value from .status.latestVersion will be used.
-	Image           string                  `json:"image,omitempty"`
+	// +kubebuilder:validation:Required
+	Image           string                  `json:"image"`
 	Command         []string                `json:"command,omitempty"`
 	Args            []string                `json:"args,omitempty"`
 	Env             []corev1.EnvVar         `json:"envs,omitempty"`
@@ -117,14 +115,19 @@ type ContainerSpec struct {
 // HostPath volume to mount into the pod
 type VolumeSpec struct {
 	// Name of the Volume as it will appear within the Pod spec.
-	Name string `json:"name,omitempty"`
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
 	// Path on the host to mount.
-	Source string `json:"source,omitempty"`
+	// +kubebuilder:validation:Required
+	Source string `json:"source"`
 	// Path to mount the Volume at within the Pod.
-	Destination string `json:"destination,omitempty"`
+	// +kubebuilder:validation:Required
+	Destination string `json:"destination"`
 }
 
-// DrainSpec encapsulates kubectl drain parameters minus node/pod selectors.
+// DrainSpec encapsulates kubectl drain parameters minus node/pod selectors. See:
+// - https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/
+// - https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#drain
 type DrainSpec struct {
 	Timeout                  *time.Duration        `json:"timeout,omitempty"`
 	GracePeriod              *int32                `json:"gracePeriod,omitempty"`
@@ -137,19 +140,25 @@ type DrainSpec struct {
 	PodSelector              *metav1.LabelSelector `json:"podSelector,omitempty"`
 }
 
-// SecretSpec describes a secret to be mounted for prepare/upgrade containers.
+// SecretSpec describes a Secret to be mounted for prepare/upgrade containers.
 type SecretSpec struct {
 	// Secret name
-	Name string `json:"name,omitempty"`
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
 	// Path to mount the Secret volume within the Pod.
-	Path string `json:"path,omitempty"`
+	// +kubebuilder:validation:Required
+	Path string `json:"path"`
 	// If set to true, the Secret contents will not be hashed, and changes to the Secret will not trigger new application of the Plan.
 	IgnoreUpdates bool `json:"ignoreUpdates,omitempty"`
 }
 
+// +kubebuilder:validation:Enum={"0","su","sun","sunday","1","mo","mon","monday","2","tu","tue","tuesday","3","we","wed","wednesday","4","th","thu","thursday","5","fr","fri","friday","6","sa","sat","saturday"}
+type Day string
+
 // TimeWindowSpec describes a time window in which a Plan should be processed.
 type TimeWindowSpec struct {
 	// Days that this time window is valid for
+	// +kubebuilder:validation:MinItems=1
 	Days []Day `json:"days,omitempty"`
 	// Start of the time window.
 	StartTime string `json:"startTime,omitempty"`
@@ -158,9 +167,6 @@ type TimeWindowSpec struct {
 	// Time zone for the time window; if not specified UTC will be used.
 	TimeZone string `json:"timeZone,omitempty"`
 }
-
-// +kubebuilder:validation:Enum={"0","su","sun","sunday","1","mo","mon","monday","2","tu","tue","tuesday","3","we","wed","wednesday","4","th","thu","thursday","5","fr","fri","friday","6","sa","sat","saturday"}
-type Day string
 
 func (tws *TimeWindowSpec) Contains(t time.Time) bool {
 	days := make([]string, len(tws.Days))
