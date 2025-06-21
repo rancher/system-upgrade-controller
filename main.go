@@ -1,6 +1,7 @@
 //go:generate go run pkg/codegen/cleanup/cleanup.go
-//go:generate rm -rf pkg/generated
+//go:generate rm -rf pkg/generated pkg/crds/yaml/generated
 //go:generate go run pkg/codegen/codegen.go
+//go:generate controller-gen crd:generateEmbeddedObjectMeta=true paths=./pkg/apis/... output:crd:dir=./pkg/crds/yaml/generated
 
 package main
 

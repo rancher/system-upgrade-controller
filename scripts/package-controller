@@ -31,5 +31,5 @@ if [ "$ARCH" = "amd64" ]; then
   trap reset-kustomization EXIT
   kustomize edit set image "rancher/system-upgrade-controller=${REPO}/system-upgrade-controller:${VERSION}"
   kustomize build --output ./dist/artifacts/system-upgrade-controller.yaml
-  go run hack/crdgen.go > ./dist/artifacts/crd.yaml
+  cat ./pkg/crds/yaml/*/* > dist/artifacts/crd.yaml
 fi

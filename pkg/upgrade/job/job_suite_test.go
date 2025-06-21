@@ -5,10 +5,12 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gstruct"
 	upgradev1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	sucjob "github.com/rancher/system-upgrade-controller/pkg/upgrade/job"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 )
 
 func TestJob(t *testing.T) {
@@ -45,21 +47,33 @@ var _ = Describe("Jobs", func() {
 	Describe("Setting the batchv1.Job ActiveDeadlineSeconds field", func() {
 		Context("When the Plan has a positive non-zero value for deadline", func() {
 			It("Constructs the batchv1.Job with the Plan's given value", func() {
-				plan.Spec.JobActiveDeadlineSecs = 12345
+				plan.Spec.JobActiveDeadlineSecs = pointer.Int64(12345)
 				job := sucjob.New(plan, node, "foo")
-				Expect(*job.Spec.ActiveDeadlineSeconds).To(Equal(int64(12345)))
+				Expect(job.Spec.ActiveDeadlineSeconds).To(PointTo(Equal(int64(12345))))
 			})
 		})
 
-		Context("When the Plan has a zero-value given as its deadline", func() {
+		Context("When the Plan has a nil given as its deadline", func() {
 			It("Constructs the batchv1.Job with a global default", func() {
 				oldActiveDeadlineSeconds := sucjob.ActiveDeadlineSeconds
 				sucjob.ActiveDeadlineSeconds = 300
 				defer func() { sucjob.ActiveDeadlineSeconds = oldActiveDeadlineSeconds }()
 
-				plan.Spec.JobActiveDeadlineSecs = 0
+				plan.Spec.JobActiveDeadlineSecs = nil
 				job := sucjob.New(plan, node, "bar")
-				Expect(*job.Spec.ActiveDeadlineSeconds).To(Equal(int64(300)))
+				Expect(job.Spec.ActiveDeadlineSeconds).To(PointTo(Equal(int64(300))))
+			})
+		})
+
+		Context("When the Plan has a zero value given as its deadline", func() {
+			It("Constructs the batchv1.Job with no deadline", func() {
+				oldActiveDeadlineSeconds := sucjob.ActiveDeadlineSeconds
+				sucjob.ActiveDeadlineSeconds = 300
+				defer func() { sucjob.ActiveDeadlineSeconds = oldActiveDeadlineSeconds }()
+
+				plan.Spec.JobActiveDeadlineSecs = pointer.Int64(0)
+				job := sucjob.New(plan, node, "bar")
+				Expect(job.Spec.ActiveDeadlineSeconds).To(BeNil())
 			})
 		})
 
@@ -69,9 +83,9 @@ var _ = Describe("Jobs", func() {
 				sucjob.ActiveDeadlineSeconds = 3600
 				defer func() { sucjob.ActiveDeadlineSeconds = oldActiveDeadlineSeconds }()
 
-				plan.Spec.JobActiveDeadlineSecs = -1
+				plan.Spec.JobActiveDeadlineSecs = pointer.Int64(-1)
 				job := sucjob.New(plan, node, "baz")
-				Expect(*job.Spec.ActiveDeadlineSeconds).To(Equal(int64(3600)))
+				Expect(job.Spec.ActiveDeadlineSeconds).To(PointTo(Equal(int64(3600))))
 			})
 		})
 
@@ -81,9 +95,9 @@ var _ = Describe("Jobs", func() {
 				sucjob.ActiveDeadlineSecondsMax = 300
 				defer func() { sucjob.ActiveDeadlineSecondsMax = oldActiveDeadlineSecondsMax }()
 
-				plan.Spec.JobActiveDeadlineSecs = 600
+				plan.Spec.JobActiveDeadlineSecs = pointer.Int64(600)
 				job := sucjob.New(plan, node, "foobar")
-				Expect(*job.Spec.ActiveDeadlineSeconds).To(Equal(int64(300)))
+				Expect(job.Spec.ActiveDeadlineSeconds).To(PointTo(Equal(int64(300))))
 			})
 		})
 
