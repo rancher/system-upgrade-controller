@@ -417,23 +417,36 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		),
 	}
 
-	activeDeadlineSeconds := ActiveDeadlineSeconds
-
-	if plan.Spec.JobActiveDeadlineSecs > 0 {
-		activeDeadlineSeconds = plan.Spec.JobActiveDeadlineSecs
-	}
-
-	// If configured with a maximum deadline via "SYSTEM_UPGRADE_JOB_ACTIVE_DEADLINE_SECONDS_MAX",
-	// clamp the Plan's given deadline to the maximum.
-	if ActiveDeadlineSecondsMax > 0 && activeDeadlineSeconds > ActiveDeadlineSecondsMax {
-		activeDeadlineSeconds = ActiveDeadlineSecondsMax
-	}
-
-	if activeDeadlineSeconds > 0 {
-		job.Spec.ActiveDeadlineSeconds = &activeDeadlineSeconds
-		if drain != nil && drain.Timeout != nil && drain.Timeout.Milliseconds() > ActiveDeadlineSeconds*1000 {
-			logrus.Warnf("drain timeout exceeds active deadline seconds")
+	if plan.Spec.JobActiveDeadlineSecs == nil {
+		// nil means default from controller
+		job.Spec.ActiveDeadlineSeconds = pointer.Int64(ActiveDeadlineSeconds)
+	} else {
+		if *plan.Spec.JobActiveDeadlineSecs < 0 {
+			// < 0 means default from controller
+			job.Spec.ActiveDeadlineSeconds = pointer.Int64(ActiveDeadlineSeconds)
+		} else if *plan.Spec.JobActiveDeadlineSecs > 0 {
+			// > 0 means value as set
+			job.Spec.ActiveDeadlineSeconds = plan.Spec.JobActiveDeadlineSecs
+		} else {
+			// 0 means nil, no deadline
+			job.Spec.ActiveDeadlineSeconds = nil
 		}
+	}
+
+	if job.Spec.ActiveDeadlineSeconds == nil {
+		// ActiveDeadlineSeconds cannot be nil if a max is configured
+		if ActiveDeadlineSecondsMax > 0 {
+			job.Spec.ActiveDeadlineSeconds = pointer.Int64(ActiveDeadlineSecondsMax)
+		}
+	} else {
+		// Clamp configured ActiveDeadlineSeconds to max
+		if ActiveDeadlineSecondsMax > 0 && *job.Spec.ActiveDeadlineSeconds > ActiveDeadlineSecondsMax {
+			job.Spec.ActiveDeadlineSeconds = pointer.Int64(ActiveDeadlineSecondsMax)
+		}
+	}
+
+	if drain != nil && drain.Timeout != nil && job.Spec.ActiveDeadlineSeconds != nil && drain.Timeout.Milliseconds() > *job.Spec.ActiveDeadlineSeconds*1000 {
+		logrus.Warnf("Plan %s/%s drain timeout exceeds active deadline seconds", plan.Namespace, plan.Name)
 	}
 
 	return job

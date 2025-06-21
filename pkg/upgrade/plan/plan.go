@@ -15,11 +15,9 @@ import (
 	"github.com/kubereboot/kured/pkg/timewindow"
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
-	"github.com/rancher/wrangler/v3/pkg/crd"
 	"github.com/rancher/wrangler/v3/pkg/data"
 	corectlv1 "github.com/rancher/wrangler/v3/pkg/generated/controllers/core/v1"
 	"github.com/rancher/wrangler/v3/pkg/merr"
-	"github.com/rancher/wrangler/v3/pkg/schemas/openapi"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,25 +47,6 @@ var (
 		return defaultValue
 	}(defaultPollingInterval)
 )
-
-func CRD() (*crd.CRD, error) {
-	prototype := upgradeapiv1.NewPlan("", "", upgradeapiv1.Plan{})
-	schema, err := openapi.ToOpenAPIFromStruct(*prototype)
-	if err != nil {
-		return nil, err
-	}
-	plan := crd.CRD{
-		GVK:        prototype.GroupVersionKind(),
-		PluralName: upgradeapiv1.PlanResourceName,
-		Status:     true,
-		Schema:     schema,
-		Categories: []string{"upgrade"},
-	}.
-		WithColumn("Image", ".spec.upgrade.image").
-		WithColumn("Channel", ".spec.channel").
-		WithColumn("Version", ".spec.version")
-	return &plan, nil
-}
 
 func DigestStatus(plan *upgradeapiv1.Plan, secretCache corectlv1.SecretCache) (upgradeapiv1.PlanStatus, error) {
 	if upgradeapiv1.PlanLatestResolved.GetReason(plan) != "Error" {
@@ -257,7 +236,11 @@ func Validate(plan *upgradeapiv1.Plan, secretCache corectlv1.SecretCache) error 
 		}
 	}
 	if windowSpec := plan.Spec.Window; windowSpec != nil {
-		if _, err := timewindow.New(windowSpec.Days, windowSpec.StartTime, windowSpec.EndTime, windowSpec.TimeZone); err != nil {
+		days := make([]string, len(windowSpec.Days))
+		for i, day := range windowSpec.Days {
+			days[i] = string(day)
+		}
+		if _, err := timewindow.New(days, windowSpec.StartTime, windowSpec.EndTime, windowSpec.TimeZone); err != nil {
 			return merr.NewErrors(ErrInvalidWindow, err)
 		}
 	}

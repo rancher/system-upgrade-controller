@@ -174,7 +174,7 @@ var _ = Describe("Job Generation", func() {
 			plan.Spec.Concurrency = 1
 			plan.Spec.ServiceAccountName = e2e.Namespace.Name
 			plan.Spec.Window = &upgradeapiv1.TimeWindowSpec{
-				Days:      []string{"never"},
+				Days:      []upgradeapiv1.Day{"never"},
 				StartTime: "00:00:00",
 				EndTime:   "23:59:59",
 				TimeZone:  "UTC",
@@ -193,7 +193,7 @@ var _ = Describe("Job Generation", func() {
 			Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(BeFalse())
 			Expect(upgradeapiv1.PlanSpecValidated.GetMessage(plan)).To(ContainSubstring("spec.window is invalid"))
 
-			plan.Spec.Window.Days = []string{"su", "mo", "tu", "we", "th", "fr", "sa"}
+			plan.Spec.Window.Days = []upgradeapiv1.Day{"su", "mo", "tu", "we", "th", "fr", "sa"}
 			plan, err = e2e.UpdatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 

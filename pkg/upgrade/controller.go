@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/rancher/system-upgrade-controller/pkg/crds"
 	upgradectl "github.com/rancher/system-upgrade-controller/pkg/generated/controllers/upgrade.cattle.io"
-	upgradeplan "github.com/rancher/system-upgrade-controller/pkg/upgrade/plan"
 	"github.com/rancher/system-upgrade-controller/pkg/version"
 	"github.com/rancher/wrangler/v3/pkg/apply"
 	"github.com/rancher/wrangler/v3/pkg/crd"
@@ -19,12 +19,18 @@ import (
 	"github.com/rancher/wrangler/v3/pkg/start"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
+)
+
+const (
+	// readyDuration time to wait for CRDs to be ready.
+	readyDuration = time.Minute * 1
 )
 
 var (
@@ -176,21 +182,14 @@ func (ctl *Controller) Start(ctx context.Context, threads int) error {
 }
 
 func (ctl *Controller) registerCRD(ctx context.Context) error {
-	factory, err := crd.NewFactoryFromClient(ctl.cfg)
+	crds, err := crds.List()
+	if err != nil {
+		return err
+	}
+	client, err := clientset.NewForConfig(ctl.cfg)
 	if err != nil {
 		return err
 	}
 
-	var crds []crd.CRD
-	for _, crdFn := range []func() (*crd.CRD, error){
-		upgradeplan.CRD,
-	} {
-		crdef, err := crdFn()
-		if err != nil {
-			return err
-		}
-		crds = append(crds, *crdef)
-	}
-
-	return factory.BatchCreateCRDs(ctx, crds...).BatchWait()
+	return crd.BatchCreateCRDs(ctx, client.ApiextensionsV1().CustomResourceDefinitions(), nil, readyDuration, crds)
 }
