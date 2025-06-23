@@ -1,10 +1,10 @@
 ARG BCI=registry.suse.com/bci/bci-base:15.6
-ARG GOLANG=registry.suse.com/bci/golang:1.23
-ARG ALPINE=alpine:3.21
+ARG GOLANG=registry.suse.com/bci/golang:1.24
+ARG ALPINE=alpine:3.22
 
 FROM ${GOLANG} AS e2e-ginkgo
 ENV GOBIN=/bin
-RUN go install github.com/onsi/ginkgo/v2/ginkgo@v2.20.0
+RUN go install github.com/onsi/ginkgo/v2/ginkgo@v2.23.4
 
 FROM ${BCI} AS e2e-tests
 ARG TARGETARCH

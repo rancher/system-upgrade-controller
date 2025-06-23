@@ -3,7 +3,7 @@
 ARG BCI="registry.suse.com/bci/bci-base:15.6"
 FROM ${BCI} AS k3s
 ARG ARCH
-ARG K3S_VERSION="v1.30.3+k3s1"
+ARG K3S_VERSION="v1.32.5+k3s1"
 RUN set -x \
    && zypper -n in \
    ca-certificates \
