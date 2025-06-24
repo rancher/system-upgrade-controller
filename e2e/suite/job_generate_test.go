@@ -8,13 +8,17 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	format "github.com/onsi/gomega/format"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/utils/pointer"
 	"k8s.io/utils/ptr"
 
 	"github.com/rancher/system-upgrade-controller/e2e/framework"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	_ "k8s.io/kubernetes/test/utils/format"
 )
 
 var _ = Describe("Job Generation", func() {
@@ -137,29 +141,7 @@ var _ = Describe("Job Generation", func() {
 			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainElement(ContainSubstring("!upgrade.cattle.io/controller")))
 			Expect(jobs[0].Spec.Template.Spec.InitContainers[0].Args).To(ContainElement(ContainSubstring("component notin (sonobuoy)")))
 		})
-		AfterEach(func() {
-			if CurrentSpecReport().Failed() {
-				podList, _ := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).List(context.Background(), metav1.ListOptions{})
-				for _, pod := range podList.Items {
-					containerNames := []string{}
-					for _, container := range pod.Spec.InitContainers {
-						containerNames = append(containerNames, container.Name)
-					}
-					for _, container := range pod.Spec.Containers {
-						containerNames = append(containerNames, container.Name)
-					}
-					for _, container := range containerNames {
-						reportName := fmt.Sprintf("podlogs-%s-%s", pod.Name, container)
-						logs := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).GetLogs(pod.Name, &v1.PodLogOptions{Container: container})
-						if logStreamer, err := logs.Stream(context.Background()); err == nil {
-							if podLogs, err := io.ReadAll(logStreamer); err == nil {
-								AddReportEntry(reportName, string(podLogs))
-							}
-						}
-					}
-				}
-			}
-		})
+		AfterEach(CollectLogsOnFailure(e2e))
 	})
 
 	When("fails because of invalid time window", func() {
@@ -206,29 +188,7 @@ var _ = Describe("Job Generation", func() {
 			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
 			Expect(jobs[0].Status.Failed).To(BeNumerically("==", 0))
 		})
-		AfterEach(func() {
-			if CurrentSpecReport().Failed() {
-				podList, _ := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).List(context.Background(), metav1.ListOptions{})
-				for _, pod := range podList.Items {
-					containerNames := []string{}
-					for _, container := range pod.Spec.InitContainers {
-						containerNames = append(containerNames, container.Name)
-					}
-					for _, container := range pod.Spec.Containers {
-						containerNames = append(containerNames, container.Name)
-					}
-					for _, container := range containerNames {
-						reportName := fmt.Sprintf("podlogs-%s-%s", pod.Name, container)
-						logs := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).GetLogs(pod.Name, &v1.PodLogOptions{Container: container})
-						if logStreamer, err := logs.Stream(context.Background()); err == nil {
-							if podLogs, err := io.ReadAll(logStreamer); err == nil {
-								AddReportEntry(reportName, string(podLogs))
-							}
-						}
-					}
-				}
-			}
-		})
+		AfterEach(CollectLogsOnFailure(e2e))
 	})
 
 	When("fails because of invalid post complete delay", func() {
@@ -275,32 +235,10 @@ var _ = Describe("Job Generation", func() {
 			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
 			Expect(jobs[0].Status.Failed).To(BeNumerically("==", 0))
 		})
-		AfterEach(func() {
-			if CurrentSpecReport().Failed() {
-				podList, _ := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).List(context.Background(), metav1.ListOptions{})
-				for _, pod := range podList.Items {
-					containerNames := []string{}
-					for _, container := range pod.Spec.InitContainers {
-						containerNames = append(containerNames, container.Name)
-					}
-					for _, container := range pod.Spec.Containers {
-						containerNames = append(containerNames, container.Name)
-					}
-					for _, container := range containerNames {
-						reportName := fmt.Sprintf("podlogs-%s-%s", pod.Name, container)
-						logs := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).GetLogs(pod.Name, &v1.PodLogOptions{Container: container})
-						if logStreamer, err := logs.Stream(context.Background()); err == nil {
-							if podLogs, err := io.ReadAll(logStreamer); err == nil {
-								AddReportEntry(reportName, string(podLogs))
-							}
-						}
-					}
-				}
-			}
-		})
+		AfterEach(CollectLogsOnFailure(e2e))
 	})
 
-	When("updated secret should not change hash", func() {
+	When("updated secret does not change hash", func() {
 		var (
 			err    error
 			plan   *upgradeapiv1.Plan
@@ -347,5 +285,82 @@ var _ = Describe("Job Generation", func() {
 		It("hash should be equal", func() {
 			Expect(plan.Status.LatestHash).Should(Equal(hash))
 		})
+		AfterEach(CollectLogsOnFailure(e2e))
+	})
+
+	When("job failure message is reflected in plan status condition", func() {
+		var (
+			err  error
+			plan *upgradeapiv1.Plan
+			jobs []batchv1.Job
+		)
+		BeforeEach(func() {
+			plan = e2e.NewPlan("job-deadline-", "library/alpine:3.18", []string{"sh", "-c"}, "sleep 3600")
+			plan.Spec.JobActiveDeadlineSecs = pointer.Int64(15)
+			plan.Spec.Version = "latest"
+			plan.Spec.Concurrency = 1
+			plan.Spec.ServiceAccountName = e2e.Namespace.Name
+			plan.Spec.NodeSelector = &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{{
+					Key:      "node-role.kubernetes.io/control-plane",
+					Operator: metav1.LabelSelectorOpDoesNotExist,
+				}},
+			}
+			plan, err = e2e.CreatePlan(plan)
+			Expect(err).ToNot(HaveOccurred())
+
+			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
+			Expect(err).ToNot(HaveOccurred())
+		})
+		It("message should contain deadline reason and message", func() {
+			jobs, err = e2e.WaitForPlanJobs(plan, 1, 120*time.Second)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(jobs).To(HaveLen(1))
+			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 0))
+			Expect(jobs[0].Status.Active).To(BeNumerically("==", 0))
+			Expect(jobs[0].Status.Failed).To(BeNumerically(">=", 1))
+
+			Eventually(e2e.GetPlan).
+				WithArguments(plan.Name, metav1.GetOptions{}).
+				WithTimeout(30 * time.Second).
+				Should(SatisfyAll(
+					WithTransform(upgradeapiv1.PlanComplete.IsTrue, BeFalse()),
+					WithTransform(upgradeapiv1.PlanComplete.GetReason, Equal("JobFailed")),
+					WithTransform(upgradeapiv1.PlanComplete.GetMessage, ContainSubstring("DeadlineExceeded: Job was active longer than specified deadline")),
+				))
+		})
+		AfterEach(CollectLogsOnFailure(e2e))
 	})
 })
+
+func CollectLogsOnFailure(e2e *framework.Client) func() {
+	return func() {
+		if CurrentSpecReport().Failed() {
+			planList, _ := e2e.UpgradeClientSet.UpgradeV1().Plans(e2e.Namespace.Name).List(context.Background(), metav1.ListOptions{})
+			AddReportEntry("plans", format.Object(planList, 0))
+
+			jobList, _ := e2e.ClientSet.BatchV1().Jobs(e2e.Namespace.Name).List(context.Background(), metav1.ListOptions{})
+			AddReportEntry("jobs", format.Object(jobList, 0))
+
+			podList, _ := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).List(context.Background(), metav1.ListOptions{})
+			for _, pod := range podList.Items {
+				containerNames := []string{}
+				for _, container := range pod.Spec.InitContainers {
+					containerNames = append(containerNames, container.Name)
+				}
+				for _, container := range pod.Spec.Containers {
+					containerNames = append(containerNames, container.Name)
+				}
+				for _, container := range containerNames {
+					reportName := fmt.Sprintf("podlogs-%s-%s", pod.Name, container)
+					logs := e2e.ClientSet.CoreV1().Pods(e2e.Namespace.Name).GetLogs(pod.Name, &v1.PodLogOptions{Container: container})
+					if logStreamer, err := logs.Stream(context.Background()); err == nil {
+						if podLogs, err := io.ReadAll(logStreamer); err == nil {
+							AddReportEntry(reportName, string(podLogs))
+						}
+					}
+				}
+			}
+		}
+	}
+}
