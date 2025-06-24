@@ -162,11 +162,11 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 				if !slices.Equal(obj.Status.Applying, concurrentNodeNames) {
 					recorder.Eventf(obj, corev1.EventTypeNormal, "SyncJob", "Jobs synced for version %s on Nodes %s. Hash: %s",
 						obj.Status.LatestVersion, strings.Join(concurrentNodeNames, ","), obj.Status.LatestHash)
+					obj.Status.Applying = concurrentNodeNames[:]
+					complete.False(obj)
+					complete.Message(obj, "")
+					complete.Reason(obj, "SyncJob")
 				}
-				obj.Status.Applying = concurrentNodeNames[:]
-				complete.False(obj)
-				complete.Message(obj, "")
-				complete.Reason(obj, "SyncJob")
 			} else {
 				// set PlanComplete to true when no nodes have been selected,
 				// and emit an event if the plan just completed

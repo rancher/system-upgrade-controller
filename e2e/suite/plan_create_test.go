@@ -22,5 +22,6 @@ var _ = Describe("Plan Creation", func() {
 		It("should return an error if upgrade in nil", func() {
 			Expect(err).To(HaveOccurred())
 		})
+		AfterEach(CollectLogsOnFailure(e2e))
 	})
 })

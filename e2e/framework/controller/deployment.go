@@ -52,6 +52,9 @@ func NewDeployment(name string, opt ...DeploymentOption) *appsv1.Deployment {
 			Name:  "SYSTEM_UPGRADE_CONTROLLER_LEADER_ELECT",
 			Value: "true",
 		}, {
+			Name:  "SYSTEM_UPGRADE_CONTROLLER_DEBUG",
+			Value: "true",
+		}, {
 			Name: "SYSTEM_UPGRADE_CONTROLLER_NAMESPACE",
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{

@@ -65,5 +65,6 @@ var _ = Describe("Resolve channel", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(latest).To(BeEmpty())
 		})
+		AfterEach(CollectLogsOnFailure(e2e))
 	})
 })

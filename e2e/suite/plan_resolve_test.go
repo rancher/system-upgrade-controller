@@ -33,6 +33,7 @@ var _ = Describe("Plan Resolution", func() {
 			Expect(plan.Status.LatestVersion).To(BeEmpty())
 			Expect(plan.Status.LatestHash).To(BeEmpty())
 		})
+		AfterEach(CollectLogsOnFailure(e2e))
 	})
 
 	When("has version", func() {
@@ -56,6 +57,7 @@ var _ = Describe("Plan Resolution", func() {
 			Expect(plan.Status.LatestVersion).To(Equal(plan.Spec.Version))
 			Expect(plan.Status.LatestHash).ToNot(BeEmpty())
 		})
+		AfterEach(CollectLogsOnFailure(e2e))
 	})
 
 	When("has version with semver+metadata", func() {
@@ -82,6 +84,7 @@ var _ = Describe("Plan Resolution", func() {
 		It("should munge the semver", func() {
 			Expect(plan.Status.LatestVersion).ToNot(ContainSubstring(`+`))
 		})
+		AfterEach(CollectLogsOnFailure(e2e))
 	})
 
 	When("has channel", func() {
@@ -114,6 +117,7 @@ var _ = Describe("Plan Resolution", func() {
 			Expect(plan.Status.LatestVersion).To(Equal(channelTag))
 			Expect(plan.Status.LatestHash).ToNot(BeEmpty())
 		})
+		AfterEach(CollectLogsOnFailure(e2e))
 	})
 
 	When("has channel with semver+metadata", func() {
@@ -148,5 +152,6 @@ var _ = Describe("Plan Resolution", func() {
 		It("should munge the semver", func() {
 			Expect(plan.Status.LatestVersion).ToNot(ContainSubstring(`+`))
 		})
+		AfterEach(CollectLogsOnFailure(e2e))
 	})
 })

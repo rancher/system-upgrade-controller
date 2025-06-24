@@ -2,18 +2,20 @@ package upgrade
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
 	"time"
 
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
+	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	upgradejob "github.com/rancher/system-upgrade-controller/pkg/upgrade/job"
 	batchctlv1 "github.com/rancher/wrangler/v3/pkg/generated/controllers/batch/v1"
 	"github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -50,7 +52,7 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 		// get the plan being applied
 		plan, err := plans.Get(obj.Namespace, planName, metav1.GetOptions{})
 		switch {
-		case errors.IsNotFound(err):
+		case apierrors.IsNotFound(err):
 			// plan is gone, delete
 			return obj, deleteJob(jobs, obj, metav1.DeletePropagationBackground)
 		case err != nil:
@@ -73,7 +75,7 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 		// get the node that the plan is being applied to
 		node, err := nodes.Cache().Get(nodeName)
 		switch {
-		case errors.IsNotFound(err):
+		case apierrors.IsNotFound(err):
 			// node is gone, delete
 			return obj, deleteJob(jobs, obj, metav1.DeletePropagationBackground)
 		case err != nil:
@@ -85,7 +87,16 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 			if failedTime.IsZero() {
 				return obj, fmt.Errorf("condition %q missing field %q", upgradejob.ConditionFailed, "LastTransitionTime")
 			}
-			ctl.recorder.Eventf(plan, corev1.EventTypeWarning, "JobFailed", "Job failed on Node %s", node.Name)
+			message := fmt.Sprintf("Job %s/%s failed on Node %s: %s: %s",
+				obj.Namespace, obj.Name, nodeName,
+				upgradejob.ConditionFailed.GetReason(obj),
+				upgradejob.ConditionFailed.GetMessage(obj),
+			)
+			ctl.recorder.Eventf(plan, corev1.EventTypeWarning, "JobFailed", message)
+			upgradeapiv1.PlanComplete.SetError(plan, "JobFailed", errors.New(message))
+			if plan, err = plans.UpdateStatus(plan); err != nil {
+				return obj, err
+			}
 			return obj, enqueueOrDelete(jobs, obj, failedTime)
 		}
 		// if the job has completed tag the node then enqueue-or-delete depending on the TTL window
