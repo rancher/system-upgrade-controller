@@ -27,6 +27,9 @@ var (
 // +kubebuilder:printcolumn:name="Image",type=string,JSONPath=`.spec.upgrade.image`
 // +kubebuilder:printcolumn:name="Channel",type=string,JSONPath=`.spec.channel`
 // +kubebuilder:printcolumn:name="Version",type=string,JSONPath=`.spec.version`
+// +kubebuilder:printcolumn:name="Complete",type=string,JSONPath=`.status.conditions[?(@.type=='Complete')].status`
+// +kubebuilder:printcolumn:name="Message",type=string,JSONPath=`.status.conditions[?(@.message!='')].message`
+// +kubebuilder:printcolumn:name="Applying",type=string,JSONPath=`.status.applying`,priority=10
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Plan represents a set of Jobs to apply an upgrade (or other operation) to set of Nodes.
@@ -83,6 +86,9 @@ type PlanSpec struct {
 
 // PlanStatus represents the resulting state from processing Plan events.
 type PlanStatus struct {
+	// `LatestResolved` indicates that the latest version as per the spec has been determined.
+	// `Validated` indicates that the plan spec has been validated.
+	// `Complete` indicates that the latest version of the plan has completed on all selected nodes. If any Jobs for the Plan fail to complete, this condition will remain false, and the reason and message will reflect the source of the error.
 	// +optional
 	// +patchMergeKey=type
 	// +patchStrategy=merge

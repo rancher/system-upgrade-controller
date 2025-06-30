@@ -24,6 +24,16 @@ spec:
     - jsonPath: .spec.version
       name: Version
       type: string
+    - jsonPath: .status.conditions[?(@.type=='Complete')].status
+      name: Complete
+      type: string
+    - jsonPath: .status.conditions[?(@.message!='')].message
+      name: Message
+      type: string
+    - jsonPath: .status.applying
+      name: Applying
+      priority: 10
+      type: string
     name: v1
     schema:
       openAPIV3Schema:
@@ -1155,6 +1165,10 @@ spec:
                   type: string
                 type: array
               conditions:
+                description: |-
+                  `LatestResolved` indicates that the latest version as per the spec has been determined.
+                  `Validated` indicates that the plan spec has been validated.
+                  `Complete` indicates that the latest version of the plan has completed on all selected nodes. If any Jobs for the Plan fail to complete, this condition will remain false, and the reason and message will reflect the source of the error.
                 items:
                   properties:
                     lastTransitionTime:
