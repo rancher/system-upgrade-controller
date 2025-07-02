@@ -20,10 +20,7 @@ package v1
 
 import (
 	http "net/http"
-	http "net/http"
 
-	upgradecattleiov1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
-	scheme "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned/scheme"
 	upgradecattleiov1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	scheme "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
@@ -87,7 +84,6 @@ func setConfigDefaults(config *rest.Config) {
 	gv := upgradecattleiov1.SchemeGroupVersion
 	config.GroupVersion = &gv
 	config.APIPath = "/apis"
-	config.NegotiatedSerializer = rest.CodecFactoryForGeneratedClient(scheme.Scheme, scheme.Codecs).WithoutConversion()
 	config.NegotiatedSerializer = rest.CodecFactoryForGeneratedClient(scheme.Scheme, scheme.Codecs).WithoutConversion()
 
 	if config.UserAgent == "" {
