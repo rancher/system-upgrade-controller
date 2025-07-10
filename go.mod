@@ -44,9 +44,9 @@ require (
 	github.com/kubereboot/kured v1.13.1
 	github.com/onsi/ginkgo/v2 v2.21.0
 	github.com/onsi/gomega v1.35.1
-	github.com/rancher/lasso v0.2.3-rc3
+	github.com/rancher/lasso v0.2.3
 	github.com/rancher/system-upgrade-controller/pkg/apis v0.0.0
-	github.com/rancher/wrangler/v3 v3.2.2-rc.3
+	github.com/rancher/wrangler/v3 v3.2.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli v1.22.15
 	k8s.io/api v0.33.1

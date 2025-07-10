@@ -6,7 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/kubereboot/kured v1.13.1
-	github.com/rancher/wrangler/v3 v3.2.2-rc.3
+	github.com/rancher/wrangler/v3 v3.2.2
 	github.com/sirupsen/logrus v1.9.3
 	k8s.io/api v0.33.1
 	k8s.io/apimachinery v0.33.1
