@@ -123,7 +123,7 @@ _Appears in:_
 | `drain` _[DrainSpec](#drainspec)_ | Configuration for draining nodes prior to upgrade. If left unspecified, no drain will be performed. |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#localobjectreference-v1-core) array_ | Image Pull Secrets, used to pull images for the Job. |  |  |
 | `postCompleteDelay` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#duration-v1-meta)_ | Time after a Job for one Node is complete before a new Job will be created for the next Node. |  |  |
-
+| `PriorityClassName` _string_ | Priority Class Name of Job, if specified. |  |  |
 
 #### PlanStatus
 

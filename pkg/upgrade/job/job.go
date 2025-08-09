@@ -281,6 +281,11 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	}
 
 	podTemplate := &job.Spec.Template
+
+	// setup priority class
+	if prioClassName := plan.Spec.PriorityClassName; prioClassName != nil {
+		podTemplate.Spec.PriorityClassName = *prioClassName
+	}
 	// setup secrets volumes
 	for _, secret := range plan.Spec.Secrets {
 		podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes, corev1.Volume{
