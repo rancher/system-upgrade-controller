@@ -630,6 +630,9 @@ spec:
                 required:
                 - image
                 type: object
+              priorityClassName:
+                description: Priority Class Name of Job, if specified.
+                type: string
               secrets:
                 description: Secrets to be mounted into the Job Pod.
                 items:
