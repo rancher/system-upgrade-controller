@@ -83,7 +83,7 @@ type PlanSpec struct {
 	// Time after a Job for one Node is complete before a new Job will be created for the next Node.
 	PostCompleteDelay *metav1.Duration `json:"postCompleteDelay,omitempty"`
 	// Priority Class Name of Job, if specified.
-	PriorityClassName *string `json:"priorityClassName,omitempty"`
+	PriorityClassName string `json:"priorityClassName,omitempty"`
 }
 
 // PlanStatus represents the resulting state from processing Plan events.
