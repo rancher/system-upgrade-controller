@@ -242,11 +242,6 @@ func (in *PlanSpec) DeepCopyInto(out *PlanSpec) {
 		*out = new(metav1.Duration)
 		**out = **in
 	}
-	if in.PriorityClassName != nil {
-		in, out := &in.PriorityClassName, &out.PriorityClassName
-		*out = new(string)
-		**out = **in
-	}
 	return
 }
 
