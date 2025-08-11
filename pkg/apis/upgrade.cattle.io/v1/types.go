@@ -158,6 +158,9 @@ type SecretSpec struct {
 	Path string `json:"path"`
 	// If set to true, the Secret contents will not be hashed, and changes to the Secret will not trigger new application of the Plan.
 	IgnoreUpdates bool `json:"ignoreUpdates,omitempty"`
+	// Mode to mount the Secret volume with.
+	// +kubebuilder:validation:Optional
+	DefaultMode *int32 `json:"defaultMode,omitempty"`
 }
 
 // +kubebuilder:validation:Enum={"0","su","sun","sunday","1","mo","mon","monday","2","tu","tue","tuesday","3","we","wed","wednesday","4","th","thu","thursday","5","fr","fri","friday","6","sa","sat","saturday"}

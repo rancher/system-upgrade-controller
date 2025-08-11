@@ -161,6 +161,7 @@ _Appears in:_
 | `name` _string_ | Secret name |  | Required: \{\} <br /> |
 | `path` _string_ | Path to mount the Secret volume within the Pod. |  | Required: \{\} <br /> |
 | `ignoreUpdates` _boolean_ | If set to true, the Secret contents will not be hashed, and changes to the Secret will not trigger new application of the Plan. |  |  |
+| `defaultMode` _integer_ | Mode to mount the Secret volume with. |  | Optional: \{\} <br /> |
 
 
 #### TimeWindowSpec
