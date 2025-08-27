@@ -2,7 +2,7 @@ module github.com/rancher/system-upgrade-controller/pkg/apis
 
 go 1.24.0
 
-toolchain go1.24.2
+toolchain go1.24.6
 
 require (
 	github.com/kubereboot/kured v1.13.1
