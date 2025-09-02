@@ -11,6 +11,7 @@ import (
 	"github.com/rancher/wrangler/v3/pkg/genericcondition"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 var (
@@ -137,7 +138,9 @@ type VolumeSpec struct {
 // - https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/
 // - https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#drain
 type DrainSpec struct {
-	Timeout                  *time.Duration        `json:"timeout,omitempty"`
+	// If a string, this is passed through directly to the `kubectl drain` command.
+	// If an int, this represents the duration as a count of nanoseconds, and will be converted to a duration string when passed to the `kubectl drain` command.
+	Timeout                  *intstr.IntOrString   `json:"timeout,omitempty"`
 	GracePeriod              *int32                `json:"gracePeriod,omitempty"`
 	DeleteLocalData          *bool                 `json:"deleteLocalData,omitempty"`
 	DeleteEmptydirData       *bool                 `json:"deleteEmptydirData,omitempty"`

@@ -19,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 )
 
@@ -354,7 +355,13 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 			args = append(args, "--force")
 		}
 		if drain.Timeout != nil {
-			args = append(args, "--timeout", drain.Timeout.String())
+			switch drain.Timeout.Type {
+			case intstr.Int:
+				timeout := time.Duration(drain.Timeout.IntVal)
+				args = append(args, "--timeout", timeout.String())
+			case intstr.String:
+				args = append(args, "--timeout", drain.Timeout.StrVal)
+			}
 		}
 		if drain.GracePeriod != nil {
 			args = append(args, "--grace-period", strconv.FormatInt(int64(*drain.GracePeriod), 10))
@@ -448,8 +455,17 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		}
 	}
 
-	if drain != nil && drain.Timeout != nil && job.Spec.ActiveDeadlineSeconds != nil && drain.Timeout.Milliseconds() > *job.Spec.ActiveDeadlineSeconds*1000 {
-		logrus.Warnf("Plan %s/%s drain timeout exceeds active deadline seconds", plan.Namespace, plan.Name)
+	if drain != nil && drain.Timeout != nil && job.Spec.ActiveDeadlineSeconds != nil {
+		var timeout time.Duration
+		switch drain.Timeout.Type {
+		case intstr.Int:
+			timeout = time.Duration(drain.Timeout.IntVal)
+		case intstr.String:
+			timeout, _ = time.ParseDuration(drain.Timeout.StrVal)
+		}
+		if timeout.Milliseconds() > *job.Spec.ActiveDeadlineSeconds*1000 {
+			logrus.Warnf("Plan %s/%s drain timeout exceeds active deadline seconds", plan.Namespace, plan.Name)
+		}
 	}
 
 	return job
