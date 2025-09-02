@@ -63,7 +63,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `timeout` _[Duration](#duration)_ |  |  |  |
+| `timeout` _[IntOrString](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#intorstring-intstr-util)_ | If a string, this is passed through directly to the `kubectl drain` command.<br />If an int, this represents the duration as a count of nanoseconds, and will be converted to a duration string when passed to the `kubectl drain` command. |  |  |
 | `gracePeriod` _integer_ |  |  |  |
 | `deleteLocalData` _boolean_ |  |  |  |
 | `deleteEmptydirData` _boolean_ |  |  |  |

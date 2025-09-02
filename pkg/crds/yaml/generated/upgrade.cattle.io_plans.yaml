@@ -145,12 +145,13 @@ spec:
                   skipWaitForDeleteTimeout:
                     type: integer
                   timeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
                     description: |-
-                      A Duration represents the elapsed time between two instants
-                      as an int64 nanosecond count. The representation limits the
-                      largest representable duration to approximately 290 years.
-                    format: int64
-                    type: integer
+                      If a string, this is passed through directly to the `kubectl drain` command.
+                      If an int, this represents the duration as a count of nanoseconds, and will be converted to a duration string when passed to the `kubectl drain` command.
+                    x-kubernetes-int-or-string: true
                 type: object
               exclusive:
                 description: Jobs for exclusive plans cannot be run alongside any
