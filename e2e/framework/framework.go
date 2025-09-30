@@ -176,7 +176,7 @@ func (c *Client) setupController() {
 	}, metav1.CreateOptions{})
 	framework.ExpectNoError(err)
 
-	err = frameworkauth.BindClusterRole(context.TODO(), c.ClientSet.RbacV1(), "cluster-admin", c.Namespace.Name, rbacv1.Subject{
+	_, err = frameworkauth.BindClusterRole(context.TODO(), c.ClientSet.RbacV1(), "cluster-admin", c.Namespace.Name, rbacv1.Subject{
 		Kind:      rbacv1.ServiceAccountKind,
 		Name:      c.controllerServiceAccount.Name,
 		Namespace: c.controllerServiceAccount.Namespace,
