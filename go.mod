@@ -1,8 +1,8 @@
 module github.com/rancher/system-upgrade-controller
 
-go 1.24.6
+go 1.25.0
 
-toolchain go1.24.7
+toolchain go1.25.1
 
 replace (
 	github.com/distribution/reference => github.com/distribution/reference v0.5.0
