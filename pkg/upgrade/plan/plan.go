@@ -53,7 +53,6 @@ func DigestStatus(plan *upgradeapiv1.Plan, secretCache corectlv1.SecretCache) (u
 		h := sha256.New224()
 		h.Write([]byte(plan.Status.LatestVersion))
 		h.Write([]byte(plan.Spec.ServiceAccountName))
-
 		if err := addToHashFromAnnotation(h, plan); err != nil {
 			return plan.Status, err
 		}
