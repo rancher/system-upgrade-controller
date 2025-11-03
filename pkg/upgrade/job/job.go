@@ -175,6 +175,13 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		}
 	}
 
+	priorityClassName := plan.Spec.PriorityClassName
+	if plan.Spec.NodePriorityClassNames != nil {
+		if nodePriority, ok := plan.Spec.NodePriorityClassNames[node.Name]; ok {
+			priorityClassName = nodePriority
+		}
+	}
+
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name.SafeConcatName("apply", plan.Name, "on", shortNodeName, "with", plan.Status.LatestHash),
@@ -196,7 +203,7 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 					HostPID:            true,
 					HostNetwork:        true,
 					DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
-					PriorityClassName:  plan.Spec.PriorityClassName,
+					PriorityClassName:  priorityClassName,
 					ServiceAccountName: plan.Spec.ServiceAccountName,
 					Affinity: &corev1.Affinity{
 						NodeAffinity: &corev1.NodeAffinity{

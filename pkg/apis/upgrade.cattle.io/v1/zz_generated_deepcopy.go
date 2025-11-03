@@ -243,6 +243,13 @@ func (in *PlanSpec) DeepCopyInto(out *PlanSpec) {
 		*out = new(metav1.Duration)
 		**out = **in
 	}
+	if in.NodePriorityClassNames != nil {
+		in, out := &in.NodePriorityClassNames, &out.NodePriorityClassNames
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 

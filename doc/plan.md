@@ -124,6 +124,7 @@ _Appears in:_
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#localobjectreference-v1-core) array_ | Image Pull Secrets, used to pull images for the Job. |  |  |
 | `postCompleteDelay` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#duration-v1-meta)_ | Time after a Job for one Node is complete before a new Job will be created for the next Node. |  |  |
 | `priorityClassName` _string_ | Priority Class Name of Job, if specified. |  |  |
+| `nodePriorityClassNames` _object (keys:string, values:string)_ | Map of node names to priority class names. If a node's name is present in this map, the corresponding priority class name will be used for the Job created for that node. |  |  |
 
 
 #### PlanStatus

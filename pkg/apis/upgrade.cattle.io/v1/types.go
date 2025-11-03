@@ -85,6 +85,8 @@ type PlanSpec struct {
 	PostCompleteDelay *metav1.Duration `json:"postCompleteDelay,omitempty"`
 	// Priority Class Name of Job, if specified.
 	PriorityClassName string `json:"priorityClassName,omitempty"`
+	// Map of node names to priority class names. If a node's name is present in this map, the corresponding priority class name will be used for the Job created for that node.
+	NodePriorityClassNames map[string]string `json:"nodePriorityClassNames,omitempty"`
 }
 
 // PlanStatus represents the resulting state from processing Plan events.

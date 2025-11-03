@@ -183,6 +183,13 @@ spec:
                   If set to 0, Jobs have no deadline. If not set, the controller default value is used.
                 format: int64
                 type: integer
+              nodePriorityClassNames:
+                additionalProperties:
+                  type: string
+                description: Map of node names to priority class names. If a node's
+                  name is present in this map, the corresponding priority class name
+                  will be used for the Job created for that node.
+                type: object
               nodeSelector:
                 description: Select which nodes this plan can be applied to.
                 properties:
