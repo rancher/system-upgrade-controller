@@ -176,10 +176,8 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 	}
 
 	priorityClassName := plan.Spec.PriorityClassName
-	if plan.Spec.NodePriorityClassNames != nil {
-		if nodePriority, ok := plan.Spec.NodePriorityClassNames[node.Name]; ok {
-			priorityClassName = nodePriority
-		}
+	if nodePriority, ok := plan.Spec.NodePriorityClassNames[node.Name]; ok {
+		priorityClassName = nodePriority
 	}
 
 	job := &batchv1.Job{
