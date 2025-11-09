@@ -10,7 +10,7 @@ ENV ARCH $DAPPER_HOST_ARCH
 ARG SONOBUOY_VERSION=0.57.3
 RUN zypper -n install expect git jq docker vim less file curl wget iproute2 gawk
 RUN if [ "${ARCH:-$(go env GOARCH)}" = "amd64" ]; then \
-    curl -sL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.64.8; \
+    curl -sL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v2.6.1; \
     curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.6.0/kustomize_v5.6.0_linux_amd64.tar.gz" | tar -xz -C /usr/local/bin; \
     curl -sL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin; \
     curl -sL "https://github.com/docker/compose/releases/download/v2.29.1/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
