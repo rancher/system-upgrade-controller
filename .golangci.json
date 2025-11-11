@@ -1,18 +1,39 @@
 {
-	"linters": {
-		"disable-all": true,
-		"enable": [
-			"govet",
-			"goimports",
-			"misspell",
-			"ineffassign",
-			"gofmt"
-		]
-	},
-	"run": {
-		"exclude-files": [
-			"/zz_generated_"
-		],
-		"timeout": "5m"
-	}
+  "formatters": {
+    "enable": [
+      "gofmt",
+      "goimports"
+    ],
+    "exclusions": {
+      "generated": "lax",
+      "paths": [
+        "third_party$",
+        "builtin$",
+        "examples$"
+      ]
+    }
+  },
+  "linters": {
+    "default": "none",
+    "enable": [
+      "govet",
+      "ineffassign",
+      "misspell"
+    ],
+    "exclusions": {
+      "generated": "lax",
+      "paths": [
+        "third_party$",
+        "builtin$",
+        "examples$"
+      ],
+      "presets": [
+        "comments",
+        "common-false-positives",
+        "legacy",
+        "std-error-handling"
+      ]
+    }
+  },
+  "version": "2"
 }
