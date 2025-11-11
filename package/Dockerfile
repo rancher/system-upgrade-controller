@@ -1,5 +1,5 @@
 ARG BCI=registry.suse.com/bci/bci-base:15.6
-ARG GOLANG=registry.suse.com/bci/golang:1.24
+ARG GOLANG=registry.suse.com/bci/golang:1.25
 ARG ALPINE=alpine:3.22
 
 FROM ${GOLANG} AS e2e-ginkgo

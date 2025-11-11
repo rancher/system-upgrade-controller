@@ -1,7 +1,7 @@
 ARG KUBECTL=rancher/kubectl:v1.33.1
 FROM ${KUBECTL} AS kubectl
 
-FROM registry.suse.com/bci/golang:1.24
+FROM registry.suse.com/bci/golang:1.25
 
 COPY --from=kubectl /bin/kubectl /usr/local/bin/kubectl
 
@@ -10,7 +10,7 @@ ENV ARCH $DAPPER_HOST_ARCH
 ARG SONOBUOY_VERSION=0.57.3
 RUN zypper -n install expect git jq docker vim less file curl wget iproute2 gawk
 RUN if [ "${ARCH:-$(go env GOARCH)}" = "amd64" ]; then \
-    curl -sL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.64.8; \
+    curl -sL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v2.6.1; \
     curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.6.0/kustomize_v5.6.0_linux_amd64.tar.gz" | tar -xz -C /usr/local/bin; \
     curl -sL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_${ARCH}.tar.gz" | tar -xz -C /usr/local/bin; \
     curl -sL "https://github.com/docker/compose/releases/download/v2.29.1/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
@@ -19,8 +19,8 @@ RUN if [ "${ARCH:-$(go env GOARCH)}" = "amd64" ]; then \
 RUN mkdir -p /usr/local/lib/docker/cli-plugins; \
     curl -o /usr/local/lib/docker/cli-plugins/docker-buildx -fsSL "https://github.com/docker/buildx/releases/download/v0.17.1/buildx-v0.17.1.linux-amd64"; \
     chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx
-RUN go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.17.3 && \
-    go install github.com/elastic/crd-ref-docs@v0.1.0
+RUN go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.19.0 && \
+    go install github.com/elastic/crd-ref-docs@v0.2.0
 ENV DAPPER_ENV REPO TAG DRONE_TAG
 ENV DAPPER_SOURCE /go/src/github.com/rancher/system-upgrade-controller/
 ENV DAPPER_OUTPUT ./bin ./dist
