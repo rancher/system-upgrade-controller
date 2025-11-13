@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -310,18 +311,42 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		})
 	}
 
+	// Determine if the target node is Windows
+	isWindows := node.Labels["kubernetes.io/os"] == "windows"
+
+	// Initialize with the default kubectl image; can be changed to Windows or other image if needed
+	selectedKubectlImage := KubectlImage
+	if isWindows {
+		// Retrieve the Windows kubectl image from the SYSTEM_UPGRADE_JOB_KUBECTL_IMAGE_WINDOWS environment variable.
+		// This environment variable must be set by customers/operators when performing upgrades on Windows nodes.
+		selectedKubectlImage = os.Getenv("SYSTEM_UPGRADE_JOB_KUBECTL_IMAGE_WINDOWS")
+		if selectedKubectlImage == "" {
+			logrus.Fatal("SYSTEM_UPGRADE_JOB_KUBECTL_IMAGE_WINDOWS is a required environment variable when targeting Windows")
+		}
+	}
+
 	// first, we prepare
 	if plan.Spec.Prepare != nil {
-		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
-			upgradectr.New("prepare", *plan.Spec.Prepare,
-				upgradectr.WithLatestTag(plan.Status.LatestVersion),
-				upgradectr.WithSecrets(plan.Spec.Secrets),
-				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
-				upgradectr.WithImagePullPolicy(ImagePullPolicy),
-				upgradectr.WithVolumes(plan.Spec.Prepare.Volumes),
-				upgradectr.WithSecurityContext(plan.Spec.Prepare.SecurityContext),
-			),
+		prepareContainer := upgradectr.New("prepare", *plan.Spec.Prepare,
+			upgradectr.WithLatestTag(plan.Status.LatestVersion),
+			upgradectr.WithSecrets(plan.Spec.Secrets),
+			upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
+			upgradectr.WithImagePullPolicy(ImagePullPolicy),
+			upgradectr.WithVolumes(plan.Spec.Prepare.Volumes),
+			upgradectr.WithSecurityContext(plan.Spec.Prepare.SecurityContext),
 		)
+		if isWindows {
+			if prepareContainer.SecurityContext == nil {
+				prepareContainer.SecurityContext = &corev1.SecurityContext{}
+			}
+			if prepareContainer.SecurityContext.WindowsOptions == nil {
+				prepareContainer.SecurityContext.WindowsOptions = &corev1.WindowsSecurityContextOptions{}
+			}
+			prepareContainer.SecurityContext.WindowsOptions.HostProcess = ptr.To(true)
+			prepareContainer.SecurityContext.WindowsOptions.RunAsUserName = ptr.To("NT AUTHORITY\\SYSTEM")
+		}
+
+		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers, prepareContainer)
 	}
 
 	// then we cordon/drain
@@ -375,35 +400,65 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 			args = append(args, "--skip-wait-for-delete-timeout", strconv.FormatInt(int64(drain.SkipWaitForDeleteTimeout), 10))
 		}
 
-		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
-			upgradectr.New("drain", upgradeapiv1.ContainerSpec{
-				Image: KubectlImage,
-				Args:  args,
-			},
-				upgradectr.WithSecrets(plan.Spec.Secrets),
-				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
-				upgradectr.WithImagePullPolicy(ImagePullPolicy),
-				upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
-			),
+		drainContainer := upgradectr.New("drain", upgradeapiv1.ContainerSpec{
+			Image: selectedKubectlImage,
+			Args:  args,
+		},
+			upgradectr.WithSecrets(plan.Spec.Secrets),
+			upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
+			upgradectr.WithImagePullPolicy(ImagePullPolicy),
+			upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
 		)
+
+		if isWindows {
+			if drainContainer.SecurityContext == nil {
+				drainContainer.SecurityContext = &corev1.SecurityContext{}
+			}
+			if drainContainer.SecurityContext.WindowsOptions == nil {
+				drainContainer.SecurityContext.WindowsOptions = &corev1.WindowsSecurityContextOptions{}
+			}
+			drainContainer.SecurityContext.WindowsOptions.HostProcess = ptr.To(true)
+			drainContainer.SecurityContext.WindowsOptions.RunAsUserName = ptr.To("NT AUTHORITY\\SYSTEM")
+		}
+
+		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers, drainContainer)
+
 	} else if cordon {
-		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
-			upgradectr.New("cordon", upgradeapiv1.ContainerSpec{
-				Image: KubectlImage,
-				Args:  []string{"cordon", node.Name},
-			},
-				upgradectr.WithSecrets(plan.Spec.Secrets),
-				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
-				upgradectr.WithImagePullPolicy(ImagePullPolicy),
-				upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
-			),
+		cordonContainer := upgradectr.New("cordon", upgradeapiv1.ContainerSpec{
+			Image: selectedKubectlImage,
+			Args:  []string{"cordon", node.Name},
+		},
+			upgradectr.WithSecrets(plan.Spec.Secrets),
+			upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
+			upgradectr.WithImagePullPolicy(ImagePullPolicy),
+			upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
 		)
+		if isWindows {
+			if cordonContainer.SecurityContext == nil {
+				cordonContainer.SecurityContext = &corev1.SecurityContext{}
+			}
+			if cordonContainer.SecurityContext.WindowsOptions == nil {
+				cordonContainer.SecurityContext.WindowsOptions = &corev1.WindowsSecurityContextOptions{}
+			}
+			cordonContainer.SecurityContext.WindowsOptions.HostProcess = ptr.To(true)
+			cordonContainer.SecurityContext.WindowsOptions.RunAsUserName = ptr.To("NT AUTHORITY\\SYSTEM")
+		}
+
+		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers, cordonContainer)
 	}
 
 	// Check if SecurityContext from the Plan is non-nil
 	var securityContext *corev1.SecurityContext
 	if plan.Spec.Upgrade.SecurityContext != nil {
 		securityContext = plan.Spec.Upgrade.SecurityContext
+	} else if isWindows {
+		// Set Windows-specific security context (HostProcess, run as SYSTEM)
+		securityContext = &corev1.SecurityContext{
+			WindowsOptions: &corev1.WindowsSecurityContextOptions{
+				RunAsUserName: ptr.To("NT AUTHORITY\\SYSTEM"),
+				HostProcess:   ptr.To(true),
+			},
+		}
 	} else {
 		securityContext = &corev1.SecurityContext{
 			Privileged: &Privileged,
