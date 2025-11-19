@@ -2,6 +2,7 @@ package upgrade
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"strings"
 	"time"
@@ -81,7 +82,7 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 			// on the resolved status indicates that the interval has not been reached.
 			if resolved.IsTrue(obj) {
 				if lastUpdated, err := time.Parse(time.RFC3339, resolved.GetLastUpdated(obj)); err == nil {
-					if interval := time.Now().Sub(lastUpdated); interval < upgradeplan.PollingInterval {
+					if interval := time.Since(lastUpdated); interval < upgradeplan.PollingInterval {
 						plans.EnqueueAfter(obj.Namespace, obj.Name, upgradeplan.PollingInterval-interval)
 						return status, nil
 					}
@@ -139,6 +140,13 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 			concurrentNodeNames := make([]string, len(concurrentNodes))
 			for i := range concurrentNodes {
 				node := concurrentNodes[i]
+				// Validate Windows nodes have kubectl image configured before creating job
+				if node.Labels["kubernetes.io/os"] == "windows" && upgradejob.KubectlImageWindows == "" {
+					err := fmt.Errorf("SYSTEM_UPGRADE_JOB_KUBECTL_IMAGE_WINDOWS is required when targeting Windows nodes")
+					recorder.Eventf(obj, corev1.EventTypeWarning, "ValidationFailed", "Failed to create job for node %s: %v", node.Name, err)
+					complete.SetError(obj, "ValidationFailed", err)
+					return objects, status, err
+				}
 				objects = append(objects, upgradejob.New(obj, node, ctl.Name))
 				concurrentNodeNames[i] = upgradenode.Hostname(node)
 			}

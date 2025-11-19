@@ -27,8 +27,7 @@ data:
   SYSTEM_UPGRADE_JOB_PRIVILEGED: "true"
   SYSTEM_UPGRADE_JOB_TTL_SECONDS_AFTER_FINISH: "900"
   SYSTEM_UPGRADE_PLAN_POLLING_INTERVAL: "15m"
-  # Set to the Windows kubectl image ONLY if you are upgrading Windows nodes.
-  # Windows customers must provide this value. Leave empty ("") if not required.
+  # Only set if you have Windows nodes to upgrade; ignored otherwise.
   SYSTEM_UPGRADE_JOB_KUBECTL_IMAGE_WINDOWS: ""
 ---
 apiVersion: apps/v1
