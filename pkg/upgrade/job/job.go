@@ -85,6 +85,10 @@ var (
 		return defaultValue
 	}(defaultKubectlImage)
 
+	KubectlImageWindows = func() string {
+		return os.Getenv("SYSTEM_UPGRADE_JOB_KUBECTL_IMAGE_WINDOWS")
+	}()
+
 	Privileged = func(defaultValue bool) bool {
 		if str, ok := os.LookupEnv("SYSTEM_UPGRADE_JOB_PRIVILEGED"); ok {
 			if b, err := strconv.ParseBool(str); err != nil {
@@ -310,18 +314,36 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		})
 	}
 
+	// Determine if the target node is Windows
+	isWindows := node.Labels["kubernetes.io/os"] == "windows"
+
+	// Initialize with the default kubectl image; can be changed to Windows or other image if needed
+	selectedKubectlImage := KubectlImage
+	if isWindows {
+		// Retrieve the Windows kubectl image from the global variable
+		selectedKubectlImage = KubectlImageWindows
+	}
+
 	// first, we prepare
 	if plan.Spec.Prepare != nil {
-		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
-			upgradectr.New("prepare", *plan.Spec.Prepare,
-				upgradectr.WithLatestTag(plan.Status.LatestVersion),
-				upgradectr.WithSecrets(plan.Spec.Secrets),
-				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
-				upgradectr.WithImagePullPolicy(ImagePullPolicy),
-				upgradectr.WithVolumes(plan.Spec.Prepare.Volumes),
-				upgradectr.WithSecurityContext(plan.Spec.Prepare.SecurityContext),
-			),
+		prepareContainer := upgradectr.New("prepare", *plan.Spec.Prepare,
+			upgradectr.WithLatestTag(plan.Status.LatestVersion),
+			upgradectr.WithSecrets(plan.Spec.Secrets),
+			upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
+			upgradectr.WithImagePullPolicy(ImagePullPolicy),
+			upgradectr.WithVolumes(plan.Spec.Prepare.Volumes),
+			upgradectr.WithSecurityContext(plan.Spec.Prepare.SecurityContext),
 		)
+		if isWindows {
+			prepareContainer.SecurityContext = &corev1.SecurityContext{
+				WindowsOptions: &corev1.WindowsSecurityContextOptions{
+					HostProcess:   pointer.Bool(true),
+					RunAsUserName: pointer.String("NT AUTHORITY\\SYSTEM"),
+				},
+			}
+		}
+
+		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers, prepareContainer)
 	}
 
 	// then we cordon/drain
@@ -375,35 +397,62 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 			args = append(args, "--skip-wait-for-delete-timeout", strconv.FormatInt(int64(drain.SkipWaitForDeleteTimeout), 10))
 		}
 
-		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
-			upgradectr.New("drain", upgradeapiv1.ContainerSpec{
-				Image: KubectlImage,
-				Args:  args,
-			},
-				upgradectr.WithSecrets(plan.Spec.Secrets),
-				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
-				upgradectr.WithImagePullPolicy(ImagePullPolicy),
-				upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
-			),
+		drainContainer := upgradectr.New("drain", upgradeapiv1.ContainerSpec{
+			Image: selectedKubectlImage,
+			Args:  args,
+		},
+			upgradectr.WithSecrets(plan.Spec.Secrets),
+			upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
+			upgradectr.WithImagePullPolicy(ImagePullPolicy),
+			upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
 		)
+
+		if isWindows {
+			drainContainer.SecurityContext = &corev1.SecurityContext{
+				WindowsOptions: &corev1.WindowsSecurityContextOptions{
+					HostProcess:   pointer.Bool(true),
+					RunAsUserName: pointer.String("NT AUTHORITY\\SYSTEM"),
+				},
+			}
+		}
+		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers, drainContainer)
+
 	} else if cordon {
-		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers,
-			upgradectr.New("cordon", upgradeapiv1.ContainerSpec{
-				Image: KubectlImage,
-				Args:  []string{"cordon", node.Name},
-			},
-				upgradectr.WithSecrets(plan.Spec.Secrets),
-				upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
-				upgradectr.WithImagePullPolicy(ImagePullPolicy),
-				upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
-			),
+		cordonContainer := upgradectr.New("cordon", upgradeapiv1.ContainerSpec{
+			Image: selectedKubectlImage,
+			Args:  []string{"cordon", node.Name},
+		},
+			upgradectr.WithSecrets(plan.Spec.Secrets),
+			upgradectr.WithPlanEnvironment(plan.Name, plan.Status),
+			upgradectr.WithImagePullPolicy(ImagePullPolicy),
+			upgradectr.WithVolumes(plan.Spec.Upgrade.Volumes),
 		)
+		if isWindows {
+			cordonContainer.SecurityContext = &corev1.SecurityContext{
+				WindowsOptions: &corev1.WindowsSecurityContextOptions{
+					HostProcess:   pointer.Bool(true),
+					RunAsUserName: pointer.String("NT AUTHORITY\\SYSTEM"),
+				},
+			}
+			cordonContainer.SecurityContext.WindowsOptions.HostProcess = pointer.Bool(true)
+			cordonContainer.SecurityContext.WindowsOptions.RunAsUserName = pointer.String("NT AUTHORITY\\SYSTEM")
+		}
+
+		podTemplate.Spec.InitContainers = append(podTemplate.Spec.InitContainers, cordonContainer)
 	}
 
 	// Check if SecurityContext from the Plan is non-nil
 	var securityContext *corev1.SecurityContext
 	if plan.Spec.Upgrade.SecurityContext != nil {
 		securityContext = plan.Spec.Upgrade.SecurityContext
+	} else if isWindows {
+		// Set Windows-specific security context (HostProcess, run as SYSTEM)
+		securityContext = &corev1.SecurityContext{
+			WindowsOptions: &corev1.WindowsSecurityContextOptions{
+				RunAsUserName: pointer.String("NT AUTHORITY\\SYSTEM"),
+				HostProcess:   pointer.Bool(true),
+			},
+		}
 	} else {
 		securityContext = &corev1.SecurityContext{
 			Privileged: &Privileged,
