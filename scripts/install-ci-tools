@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+GOLANGCI_LINT_VERSION="${GOLANGCI_LINT_VERSION:-v2.6.1}"
+KUSTOMIZE_VERSION="${KUSTOMIZE_VERSION:-v5.6.0}"
+SONOBUOY_VERSION="${SONOBUOY_VERSION:-0.57.3}"
+DOCKER_COMPOSE_VERSION="${DOCKER_COMPOSE_VERSION:-v2.29.1}"
+KUBECTL_IMAGE="${KUBECTL_IMAGE:-rancher/kubectl:v1.33.1}"
+BIN_DIR="${BIN_DIR:-/usr/local/bin}"
+INSTALL_APT_PACKAGES="${INSTALL_APT_PACKAGES:-true}"
+
+SUDO=""
+if [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1; then
+    SUDO="sudo"
+fi
+
+run_as_root() {
+    if [ -n "${SUDO}" ]; then
+        "${SUDO}" "$@"
+    else
+        "$@"
+    fi
+}
+
+run_for_bin_dir() {
+    if [ -w "${BIN_DIR}" ]; then
+        "$@"
+    else
+        run_as_root "$@"
+    fi
+}
+
+if [ ! -d "${BIN_DIR}" ]; then
+    if [ -w "$(dirname "${BIN_DIR}")" ]; then
+        mkdir -p "${BIN_DIR}"
+    else
+        run_as_root mkdir -p "${BIN_DIR}"
+    fi
+fi
+
+if [ "${INSTALL_APT_PACKAGES}" = "true" ]; then
+    missing_packages=()
+    command -v file >/dev/null 2>&1 || missing_packages+=(file)
+    command -v jq >/dev/null 2>&1 || missing_packages+=(jq)
+    if [ "${#missing_packages[@]}" -gt 0 ]; then
+        run_as_root apt-get update
+        run_as_root apt-get install -y "${missing_packages[@]}"
+    fi
+fi
+
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+    | run_for_bin_dir sh -s -- -b "${BIN_DIR}" "${GOLANGCI_LINT_VERSION}"
+
+curl -sSfL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
+    | run_for_bin_dir tar -xz -C "${BIN_DIR}" kustomize
+
+curl -sSfL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_linux_amd64.tar.gz" \
+    | run_for_bin_dir tar -xz -C "${BIN_DIR}" sonobuoy
+
+curl -sSfL "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-linux-x86_64" \
+    -o /tmp/docker-compose
+run_for_bin_dir install -m 0755 /tmp/docker-compose "${BIN_DIR}/docker-compose"
+
+if ! command -v docker >/dev/null 2>&1; then
+    echo "install-ci-tools failed: docker is required to install kubectl from ${KUBECTL_IMAGE}"
+    exit 1
+fi
+
+KUBECTL_TMP="$(mktemp)"
+KUBECTL_CONTAINER="$(docker create "${KUBECTL_IMAGE}")"
+cleanup_kubectl_install() {
+    rm -f "${KUBECTL_TMP}"
+    if [ -n "${KUBECTL_CONTAINER:-}" ]; then
+        docker rm "${KUBECTL_CONTAINER}" >/dev/null 2>&1 || true
+    fi
+}
+trap cleanup_kubectl_install EXIT
+
+docker cp "${KUBECTL_CONTAINER}:/bin/kubectl" "${KUBECTL_TMP}"
+docker rm "${KUBECTL_CONTAINER}" >/dev/null
+KUBECTL_CONTAINER=""
+run_for_bin_dir install -m 0755 "${KUBECTL_TMP}" "${BIN_DIR}/kubectl"
+trap - EXIT
+cleanup_kubectl_install

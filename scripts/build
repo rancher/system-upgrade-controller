@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
-$(dirname $0)/build-controller
-$(dirname $0)/build-e2e-tests
+cd "$(dirname "$0")/.."
+
+make --no-print-directory build-controller build-e2e-tests ${ARCH:+ARCH=$ARCH}
 #$(dirname $0)/build-source
