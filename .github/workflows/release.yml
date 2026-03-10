@@ -128,5 +128,6 @@ jobs:
           identity-registry: ${{ env.PRIME_REGISTRY }}
           prime-registry: ${{ env.PRIME_STG_REGISTRY }}
           prime-repo: rancher
+          prime-make-target: push-prime-image
           prime-username: ${{ env.PRIME_STG_REGISTRY_USERNAME }}
           prime-password: ${{ env.PRIME_STG_REGISTRY_PASSWORD }}
