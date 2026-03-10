@@ -54,6 +54,8 @@ RUN set -x \
 ENTRYPOINT ["/run.sh"]
 
 FROM --platform=$BUILDPLATFORM ${GOLANG} AS zoneinfo
+RUN zypper -n in timezone \
+    && zypper -n clean -a
 
 FROM scratch AS controller
 LABEL org.opencontainers.image.source="https://github.com/rancher/system-upgrade-controller"

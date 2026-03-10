@@ -14,6 +14,7 @@ docker buildx build \
   --build-arg REPO=${REPO} \
   --build-arg TAG=${TAG} \
   --build-arg VERSION=${VERSION} \
+  --build-arg COMMIT=${COMMIT} \
   --file package/Dockerfile \
   --tag ${REPO}/system-upgrade-controller:${TAG}-e2e-tests \
   --tag ${REPO}/system-upgrade-controller:${VERSION}-e2e-tests \
