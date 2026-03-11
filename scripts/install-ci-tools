@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+GOLANGCI_LINT_VERSION="${GOLANGCI_LINT_VERSION:-v2.6.1}"
+KUSTOMIZE_VERSION="${KUSTOMIZE_VERSION:-v5.6.0}"
+SONOBUOY_VERSION="${SONOBUOY_VERSION:-0.57.3}"
+DOCKER_COMPOSE_VERSION="${DOCKER_COMPOSE_VERSION:-v2.29.1}"
+KUBECTL_IMAGE="${KUBECTL_IMAGE:-rancher/kubectl:v1.33.1}"
+BIN_DIR="${BIN_DIR:-/usr/local/bin}"
+INSTALL_APT_PACKAGES="${INSTALL_APT_PACKAGES:-true}"
+HOST_ARCH="${HOST_ARCH:-$(uname -m)}"
+
+case "${HOST_ARCH}" in
+    x86_64 | amd64)
+        GOLANGCI_LINT_ASSET_ARCH="amd64"
+        KUSTOMIZE_ASSET_ARCH="amd64"
+        SONOBUOY_ASSET_ARCH="amd64"
+        DOCKER_COMPOSE_ASSET_ARCH="x86_64"
+        ;;
+    aarch64 | arm64)
+        GOLANGCI_LINT_ASSET_ARCH="arm64"
+        KUSTOMIZE_ASSET_ARCH="arm64"
+        SONOBUOY_ASSET_ARCH="arm64"
+        DOCKER_COMPOSE_ASSET_ARCH="aarch64"
+        ;;
+    *)
+        echo "install-ci-tools failed: unsupported architecture '${HOST_ARCH}'. Supported architectures: amd64/x86_64, arm64/aarch64."
+        exit 1
+        ;;
+esac
+
+SUDO=""
+if [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1; then
+    SUDO="sudo"
+fi
+
+run_as_root() {
+    if [ -n "${SUDO}" ]; then
+        "${SUDO}" "$@"
+    else
+        "$@"
+    fi
+}
+
+run_for_bin_dir() {
+    if [ -w "${BIN_DIR}" ]; then
+        "$@"
+    else
+        run_as_root "$@"
+    fi
+}
+
+if [ ! -d "${BIN_DIR}" ]; then
+    if [ -w "$(dirname "${BIN_DIR}")" ]; then
+        mkdir -p "${BIN_DIR}"
+    else
+        run_as_root mkdir -p "${BIN_DIR}"
+    fi
+fi
+
+if [ "${INSTALL_APT_PACKAGES}" = "true" ]; then
+    missing_packages=()
+    command -v file >/dev/null 2>&1 || missing_packages+=(file)
+    command -v jq >/dev/null 2>&1 || missing_packages+=(jq)
+    if [ "${#missing_packages[@]}" -gt 0 ]; then
+        run_as_root apt-get update
+        run_as_root apt-get install -y "${missing_packages[@]}"
+    fi
+fi
+
+TMP_DIR="$(mktemp -d)"
+cleanup_tmpdir() {
+    rm -rf "${TMP_DIR}"
+}
+trap cleanup_tmpdir EXIT
+
+verify_asset_from_checksums() {
+    local checksums_file="$1"
+    local asset_name="$2"
+    local asset_file="$3"
+    local expected_checksum
+
+    expected_checksum="$(awk -v name="${asset_name}" '$2 == name { print $1; exit }' "${checksums_file}")"
+    if [ -z "${expected_checksum}" ]; then
+        echo "install-ci-tools failed: checksum for ${asset_name} not found in ${checksums_file}"
+        exit 1
+    fi
+    printf '%s  %s\n' "${expected_checksum}" "${asset_file}" | sha256sum -c -
+}
+
+GOLANGCI_LINT_VERSION_NUMBER="${GOLANGCI_LINT_VERSION#v}"
+GOLANGCI_LINT_ASSET="golangci-lint-${GOLANGCI_LINT_VERSION_NUMBER}-linux-${GOLANGCI_LINT_ASSET_ARCH}.tar.gz"
+GOLANGCI_LINT_TARBALL="${TMP_DIR}/${GOLANGCI_LINT_ASSET}"
+GOLANGCI_LINT_CHECKSUMS="${TMP_DIR}/golangci-lint-checksums.txt"
+curl -sSfL "https://github.com/golangci/golangci-lint/releases/download/${GOLANGCI_LINT_VERSION}/${GOLANGCI_LINT_ASSET}" \
+    -o "${GOLANGCI_LINT_TARBALL}"
+curl -sSfL "https://github.com/golangci/golangci-lint/releases/download/${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION_NUMBER}-checksums.txt" \
+    -o "${GOLANGCI_LINT_CHECKSUMS}"
+verify_asset_from_checksums "${GOLANGCI_LINT_CHECKSUMS}" "${GOLANGCI_LINT_ASSET}" "${GOLANGCI_LINT_TARBALL}"
+tar -xzf "${GOLANGCI_LINT_TARBALL}" -C "${TMP_DIR}"
+run_for_bin_dir install -m 0755 \
+    "${TMP_DIR}/golangci-lint-${GOLANGCI_LINT_VERSION_NUMBER}-linux-${GOLANGCI_LINT_ASSET_ARCH}/golangci-lint" \
+    "${BIN_DIR}/golangci-lint"
+
+KUSTOMIZE_ASSET="kustomize_${KUSTOMIZE_VERSION}_linux_${KUSTOMIZE_ASSET_ARCH}.tar.gz"
+KUSTOMIZE_TARBALL="${TMP_DIR}/${KUSTOMIZE_ASSET}"
+KUSTOMIZE_CHECKSUMS="${TMP_DIR}/kustomize-checksums.txt"
+curl -sSfL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/${KUSTOMIZE_ASSET}" \
+    -o "${KUSTOMIZE_TARBALL}"
+curl -sSfL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/checksums.txt" \
+    -o "${KUSTOMIZE_CHECKSUMS}"
+verify_asset_from_checksums "${KUSTOMIZE_CHECKSUMS}" "${KUSTOMIZE_ASSET}" "${KUSTOMIZE_TARBALL}"
+tar -xzf "${KUSTOMIZE_TARBALL}" -C "${TMP_DIR}" kustomize
+run_for_bin_dir install -m 0755 "${TMP_DIR}/kustomize" "${BIN_DIR}/kustomize"
+
+SONOBUOY_ASSET="sonobuoy_${SONOBUOY_VERSION}_linux_${SONOBUOY_ASSET_ARCH}.tar.gz"
+SONOBUOY_TARBALL="${TMP_DIR}/${SONOBUOY_ASSET}"
+SONOBUOY_CHECKSUMS="${TMP_DIR}/sonobuoy-checksums.txt"
+curl -sSfL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/${SONOBUOY_ASSET}" \
+    -o "${SONOBUOY_TARBALL}"
+curl -sSfL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_checksums.txt" \
+    -o "${SONOBUOY_CHECKSUMS}"
+verify_asset_from_checksums "${SONOBUOY_CHECKSUMS}" "${SONOBUOY_ASSET}" "${SONOBUOY_TARBALL}"
+tar -xzf "${SONOBUOY_TARBALL}" -C "${TMP_DIR}" sonobuoy
+run_for_bin_dir install -m 0755 "${TMP_DIR}/sonobuoy" "${BIN_DIR}/sonobuoy"
+
+DOCKER_COMPOSE_ASSET="docker-compose-linux-${DOCKER_COMPOSE_ASSET_ARCH}"
+DOCKER_COMPOSE_BINARY="${TMP_DIR}/${DOCKER_COMPOSE_ASSET}"
+DOCKER_COMPOSE_CHECKSUM="${TMP_DIR}/${DOCKER_COMPOSE_ASSET}.sha256"
+curl -sSfL "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/${DOCKER_COMPOSE_ASSET}" \
+    -o "${DOCKER_COMPOSE_BINARY}"
+curl -sSfL "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/${DOCKER_COMPOSE_ASSET}.sha256" \
+    -o "${DOCKER_COMPOSE_CHECKSUM}"
+(
+    cd "${TMP_DIR}"
+    sha256sum -c "${DOCKER_COMPOSE_ASSET}.sha256"
+)
+run_for_bin_dir install -m 0755 "${DOCKER_COMPOSE_BINARY}" "${BIN_DIR}/docker-compose"
+
+if ! command -v docker >/dev/null 2>&1; then
+    echo "install-ci-tools failed: docker is required to install kubectl from ${KUBECTL_IMAGE}"
+    exit 1
+fi
+
+KUBECTL_TMP="$(mktemp)"
+KUBECTL_CONTAINER="$(docker create "${KUBECTL_IMAGE}")"
+cleanup_kubectl_install() {
+    rm -f "${KUBECTL_TMP}"
+    if [ -n "${KUBECTL_CONTAINER:-}" ]; then
+        docker rm "${KUBECTL_CONTAINER}" >/dev/null 2>&1 || true
+    fi
+}
+trap cleanup_kubectl_install EXIT
+
+docker cp "${KUBECTL_CONTAINER}:/bin/kubectl" "${KUBECTL_TMP}"
+docker rm "${KUBECTL_CONTAINER}" >/dev/null
+KUBECTL_CONTAINER=""
+run_for_bin_dir install -m 0755 "${KUBECTL_TMP}" "${BIN_DIR}/kubectl"
+trap - EXIT
+cleanup_kubectl_install

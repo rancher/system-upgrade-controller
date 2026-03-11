@@ -10,10 +10,12 @@ docker buildx build \
   --build-arg REPO=${REPO} \
   --build-arg TAG=${TAG} \
   --build-arg VERSION=${VERSION} \
+  --build-arg COMMIT=${COMMIT} \
   --file package/Dockerfile \
   --tag ${REPO}/system-upgrade-controller:${TAG} \
   --tag ${REPO}/system-upgrade-controller:latest \
   --target controller \
+  --load \
 .
 
 docker image save --output ./dist/artifacts/system-upgrade-controller-${ARCH}.tar \

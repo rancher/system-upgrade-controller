@@ -4,7 +4,6 @@
 
 e2e-wait-for-kubeconfig() {
     set -e -o pipefail
-    # the `--insecure-skip-tls-verify` seems to be only needed here when run in dapper
     while ! kubectl --insecure-skip-tls-verify get pods -A >/dev/null 2>&1 ; do
         echo 'Waiting for kubeconfig to become available...' >&2
         sleep 5
@@ -47,4 +46,3 @@ e2e-wait-for-services() {
 export -f e2e-wait-for-services
 
 # ---
-
