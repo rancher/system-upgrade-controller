@@ -121,10 +121,10 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 					jobs.EnqueueAfter(obj.Namespace, obj.Name, delay-interval)
 				} else {
 					ctl.recorder.Eventf(plan, corev1.EventTypeNormal, "JobComplete", "Job completed on Node %s", node.Name)
-					node.Labels[planLabel] = planHash
 					for k, v := range plan.Spec.CustomNodeLabels {
 						node.Labels[k] = v
 					}
+					node.Labels[planLabel] = planHash
 				}
 				// mark the node as schedulable even if the delay has not elapsed, so that
 				// workloads can resume scheduling.
