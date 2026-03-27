@@ -124,7 +124,6 @@ _Appears in:_
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#localobjectreference-v1-core) array_ | Image Pull Secrets, used to pull images for the Job. |  |  |
 | `postCompleteDelay` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#duration-v1-meta)_ | Time after a Job for one Node is complete before a new Job will be created for the next Node. |  |  |
 | `priorityClassName` _string_ | Priority Class Name of Job, if specified. |  |  |
-| `customNodeLabels` _map[string]string_ | Custom labels to apply to a node when the job for this plan completes successfully. |  |  |
 | `customNodeLabels` _map[string]string_ | Custom labels to apply to a node when the job for this plan completes successfully. Label values support the template variable `${PLAN_VERSION}`, which is translated to `plan.status.latestVersion` at the time the label is applied. |  |  |
 #### PlanStatus
 
