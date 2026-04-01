@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
@@ -121,6 +122,10 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 					jobs.EnqueueAfter(obj.Namespace, obj.Name, delay-interval)
 				} else {
 					ctl.recorder.Eventf(plan, corev1.EventTypeNormal, "JobComplete", "Job completed on Node %s", node.Name)
+					for k, v := range plan.Spec.CustomNodeLabels {
+						// if the label value contains the placeholder for the plan version, replace it with the actual version being applied
+						node.Labels[k] = strings.ReplaceAll(v, "${PLAN_VERSION}", plan.Status.LatestVersion)
+					}
 					node.Labels[planLabel] = planHash
 				}
 				// mark the node as schedulable even if the delay has not elapsed, so that
