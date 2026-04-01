@@ -32,8 +32,11 @@ RUN set -x \
     /var/tmp/*
 
 ARG INSTALL_K3S_VERSION=v1.21.9+k3s1
+# renovate-local: k3s-install-sh=v1.21.9+k3s1
+ARG INSTALL_K3S_SCRIPT_SUM=00d56f5b77421cd92fe9d375db7eb1140d3d4e9c8720099dfba3eab723d95251
 ARG INSTALL_K3S_SKIP_START=true
-ADD https://raw.githubusercontent.com/rancher/k3s/${INSTALL_K3S_VERSION}/install.sh /usr/share/rancher/k3s/
+ADD https://raw.githubusercontent.com/rancher/k3s/${INSTALL_K3S_VERSION}/install.sh /usr/share/rancher/k3s/install.sh
+RUN echo "${INSTALL_K3S_SCRIPT_SUM}  /usr/share/rancher/k3s/install.sh" | sha256sum -c -
 RUN sh -x /usr/share/rancher/k3s/install.sh || true
 RUN k3s --version
 

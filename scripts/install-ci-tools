@@ -1,10 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-GOLANGCI_LINT_VERSION="${GOLANGCI_LINT_VERSION:-v2.6.1}"
-KUSTOMIZE_VERSION="${KUSTOMIZE_VERSION:-v5.6.0}"
-SONOBUOY_VERSION="${SONOBUOY_VERSION:-0.57.3}"
-DOCKER_COMPOSE_VERSION="${DOCKER_COMPOSE_VERSION:-v2.29.1}"
+# renovate: datasource=github-release-attachments depName=golangci/golangci-lint
+GOLANGCI_LINT_VERSION="v2.6.1"
+# renovate: datasource=github-release-attachments depName=golangci/golangci-lint digestVersion=v2.6.1
+GOLANGCI_LINT_SUM_amd64="c22e188e46aff9b140588abe6828ba271b600ae82b2d6a4f452196a639c17ec0"
+# renovate: datasource=github-release-attachments depName=golangci/golangci-lint digestVersion=v2.6.1
+GOLANGCI_LINT_SUM_arm64="1c22b899f2dd84f9638e0e0352a319a2867b0bb082c5323ad50d8713b65bb793"
+# renovate: datasource=github-release-attachments depName=kubernetes-sigs/kustomize
+KUSTOMIZE_VERSION="v5.6.0"
+# renovate: datasource=github-release-attachments depName=kubernetes-sigs/kustomize digestVersion=v5.6.0
+KUSTOMIZE_SUM_amd64="54e4031ddc4e7fc59e408da29e7c646e8e57b8088c51b84b3df0864f47b5148f"
+# renovate: datasource=github-release-attachments depName=kubernetes-sigs/kustomize digestVersion=v5.6.0
+KUSTOMIZE_SUM_arm64="ad8ab62d4f6d59a8afda0eec4ba2e5cd2f86bf1afeea4b78d06daac945eb0660"
+# renovate: datasource=github-release-attachments depName=vmware-tanzu/sonobuoy
+SONOBUOY_VERSION="0.57.3"
+# renovate: datasource=github-release-attachments depName=vmware-tanzu/sonobuoy digestVersion=v0.57.3
+SONOBUOY_SUM_amd64="6728e04f62068465c56e2d317f4a5392520bf00c836aeaba970ae913f943718c"
+# renovate: datasource=github-release-attachments depName=vmware-tanzu/sonobuoy digestVersion=v0.57.3
+SONOBUOY_SUM_arm64="958edd774ff6a23f8eaefc2ea2c361b05caa8d7980ab8443e552e7f7bf100ab1"
+# renovate: datasource=github-release-attachments depName=docker/compose
+DOCKER_COMPOSE_VERSION="v2.29.1"
+# renovate: datasource=github-release-attachments depName=docker/compose digestVersion=v2.29.1
+DOCKER_COMPOSE_SUM_amd64="5ea89dd65d33912a83737d8a4bf070d5de534a32b8493a21fbefc924484786a9"
+# renovate: datasource=github-release-attachments depName=docker/compose digestVersion=v2.29.1
+DOCKER_COMPOSE_SUM_arm64="7f0023ba726b90347e4ebc1d94ec5970390b8bddb86402c0429f163dca70d745"
 KUBECTL_IMAGE="${KUBECTL_IMAGE:-rancher/kubectl:v1.33.1}"
 BIN_DIR="${BIN_DIR:-/usr/local/bin}"
 INSTALL_APT_PACKAGES="${INSTALL_APT_PACKAGES:-true}"
@@ -13,15 +33,23 @@ HOST_ARCH="${HOST_ARCH:-$(uname -m)}"
 case "${HOST_ARCH}" in
     x86_64 | amd64)
         GOLANGCI_LINT_ASSET_ARCH="amd64"
+        GOLANGCI_LINT_SUM="${GOLANGCI_LINT_SUM_amd64}"
         KUSTOMIZE_ASSET_ARCH="amd64"
+        KUSTOMIZE_SUM="${KUSTOMIZE_SUM_amd64}"
         SONOBUOY_ASSET_ARCH="amd64"
+        SONOBUOY_SUM="${SONOBUOY_SUM_amd64}"
         DOCKER_COMPOSE_ASSET_ARCH="x86_64"
+        DOCKER_COMPOSE_SUM="${DOCKER_COMPOSE_SUM_amd64}"
         ;;
     aarch64 | arm64)
         GOLANGCI_LINT_ASSET_ARCH="arm64"
+        GOLANGCI_LINT_SUM="${GOLANGCI_LINT_SUM_arm64}"
         KUSTOMIZE_ASSET_ARCH="arm64"
+        KUSTOMIZE_SUM="${KUSTOMIZE_SUM_arm64}"
         SONOBUOY_ASSET_ARCH="arm64"
+        SONOBUOY_SUM="${SONOBUOY_SUM_arm64}"
         DOCKER_COMPOSE_ASSET_ARCH="aarch64"
+        DOCKER_COMPOSE_SUM="${DOCKER_COMPOSE_SUM_arm64}"
         ;;
     *)
         echo "install-ci-tools failed: unsupported architecture '${HOST_ARCH}'. Supported architectures: amd64/x86_64, arm64/aarch64."
@@ -74,15 +102,13 @@ cleanup_tmpdir() {
 }
 trap cleanup_tmpdir EXIT
 
-verify_asset_from_checksums() {
-    local checksums_file="$1"
+verify_asset_checksum() {
+    local expected_checksum="$1"
     local asset_name="$2"
     local asset_file="$3"
-    local expected_checksum
 
-    expected_checksum="$(awk -v name="${asset_name}" '$2 == name { print $1; exit }' "${checksums_file}")"
     if [ -z "${expected_checksum}" ]; then
-        echo "install-ci-tools failed: checksum for ${asset_name} not found in ${checksums_file}"
+        echo "install-ci-tools failed: checksum for ${asset_name} is empty"
         exit 1
     fi
     printf '%s  %s\n' "${expected_checksum}" "${asset_file}" | sha256sum -c -
@@ -91,12 +117,9 @@ verify_asset_from_checksums() {
 GOLANGCI_LINT_VERSION_NUMBER="${GOLANGCI_LINT_VERSION#v}"
 GOLANGCI_LINT_ASSET="golangci-lint-${GOLANGCI_LINT_VERSION_NUMBER}-linux-${GOLANGCI_LINT_ASSET_ARCH}.tar.gz"
 GOLANGCI_LINT_TARBALL="${TMP_DIR}/${GOLANGCI_LINT_ASSET}"
-GOLANGCI_LINT_CHECKSUMS="${TMP_DIR}/golangci-lint-checksums.txt"
 curl -sSfL "https://github.com/golangci/golangci-lint/releases/download/${GOLANGCI_LINT_VERSION}/${GOLANGCI_LINT_ASSET}" \
     -o "${GOLANGCI_LINT_TARBALL}"
-curl -sSfL "https://github.com/golangci/golangci-lint/releases/download/${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION_NUMBER}-checksums.txt" \
-    -o "${GOLANGCI_LINT_CHECKSUMS}"
-verify_asset_from_checksums "${GOLANGCI_LINT_CHECKSUMS}" "${GOLANGCI_LINT_ASSET}" "${GOLANGCI_LINT_TARBALL}"
+verify_asset_checksum "${GOLANGCI_LINT_SUM}" "${GOLANGCI_LINT_ASSET}" "${GOLANGCI_LINT_TARBALL}"
 tar -xzf "${GOLANGCI_LINT_TARBALL}" -C "${TMP_DIR}"
 run_for_bin_dir install -m 0755 \
     "${TMP_DIR}/golangci-lint-${GOLANGCI_LINT_VERSION_NUMBER}-linux-${GOLANGCI_LINT_ASSET_ARCH}/golangci-lint" \
@@ -104,37 +127,25 @@ run_for_bin_dir install -m 0755 \
 
 KUSTOMIZE_ASSET="kustomize_${KUSTOMIZE_VERSION}_linux_${KUSTOMIZE_ASSET_ARCH}.tar.gz"
 KUSTOMIZE_TARBALL="${TMP_DIR}/${KUSTOMIZE_ASSET}"
-KUSTOMIZE_CHECKSUMS="${TMP_DIR}/kustomize-checksums.txt"
 curl -sSfL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/${KUSTOMIZE_ASSET}" \
     -o "${KUSTOMIZE_TARBALL}"
-curl -sSfL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/checksums.txt" \
-    -o "${KUSTOMIZE_CHECKSUMS}"
-verify_asset_from_checksums "${KUSTOMIZE_CHECKSUMS}" "${KUSTOMIZE_ASSET}" "${KUSTOMIZE_TARBALL}"
+verify_asset_checksum "${KUSTOMIZE_SUM}" "${KUSTOMIZE_ASSET}" "${KUSTOMIZE_TARBALL}"
 tar -xzf "${KUSTOMIZE_TARBALL}" -C "${TMP_DIR}" kustomize
 run_for_bin_dir install -m 0755 "${TMP_DIR}/kustomize" "${BIN_DIR}/kustomize"
 
 SONOBUOY_ASSET="sonobuoy_${SONOBUOY_VERSION}_linux_${SONOBUOY_ASSET_ARCH}.tar.gz"
 SONOBUOY_TARBALL="${TMP_DIR}/${SONOBUOY_ASSET}"
-SONOBUOY_CHECKSUMS="${TMP_DIR}/sonobuoy-checksums.txt"
 curl -sSfL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/${SONOBUOY_ASSET}" \
     -o "${SONOBUOY_TARBALL}"
-curl -sSfL "https://github.com/vmware-tanzu/sonobuoy/releases/download/v${SONOBUOY_VERSION}/sonobuoy_${SONOBUOY_VERSION}_checksums.txt" \
-    -o "${SONOBUOY_CHECKSUMS}"
-verify_asset_from_checksums "${SONOBUOY_CHECKSUMS}" "${SONOBUOY_ASSET}" "${SONOBUOY_TARBALL}"
+verify_asset_checksum "${SONOBUOY_SUM}" "${SONOBUOY_ASSET}" "${SONOBUOY_TARBALL}"
 tar -xzf "${SONOBUOY_TARBALL}" -C "${TMP_DIR}" sonobuoy
 run_for_bin_dir install -m 0755 "${TMP_DIR}/sonobuoy" "${BIN_DIR}/sonobuoy"
 
 DOCKER_COMPOSE_ASSET="docker-compose-linux-${DOCKER_COMPOSE_ASSET_ARCH}"
 DOCKER_COMPOSE_BINARY="${TMP_DIR}/${DOCKER_COMPOSE_ASSET}"
-DOCKER_COMPOSE_CHECKSUM="${TMP_DIR}/${DOCKER_COMPOSE_ASSET}.sha256"
 curl -sSfL "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/${DOCKER_COMPOSE_ASSET}" \
     -o "${DOCKER_COMPOSE_BINARY}"
-curl -sSfL "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/${DOCKER_COMPOSE_ASSET}.sha256" \
-    -o "${DOCKER_COMPOSE_CHECKSUM}"
-(
-    cd "${TMP_DIR}"
-    sha256sum -c "${DOCKER_COMPOSE_ASSET}.sha256"
-)
+verify_asset_checksum "${DOCKER_COMPOSE_SUM}" "${DOCKER_COMPOSE_ASSET}" "${DOCKER_COMPOSE_BINARY}"
 run_for_bin_dir install -m 0755 "${DOCKER_COMPOSE_BINARY}" "${BIN_DIR}/docker-compose"
 
 if ! command -v docker >/dev/null 2>&1; then
