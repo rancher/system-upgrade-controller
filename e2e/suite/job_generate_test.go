@@ -15,6 +15,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/rancher/system-upgrade-controller/e2e/framework"
+	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -284,6 +285,60 @@ var _ = Describe("Job Generation", func() {
 		})
 		It("hash should be equal", func() {
 			Expect(plan.Status.LatestHash).Should(Equal(hash))
+		})
+		AfterEach(CollectLogsOnFailure(e2e))
+	})
+
+	When("plan has post complete labels with variable expansion", func() {
+		var (
+			err  error
+			plan *upgradeapiv1.Plan
+			jobs []batchv1.Job
+		)
+		BeforeEach(func() {
+			plan = e2e.NewPlan("post-complete-labels-", "library/alpine:3.18", []string{"sh", "-c"}, "exit 0")
+			plan.Spec.Version = "latest"
+			plan.Spec.Concurrency = 1
+			plan.Spec.ServiceAccountName = e2e.Namespace.Name
+			plan.Spec.NodeSelector = &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{{
+					Key:      "node-role.kubernetes.io/control-plane",
+					Operator: metav1.LabelSelectorOpDoesNotExist,
+				}},
+			}
+			plan.Spec.PostCompleteLabels = map[string]string{
+				"test.cattle.io/upgraded-version": "$(LATEST_VERSION)",
+				"test.cattle.io/upgraded-hash":    "$(LATEST_HASH)",
+				"test.cattle.io/static-label":     "static-value",
+			}
+			plan, err = e2e.CreatePlan(plan)
+			Expect(err).ToNot(HaveOccurred())
+
+			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(BeTrue())
+
+			jobs, err = e2e.WaitForPlanJobs(plan, 1, 120*time.Second)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(jobs).To(HaveLen(1))
+		})
+		It("should apply post complete labels with expanded variables to the node", func() {
+			Expect(jobs[0].Status.Succeeded).To(BeNumerically("==", 1))
+
+			nodeName, ok := jobs[0].Labels[upgradeapi.LabelNode]
+			Expect(ok).To(BeTrue())
+
+			var node *v1.Node
+			Eventually(func() (*v1.Node, error) {
+				node, err = e2e.ClientSet.CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
+				return node, err
+			}).WithTimeout(30 * time.Second).Should(
+				SatisfyAll(
+					WithTransform(func(n *v1.Node) string { return n.Labels["test.cattle.io/upgraded-version"] }, Equal(plan.Status.LatestVersion)),
+					WithTransform(func(n *v1.Node) string { return n.Labels["test.cattle.io/upgraded-hash"] }, Equal(plan.Status.LatestHash)),
+					WithTransform(func(n *v1.Node) string { return n.Labels["test.cattle.io/static-label"] }, Equal("static-values")),
+				),
+			)
 		})
 		AfterEach(CollectLogsOnFailure(e2e))
 	})
