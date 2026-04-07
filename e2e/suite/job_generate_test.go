@@ -336,7 +336,7 @@ var _ = Describe("Job Generation", func() {
 				SatisfyAll(
 					WithTransform(func(n *v1.Node) string { return n.Labels["test.cattle.io/upgraded-version"] }, Equal(plan.Status.LatestVersion)),
 					WithTransform(func(n *v1.Node) string { return n.Labels["test.cattle.io/upgraded-hash"] }, Equal(plan.Status.LatestHash)),
-					WithTransform(func(n *v1.Node) string { return n.Labels["test.cattle.io/static-label"] }, Equal("static-values")),
+					WithTransform(func(n *v1.Node) string { return n.Labels["test.cattle.io/static-label"] }, Equal("static-value")),
 				),
 			)
 		})
