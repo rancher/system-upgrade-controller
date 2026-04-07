@@ -87,7 +87,7 @@ type PlanSpec struct {
 	PriorityClassName string `json:"priorityClassName,omitempty"`
 	// Label key-value pairs to apply to a node when the job for this plan completes successfully.
 	// Values may contain `$(LATEST_HASH)` or `$(LATEST_VERSION)`, which will be expanded from the plan status.
-	PostCompleteLabels map[string]string `json:"customNodeLabels,omitempty"`
+	PostCompleteLabels map[string]string `json:"postCompleteLabels,omitempty"`
 }
 
 // PlanStatus represents the resulting state from processing Plan events.

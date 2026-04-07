@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
@@ -19,6 +18,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/kubernetes/third_party/forked/golang/expansion"
 )
 
 // job events (successful completions) cause the node the job ran on to be labeled as per the plan
@@ -122,9 +122,12 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 					jobs.EnqueueAfter(obj.Namespace, obj.Name, delay-interval)
 				} else {
 					ctl.recorder.Eventf(plan, corev1.EventTypeNormal, "JobComplete", "Job completed on Node %s", node.Name)
-					for k, v := range plan.Spec.CustomNodeLabels {
-						// if the label value contains the placeholder for the plan version, replace it with the actual version being applied
-						node.Labels[k] = strings.ReplaceAll(v, "${PLAN_VERSION}", plan.Status.LatestVersion)
+					labelVars := map[string]string{
+						"LATEST_VERSION": plan.Status.LatestVersion,
+						"LATEST_HASH":    plan.Status.LatestHash,
+					}
+					for k, v := range plan.Spec.PostCompleteLabels {
+						node.Labels[k] = expansion.Expand(v, expansion.MappingFuncFor(labelVars))
 					}
 					node.Labels[planLabel] = planHash
 				}
