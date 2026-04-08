@@ -243,6 +243,13 @@ func (in *PlanSpec) DeepCopyInto(out *PlanSpec) {
 		*out = new(metav1.Duration)
 		**out = **in
 	}
+	if in.PostCompleteLabels != nil {
+		in, out := &in.PostCompleteLabels, &out.PostCompleteLabels
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 

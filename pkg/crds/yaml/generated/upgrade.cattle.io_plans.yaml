@@ -233,6 +233,13 @@ spec:
                 description: Time after a Job for one Node is complete before a new
                   Job will be created for the next Node.
                 type: string
+              postCompleteLabels:
+                additionalProperties:
+                  type: string
+                description: |-
+                  Label key-value pairs to apply to a node when the job for this plan completes successfully.
+                  Values may contain `$(LATEST_HASH)` or `$(LATEST_VERSION)`, which will be expanded from the plan status.
+                type: object
               prepare:
                 description: The prepare init container, if specified, is run before
                   cordon/drain which is run before the upgrade container.
@@ -727,9 +734,10 @@ spec:
                     operator:
                       description: |-
                         Operator represents a key's relationship to the value.
-                        Valid operators are Exists and Equal. Defaults to Equal.
+                        Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal.
                         Exists is equivalent to wildcard for value, so that a pod can
                         tolerate all taints of a particular category.
+                        Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
                       type: string
                     tolerationSeconds:
                       description: |-
