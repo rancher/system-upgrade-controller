@@ -1,5 +1,5 @@
-ARG BCI=registry.suse.com/bci/bci-base:15.6
-ARG GOLANG=registry.suse.com/bci/golang:1.25
+ARG BCI=registry.suse.com/bci/bci-base:15.7
+ARG GOLANG=registry.suse.com/bci/golang:1.26
 
 FROM --platform=$BUILDPLATFORM ${GOLANG} AS build-base
 ARG TARGETOS
