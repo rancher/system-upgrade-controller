@@ -2,11 +2,11 @@
 set -euo pipefail
 
 # renovate: datasource=github-release-attachments depName=golangci/golangci-lint
-GOLANGCI_LINT_VERSION="v2.6.1"
-# renovate: datasource=github-release-attachments depName=golangci/golangci-lint digestVersion=v2.6.1
-GOLANGCI_LINT_SUM_amd64="c22e188e46aff9b140588abe6828ba271b600ae82b2d6a4f452196a639c17ec0"
-# renovate: datasource=github-release-attachments depName=golangci/golangci-lint digestVersion=v2.6.1
-GOLANGCI_LINT_SUM_arm64="1c22b899f2dd84f9638e0e0352a319a2867b0bb082c5323ad50d8713b65bb793"
+GOLANGCI_LINT_VERSION="v2.12.1"
+# renovate: datasource=github-release-attachments depName=golangci/golangci-lint digestVersion=v2.12.1
+GOLANGCI_LINT_SUM_amd64="82c7932d9aa10c34e22ef56961ac5aad71d4a14806a1a31b06931add2688b368"
+# renovate: datasource=github-release-attachments depName=golangci/golangci-lint digestVersion=v2.12.1
+GOLANGCI_LINT_SUM_arm64="23c8e14f42b288d11d46ef52c622e2481d92901edfb263c2cf10875f38d386c4"
 # renovate: datasource=github-release-attachments depName=kubernetes-sigs/kustomize
 KUSTOMIZE_VERSION="v5.6.0"
 # renovate: datasource=github-release-attachments depName=kubernetes-sigs/kustomize digestVersion=v5.6.0

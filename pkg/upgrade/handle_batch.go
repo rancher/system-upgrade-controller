@@ -93,7 +93,7 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 				upgradejob.ConditionFailed.GetReason(obj),
 				upgradejob.ConditionFailed.GetMessage(obj),
 			)
-			ctl.recorder.Eventf(plan, corev1.EventTypeWarning, "JobFailed", message)
+			ctl.recorder.Eventf(plan, corev1.EventTypeWarning, "JobFailed", "%s", message)
 			upgradeapiv1.PlanComplete.SetError(plan, "JobFailed", errors.New(message))
 			if plan, err = plans.UpdateStatus(plan); err != nil {
 				return obj, err
