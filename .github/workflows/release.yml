@@ -69,7 +69,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Create draft GitHub release
-        run: gh release create -R "${GITHUB_REPOSITORY}" ${{ env.TAG }}" --draft --title "${{ env.TAG }}"
+        run: gh release create -R "${GITHUB_REPOSITORY}" "${{ env.TAG }}" --draft --title "${{ env.TAG }}"
 
   # Publishes signed Docker images built from source using Docker buildx.
   publish:
@@ -134,7 +134,7 @@ jobs:
           merge-multiple: true
 
       - name: Add artifacts to release
-        run: gh release upload -R "${GITHUB_REPOSITORY}" ${{ env.TAG }}" dist/artifacts/*
+        run: gh release upload -R "${GITHUB_REPOSITORY}" "${{ env.TAG }}" dist/artifacts/*
 
       - name: Publish GitHub release
         run: |
@@ -142,4 +142,4 @@ jobs:
           if [[ "${{ env.TAG }}" == *"-rc"* ]]; then
             flags="${flags} --prerelease"
           fi
-          gh release edit -R "${GITHUB_REPOSITORY}" ${{ env.TAG }}" ${flags}
+          gh release edit -R "${GITHUB_REPOSITORY}" "${{ env.TAG }}" ${flags}
