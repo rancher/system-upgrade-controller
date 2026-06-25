@@ -40,7 +40,7 @@ require (
 	github.com/onsi/gomega v1.39.1
 	github.com/rancher/lasso v0.2.9
 	github.com/rancher/system-upgrade-controller/pkg/apis v0.0.0
-	github.com/rancher/wrangler/v3 v3.7.0-rc.1
+	github.com/rancher/wrangler/v3 v3.7.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/urfave/cli v1.22.15
 	k8s.io/api v0.36.0
