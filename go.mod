@@ -5,7 +5,7 @@ go 1.26.0
 toolchain go1.26.3
 
 replace (
-	github.com/distribution/reference => github.com/distribution/reference v0.5.0
+	github.com/distribution/reference => github.com/distribution/reference v0.6.0
 	github.com/rancher/system-upgrade-controller/pkg/apis => ./pkg/apis
 	k8s.io/apiserver => k8s.io/apiserver v0.36.0
 	k8s.io/cli-runtime => k8s.io/cli-runtime v0.36.0
