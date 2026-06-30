@@ -1,6 +1,6 @@
 # Install the all-in-one binary so we can copy our run-time images into the image
 # which helps avoid pulling them when running e2e tests.
-ARG BCI="registry.suse.com/bci/bci-base:15.6"
+ARG BCI="registry.suse.com/bci/bci-base:16.1"
 FROM ${BCI} AS k3s
 ARG ARCH
 # renovate: datasource=github-release-attachments depName=k3s-io/k3s
