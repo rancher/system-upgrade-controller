@@ -4,13 +4,13 @@ ARG BCI="registry.suse.com/bci/bci-base:15.6"
 FROM ${BCI} AS k3s
 ARG ARCH
 # renovate: datasource=github-release-attachments depName=k3s-io/k3s
-ARG K3S_VERSION="v1.32.5+k3s1"
-# renovate: datasource=github-release-attachments depName=k3s-io/k3s digestVersion=v1.32.5+k3s1
-ARG K3S_SUM_amd64="9624ef0534b1be432b4ce8dd94dcd7241ed02451d970a4d38943baccf5c60dce"
-# renovate: datasource=github-release-attachments depName=k3s-io/k3s digestVersion=v1.32.5+k3s1
-ARG K3S_SUM_arm64="eb62d8ba346f7c6a0bb5c874ea92335ecad7cb3fa167508f94888aaeb43e7f22"
-# renovate: datasource=github-release-attachments depName=k3s-io/k3s digestVersion=v1.32.5+k3s1
-ARG K3S_SUM_arm="d9ea2edae8710246f7ccd0b0eb688e665937072a4ab8aa08a1b99d8b3ca89788"
+ARG K3S_VERSION="v1.36.2+k3s1"
+# renovate: datasource=github-release-attachments depName=k3s-io/k3s digestVersion=v1.36.2+k3s1
+ARG K3S_SUM_amd64="65a55ec56c24eab44383086166ec620a491952b7e23941a49ddca6e8a4c4b4de"
+# renovate: datasource=github-release-attachments depName=k3s-io/k3s digestVersion=v1.36.2+k3s1
+ARG K3S_SUM_arm64="1dc5fc17f15c28fa0a3f011cee28ad613f918c3d967a426e5a05d43ddb239817"
+# renovate: datasource=github-release-attachments depName=k3s-io/k3s digestVersion=v1.36.2+k3s1
+ARG K3S_SUM_arm="3e4cc1de8dc38eeed28f9c0f3de810964ae505a683e8f2342cbb6faafc520fe2"
 RUN set -x \
    && zypper -n in \
    ca-certificates \
