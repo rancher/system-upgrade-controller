@@ -197,7 +197,8 @@ sonobuoy results $(sonobuoy retrieve)
 
 ## Usage in Rancher
 
-System Upgrade Controller (SUC) is installed in Rancher as a managed App. The chart is maintained in the `rancher/charts` repository, with branches matching Rancher release lines.
+System Upgrade Controller (SUC) is packaged as a Helm chart and distributed with Rancher. 
+The chart is maintained in the `rancher/charts` repository, with branches corresponding to Rancher release lines.
 
 The table below shows the SUC chart and controller versions used by each supported Rancher release line.
 
