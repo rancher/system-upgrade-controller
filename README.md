@@ -195,8 +195,25 @@ sonobuoy run --plugin dist/artifacts/system-upgrade-controller-e2e-tests.yaml --
 sonobuoy results $(sonobuoy retrieve)
 ```
 
+## Usage in Rancher
+
+System Upgrade Controller (SUC) is packaged as a Helm chart and distributed with Rancher. 
+The chart is maintained in the `rancher/charts` repository, with branches corresponding to Rancher release lines.
+
+The table below shows the SUC chart and controller versions used by each supported Rancher release line.
+
+| Rancher Release Line | SUC Chart Version | SUC Version |
+| -------------------- | ----------------- | ----------- |
+| `v2.15`              | `110.0.0`         | `v0.20.1`   |
+| `v2.14`              | `109.0.2`         | `v0.19.1`   |
+| `v2.13`              | `108.0.0`         | `v0.17.0`   |
+| `v2.12`              | `107.0.1`         | `v0.16.3`   |
+
+> **Note:** The chart and SUC versions shown above are examples and may change over time as Rancher patch releases update their dependencies.
+
+
 ## License
-Copyright (c) 2019-2022 [Rancher Labs, Inc.](http://rancher.com)
+Copyright (c) 2019-2026 [Rancher Labs, Inc.](http://rancher.com)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
