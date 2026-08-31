@@ -19,7 +19,7 @@ import (
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	_ "k8s.io/kubernetes/test/utils/format"
+	_ "k8s.io/kubernetes/test/utils/ktesting/format"
 )
 
 var _ = Describe("Job Generation", func() {
