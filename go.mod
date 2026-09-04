@@ -37,8 +37,8 @@ replace (
 require (
 	github.com/docker/distribution v2.8.3+incompatible
 	github.com/kubereboot/kured v1.13.1
-	github.com/onsi/ginkgo/v2 v2.32.0
-	github.com/onsi/gomega v1.42.1
+	github.com/onsi/ginkgo/v2 v2.32.1
+	github.com/onsi/gomega v1.43.0
 	github.com/rancher/lasso v0.2.9
 	github.com/rancher/system-upgrade-controller/pkg/apis v0.0.0
 	github.com/rancher/wrangler/v3 v3.7.0
