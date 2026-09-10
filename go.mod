@@ -5,11 +5,6 @@ go 1.26.0
 toolchain go1.26.5
 
 replace (
-	github.com/rancher/lasso => github.com/Abhishek-Valaboju/lasso v0.2.9-0.20260828055838-34eaedfec2e7
-	github.com/rancher/wrangler/v3 => github.com/Abhishek-Valaboju/wrangler/v3 v3.5.1-rc.1.0.20260828064927-bed3da9cc545
-)
-
-replace (
 	github.com/distribution/reference => github.com/distribution/reference v0.5.0
 	github.com/rancher/system-upgrade-controller/pkg/apis => ./pkg/apis
 	k8s.io/apiserver => k8s.io/apiserver v0.37.0
@@ -44,9 +39,9 @@ require (
 	github.com/kubereboot/kured v1.13.1
 	github.com/onsi/ginkgo/v2 v2.32.0
 	github.com/onsi/gomega v1.42.1
-	github.com/rancher/lasso v0.2.9
+	github.com/rancher/lasso v0.2.10
 	github.com/rancher/system-upgrade-controller/pkg/apis v0.0.0
-	github.com/rancher/wrangler/v3 v3.7.0
+	github.com/rancher/wrangler/v3 v3.8.0-rc.1
 	github.com/sirupsen/logrus v1.10.0
 	github.com/urfave/cli v1.22.17
 	k8s.io/api v0.37.0

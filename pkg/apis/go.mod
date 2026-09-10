@@ -4,11 +4,9 @@ go 1.26.0
 
 toolchain go1.26.5
 
-replace github.com/rancher/wrangler/v3 => github.com/Abhishek-Valaboju/wrangler/v3 v3.5.1-rc.1.0.20260828064927-bed3da9cc545
-
 require (
 	github.com/kubereboot/kured v1.13.1
-	github.com/rancher/wrangler/v3 v3.7.0
+	github.com/rancher/wrangler/v3 v3.8.0-rc.1
 	github.com/sirupsen/logrus v1.10.0
 	k8s.io/api v0.37.0
 	k8s.io/apimachinery v0.37.0
