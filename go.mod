@@ -16,16 +16,16 @@ require (
 	github.com/onsi/gomega v1.43.0
 	github.com/rancher/lasso v0.2.10
 	github.com/rancher/system-upgrade-controller/pkg/apis v0.0.0
-	github.com/rancher/wrangler/v3 v3.8.0-rc.1
+	github.com/rancher/wrangler/v3 v3.8.0-rc.2
 	github.com/sirupsen/logrus v1.10.2
 	github.com/urfave/cli v1.22.17
-	k8s.io/api v0.37.0
-	k8s.io/apiextensions-apiserver v0.37.0
-	k8s.io/apimachinery v0.37.0
-	k8s.io/client-go v0.37.0
-	k8s.io/kubectl v0.37.0
-	k8s.io/kubernetes v1.37.0
-	k8s.io/pod-security-admission v0.37.0
+	k8s.io/api v0.37.1
+	k8s.io/apiextensions-apiserver v0.37.1
+	k8s.io/apimachinery v0.37.1
+	k8s.io/client-go v0.37.1
+	k8s.io/kubectl v0.37.1
+	k8s.io/kubernetes v1.37.1
+	k8s.io/pod-security-admission v0.37.1
 	k8s.io/utils v0.0.0-20260626114624-be93311217bd
 )
 
@@ -126,18 +126,18 @@ require (
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/apiserver v0.37.0 // indirect
-	k8s.io/cli-runtime v0.37.0 // indirect
-	k8s.io/code-generator v0.37.0 // indirect
-	k8s.io/component-base v0.37.0 // indirect
-	k8s.io/component-helpers v0.37.0 // indirect
+	k8s.io/apiserver v0.37.1 // indirect
+	k8s.io/cli-runtime v0.37.1 // indirect
+	k8s.io/code-generator v0.37.1 // indirect
+	k8s.io/component-base v0.37.1 // indirect
+	k8s.io/component-helpers v0.37.1 // indirect
 	k8s.io/controller-manager v0.37.0 // indirect
 	k8s.io/gengo v0.0.0-20250130153323-76c5745d3511 // indirect
 	k8s.io/gengo/v2 v2.0.0-20260408192533-25e2208e0dc3 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad // indirect
 	k8s.io/kubelet v0.37.0 // indirect
-	k8s.io/streaming v0.37.0 // indirect
+	k8s.io/streaming v0.37.1 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.36.0 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/kustomize/api v0.21.1 // indirect
