@@ -54,7 +54,7 @@ jobs:
         run: find dist/artifacts -type f -exec sha256sum {} \; > "dist/artifacts/sha256sum-${{ matrix.arch }}.txt"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: "artifacts-${{ matrix.os }}-${{ matrix.arch }}"
           path: dist/artifacts/*
@@ -98,7 +98,7 @@ jobs:
             secret/data/github/repo/${{ github.repository }}/rancher-prime-stg-registry/credentials password | PRIME_STG_REGISTRY_PASSWORD
 
       - name: Publish image
-        uses: rancher/ecm-distro-tools/actions/publish-image@fdf1c26ea7f6c61b1cc8496a393788d9e9246b98 # v0.77.3
+        uses: rancher/ecm-distro-tools/actions/publish-image@de2813d6e83420b8146ce1f57de5ac6aad28c985 # v0.78.0
         with:
           image: system-upgrade-controller
           tag: ${{ github.ref_name }}
@@ -127,7 +127,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           path: dist/artifacts
           pattern: artifacts-*
