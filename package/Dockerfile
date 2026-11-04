@@ -53,7 +53,7 @@ RUN set -x \
     && zypper -n in tar gzip
 ENTRYPOINT ["/run.sh"]
 
-FROM --platform=$BUILDPLATFORM ${GOLANG} AS zoneinfo
+FROM --platform=$BUILDPLATFORM ${BCI} AS zoneinfo
 RUN zypper -n in timezone \
     && zypper -n clean -a
 
