@@ -1,8 +1,8 @@
 module github.com/rancher/system-upgrade-controller
 
-go 1.26.0
+go 1.27.0
 
-toolchain go1.26.10
+toolchain go1.27.3
 
 replace (
 	github.com/distribution/reference => github.com/distribution/reference v0.5.0
@@ -27,6 +27,7 @@ require (
 	k8s.io/kubernetes v1.37.0
 	k8s.io/pod-security-admission v0.37.0
 	k8s.io/utils v0.0.0-20260626114624-be93311217bd
+	sigs.k8s.io/structured-merge-diff/v6 v6.4.2
 )
 
 require (
@@ -143,6 +144,5 @@ require (
 	sigs.k8s.io/kustomize/api v0.21.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.21.1 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
