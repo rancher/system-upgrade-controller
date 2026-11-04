@@ -15,6 +15,7 @@ import (
 	"github.com/kubereboot/kured/pkg/timewindow"
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
+	"github.com/rancher/wrangler/v3/pkg/condition"
 	"github.com/rancher/wrangler/v3/pkg/data"
 	corectlv1 "github.com/rancher/wrangler/v3/pkg/generated/controllers/core/v1"
 	"github.com/rancher/wrangler/v3/pkg/merr"
@@ -46,10 +47,12 @@ var (
 		}
 		return defaultValue
 	}(defaultPollingInterval)
+
+	planLatestResolved = condition.Cond(upgradeapiv1.PlanLatestResolved)
 )
 
 func DigestStatus(plan *upgradeapiv1.Plan, secretCache corectlv1.SecretCache) (upgradeapiv1.PlanStatus, error) {
-	if upgradeapiv1.PlanLatestResolved.GetReason(plan) != "Error" {
+	if planLatestResolved.GetReason(plan) != "Error" {
 		h := sha256.New224()
 		h.Write([]byte(plan.Status.LatestVersion))
 		h.Write([]byte(plan.Spec.ServiceAccountName))

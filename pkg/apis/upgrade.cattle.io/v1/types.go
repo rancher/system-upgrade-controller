@@ -7,20 +7,9 @@ import (
 	"time"
 
 	"github.com/kubereboot/kured/pkg/timewindow"
-	"github.com/rancher/system-upgrade-controller/pkg/apis/condition"
-	"github.com/rancher/wrangler/v3/pkg/genericcondition"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-)
-
-var (
-	// PlanLatestResolved indicates that the latest version as per the spec has been determined.
-	PlanLatestResolved = condition.Cond("LatestResolved")
-	// PlanSpecValidated indicates that the plan spec has been validated.
-	PlanSpecValidated = condition.Cond("Validated")
-	// PlanComplete indicates that the latest version of the plan has completed on all selected nodes.
-	PlanComplete = condition.Cond("Complete")
 )
 
 // +genclient
@@ -100,7 +89,7 @@ type PlanStatus struct {
 	// +patchStrategy=merge
 	// +listType=map
 	// +listMapKey=type
-	Conditions []genericcondition.GenericCondition `json:"conditions,omitempty"`
+	Conditions []PlanCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 
 	// The latest version, as resolved from .spec.version, or the channel server.
 	LatestVersion string `json:"latestVersion,omitempty"`
@@ -195,4 +184,34 @@ func (tws *TimeWindowSpec) Contains(t time.Time) bool {
 		return false
 	}
 	return tw.Contains(t)
+}
+
+type PlanConditionType string
+
+const (
+	// PlanLatestResolved indicates that the latest version as per the spec has been determined.
+	PlanLatestResolved = "LatestResolved"
+	// PlanSpecValidated indicates that the plan spec has been validated.
+	PlanSpecValidated = "Validated"
+	// PlanComplete indicates that the latest version of the plan has completed on all selected nodes.
+	PlanComplete = "Complete"
+)
+
+type PlanCondition struct {
+	// Type of plan condition.
+	Type PlanConditionType `json:"type"`
+	// Status of the condition, one of True, False, Unknown.
+	Status corev1.ConditionStatus `json:"status"`
+	// The last time this condition was updated.
+	// +optional
+	LastUpdateTime string `json:"lastUpdateTime,omitempty"`
+	// Last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime string `json:"lastTransitionTime,omitempty"`
+	// The reason for the condition's last transition.
+	// +optional
+	Reason string `json:"reason,omitempty"`
+	// Human-readable message indicating details about last transition.
+	// +optional
+	Message string `json:"message,omitempty"`
 }

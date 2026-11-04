@@ -20,19 +20,20 @@ package fake
 
 import (
 	v1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
-	upgradecattleiov1 "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned/typed/upgrade.cattle.io/v1"
+	upgradecattleiov1 "github.com/rancher/system-upgrade-controller/pkg/generated/applyconfiguration/upgrade.cattle.io/v1"
+	typedupgradecattleiov1 "github.com/rancher/system-upgrade-controller/pkg/generated/clientset/versioned/typed/upgrade.cattle.io/v1"
 	gentype "k8s.io/client-go/gentype"
 )
 
 // fakePlans implements PlanInterface
 type fakePlans struct {
-	*gentype.FakeClientWithList[*v1.Plan, *v1.PlanList]
+	*gentype.FakeClientWithListAndApply[*v1.Plan, *v1.PlanList, *upgradecattleiov1.PlanApplyConfiguration]
 	Fake *FakeUpgradeV1
 }
 
-func newFakePlans(fake *FakeUpgradeV1, namespace string) upgradecattleiov1.PlanInterface {
+func newFakePlans(fake *FakeUpgradeV1, namespace string) typedupgradecattleiov1.PlanInterface {
 	return &fakePlans{
-		gentype.NewFakeClientWithList[*v1.Plan, *v1.PlanList](
+		gentype.NewFakeClientWithListAndApply[*v1.Plan, *v1.PlanList, *upgradecattleiov1.PlanApplyConfiguration](
 			fake.Fake,
 			namespace,
 			v1.SchemeGroupVersion.WithResource("plans"),

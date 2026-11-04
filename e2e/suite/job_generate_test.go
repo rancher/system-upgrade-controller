@@ -15,11 +15,18 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/rancher/system-upgrade-controller/e2e/framework"
+	"github.com/rancher/system-upgrade-controller/pkg/apis/condition"
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	_ "k8s.io/kubernetes/test/utils/ktesting/format"
+)
+
+var (
+	validated = condition.Cond(upgradeapiv1.PlanSpecValidated)
+	resolved  = condition.Cond(upgradeapiv1.PlanLatestResolved)
+	complete  = condition.Cond(upgradeapiv1.PlanComplete)
 )
 
 var _ = Describe("Job Generation", func() {
@@ -45,9 +52,9 @@ var _ = Describe("Job Generation", func() {
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, resolved, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(BeTrue())
+			Expect(resolved.IsTrue(plan)).To(BeTrue())
 
 			jobs, err = e2e.WaitForPlanJobs(plan, 1, 120*time.Second)
 			Expect(err).ToNot(HaveOccurred())
@@ -59,7 +66,7 @@ var _ = Describe("Job Generation", func() {
 			Eventually(e2e.GetPlan).
 				WithArguments(plan.Name, metav1.GetOptions{}).
 				WithTimeout(30 * time.Second).
-				Should(WithTransform(upgradeapiv1.PlanComplete.IsTrue, BeFalse()))
+				Should(WithTransform(complete.IsTrue, BeFalse()))
 
 			plan, err = e2e.GetPlan(plan.Name, metav1.GetOptions{})
 			Expect(err).ToNot(HaveOccurred())
@@ -80,7 +87,7 @@ var _ = Describe("Job Generation", func() {
 			Eventually(e2e.GetPlan).
 				WithArguments(plan.Name, metav1.GetOptions{}).
 				WithTimeout(30 * time.Second).
-				Should(WithTransform(upgradeapiv1.PlanComplete.IsTrue, BeTrue()))
+				Should(WithTransform(complete.IsTrue, BeTrue()))
 		})
 	})
 
@@ -116,18 +123,18 @@ var _ = Describe("Job Generation", func() {
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanSpecValidated, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, validated, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(BeFalse())
-			Expect(upgradeapiv1.PlanSpecValidated.GetMessage(plan)).To(ContainSubstring("spec.drain cannot specify both deleteEmptydirData and deleteLocalData"))
+			Expect(validated.IsTrue(plan)).To(BeFalse())
+			Expect(validated.GetMessage(plan)).To(ContainSubstring("spec.drain cannot specify both deleteEmptydirData and deleteLocalData"))
 
 			plan.Spec.Drain.DeleteLocalData = nil
 			plan, err = e2e.UpdatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanSpecValidated, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, validated, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(BeTrue())
+			Expect(validated.IsTrue(plan)).To(BeTrue())
 
 			jobs, err = e2e.WaitForPlanJobs(plan, 1, 120*time.Second)
 			Expect(err).ToNot(HaveOccurred())
@@ -175,9 +182,9 @@ var _ = Describe("Job Generation", func() {
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanSpecValidated, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, validated, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(BeTrue())
+			Expect(validated.IsTrue(plan)).To(BeTrue())
 
 			jobs, err = e2e.WaitForPlanJobs(plan, 1, 120*time.Second)
 			Expect(err).ToNot(HaveOccurred())
@@ -213,18 +220,18 @@ var _ = Describe("Job Generation", func() {
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanSpecValidated, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, validated, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(BeFalse())
-			Expect(upgradeapiv1.PlanSpecValidated.GetMessage(plan)).To(ContainSubstring("spec.postCompleteDelay is negative"))
+			Expect(validated.IsTrue(plan)).To(BeFalse())
+			Expect(validated.GetMessage(plan)).To(ContainSubstring("spec.postCompleteDelay is negative"))
 
 			plan.Spec.PostCompleteDelay.Duration = time.Second
 			plan, err = e2e.UpdatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanSpecValidated, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, validated, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(upgradeapiv1.PlanSpecValidated.IsTrue(plan)).To(BeTrue())
+			Expect(validated.IsTrue(plan)).To(BeTrue())
 
 			jobs, err = e2e.WaitForPlanJobs(plan, 1, 120*time.Second)
 			Expect(err).ToNot(HaveOccurred())
@@ -274,7 +281,7 @@ var _ = Describe("Job Generation", func() {
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, resolved, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(plan.Status.LatestHash).ToNot(BeEmpty())
 			hash = plan.Status.LatestHash
@@ -314,9 +321,9 @@ var _ = Describe("Job Generation", func() {
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, resolved, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(BeTrue())
+			Expect(resolved.IsTrue(plan)).To(BeTrue())
 
 			jobs, err = e2e.WaitForPlanJobs(plan, 1, 120*time.Second)
 			Expect(err).ToNot(HaveOccurred())
@@ -364,7 +371,7 @@ var _ = Describe("Job Generation", func() {
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, resolved, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
 		})
 		It("message should contain deadline reason and message", func() {
@@ -379,9 +386,9 @@ var _ = Describe("Job Generation", func() {
 				WithArguments(plan.Name, metav1.GetOptions{}).
 				WithTimeout(30 * time.Second).
 				Should(SatisfyAll(
-					WithTransform(upgradeapiv1.PlanComplete.IsTrue, BeFalse()),
-					WithTransform(upgradeapiv1.PlanComplete.GetReason, Equal("JobFailed")),
-					WithTransform(upgradeapiv1.PlanComplete.GetMessage, ContainSubstring("DeadlineExceeded: Job was active longer than specified deadline")),
+					WithTransform(complete.IsTrue, BeFalse()),
+					WithTransform(complete.GetReason, Equal("JobFailed")),
+					WithTransform(complete.GetMessage, ContainSubstring("DeadlineExceeded: Job was active longer than specified deadline")),
 				))
 		})
 		AfterEach(CollectLogsOnFailure(e2e))

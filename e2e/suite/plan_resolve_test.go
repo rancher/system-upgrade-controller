@@ -25,11 +25,11 @@ var _ = Describe("Plan Resolution", func() {
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, resolved, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
 		})
 		It("should not resolve", func() {
-			Expect(upgradeapiv1.PlanLatestResolved.MatchesError(plan, "Error", upgradeapiv1.ErrPlanUnresolvable)).To(BeTrue())
+			Expect(resolved.MatchesError(plan, "Error", upgradeapiv1.ErrPlanUnresolvable)).To(BeTrue())
 			Expect(plan.Status.LatestVersion).To(BeEmpty())
 			Expect(plan.Status.LatestHash).To(BeEmpty())
 		})
@@ -48,12 +48,12 @@ var _ = Describe("Plan Resolution", func() {
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, resolved, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
 		})
 		It("should resolve", func() {
-			Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(BeTrue())
-			Expect(upgradeapiv1.PlanLatestResolved.GetReason(plan)).To(Equal("Version"))
+			Expect(resolved.IsTrue(plan)).To(BeTrue())
+			Expect(resolved.GetReason(plan)).To(Equal("Version"))
 			Expect(plan.Status.LatestVersion).To(Equal(plan.Spec.Version))
 			Expect(plan.Status.LatestHash).ToNot(BeEmpty())
 		})
@@ -73,12 +73,12 @@ var _ = Describe("Plan Resolution", func() {
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, resolved, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
 		})
 		It("should resolve", func() {
-			Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(BeTrue())
-			Expect(upgradeapiv1.PlanLatestResolved.GetReason(plan)).To(Equal("Version"))
+			Expect(resolved.IsTrue(plan)).To(BeTrue())
+			Expect(resolved.GetReason(plan)).To(Equal("Version"))
 			Expect(plan.Status.LatestHash).ToNot(BeEmpty())
 		})
 		It("should munge the semver", func() {
@@ -103,7 +103,7 @@ var _ = Describe("Plan Resolution", func() {
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, resolved, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
 		})
 		AfterEach(func() {
@@ -112,8 +112,8 @@ var _ = Describe("Plan Resolution", func() {
 			}
 		})
 		It("should resolve", func() {
-			Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(BeTrue())
-			Expect(upgradeapiv1.PlanLatestResolved.GetReason(plan)).To(Equal("Channel"))
+			Expect(resolved.IsTrue(plan)).To(BeTrue())
+			Expect(resolved.GetReason(plan)).To(Equal("Channel"))
 			Expect(plan.Status.LatestVersion).To(Equal(channelTag))
 			Expect(plan.Status.LatestHash).ToNot(BeEmpty())
 		})
@@ -136,7 +136,7 @@ var _ = Describe("Plan Resolution", func() {
 			plan, err = e2e.CreatePlan(plan)
 			Expect(err).ToNot(HaveOccurred())
 
-			plan, err = e2e.WaitForPlanCondition(plan.Name, upgradeapiv1.PlanLatestResolved, 30*time.Second)
+			plan, err = e2e.WaitForPlanCondition(plan.Name, resolved, 30*time.Second)
 			Expect(err).ToNot(HaveOccurred())
 		})
 		AfterEach(func() {
@@ -145,8 +145,8 @@ var _ = Describe("Plan Resolution", func() {
 			}
 		})
 		It("should resolve", func() {
-			Expect(upgradeapiv1.PlanLatestResolved.IsTrue(plan)).To(BeTrue())
-			Expect(upgradeapiv1.PlanLatestResolved.GetReason(plan)).To(Equal("Channel"))
+			Expect(resolved.IsTrue(plan)).To(BeTrue())
+			Expect(resolved.GetReason(plan)).To(Equal("Channel"))
 			Expect(plan.Status.LatestHash).ToNot(BeEmpty())
 		})
 		It("should munge the semver", func() {
