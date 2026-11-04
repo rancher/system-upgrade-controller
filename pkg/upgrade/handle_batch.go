@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/rancher/system-upgrade-controller/pkg/apis/condition"
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	upgradejob "github.com/rancher/system-upgrade-controller/pkg/upgrade/job"
@@ -20,6 +21,8 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/third_party/forked/golang/expansion"
 )
+
+var planComplete = condition.Cond(upgradeapiv1.PlanComplete)
 
 // job events (successful completions) cause the node the job ran on to be labeled as per the plan
 func (ctl *Controller) handleJobs(ctx context.Context) error {
@@ -94,7 +97,7 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 				upgradejob.ConditionFailed.GetMessage(obj),
 			)
 			ctl.recorder.Eventf(plan, corev1.EventTypeWarning, "JobFailed", "%s", message)
-			upgradeapiv1.PlanComplete.SetError(plan, "JobFailed", errors.New(message))
+			planComplete.SetError(plan, "JobFailed", errors.New(message))
 			if plan, err = plans.UpdateStatus(plan); err != nil {
 				return obj, err
 			}

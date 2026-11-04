@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rancher/system-upgrade-controller/pkg/apis/condition"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	upgradectlv1 "github.com/rancher/system-upgrade-controller/pkg/generated/controllers/upgrade.cattle.io/v1"
 	upgradejob "github.com/rancher/system-upgrade-controller/pkg/upgrade/job"
@@ -16,6 +17,12 @@ import (
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+)
+
+var (
+	validated = condition.Cond(upgradeapiv1.PlanSpecValidated)
+	resolved  = condition.Cond(upgradeapiv1.PlanLatestResolved)
+	complete  = condition.Cond(upgradeapiv1.PlanComplete)
 )
 
 func (ctl *Controller) handlePlans(ctx context.Context) error {
@@ -35,11 +42,9 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 			logrus.Debugf("PLAN STATUS HANDLER: plan=%s/%s@%s, status=%+v", obj.Namespace, obj.Name, obj.ResourceVersion, status)
 
 			// ensure that the complete status is present
-			complete := upgradeapiv1.PlanComplete
 			complete.CreateUnknownIfNotExists(obj)
 
 			// validate plan, and generate events for transitions
-			validated := upgradeapiv1.PlanSpecValidated
 			validated.CreateUnknownIfNotExists(obj)
 			if err := upgradeplan.Validate(obj, secretsCache); err != nil {
 				if !validated.IsFalse(obj) {
@@ -54,7 +59,6 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 			validated.SetError(obj, "PlanIsValid", nil)
 
 			// resolve version from spec or channel, and generate events for transitions
-			resolved := upgradeapiv1.PlanLatestResolved
 			resolved.CreateUnknownIfNotExists(obj)
 			// raise error if neither version nor channel are set. this is handled separate from other validation.
 			if obj.Spec.Version == "" && obj.Spec.Channel == "" {
@@ -119,8 +123,7 @@ func (ctl *Controller) handlePlans(ctx context.Context) error {
 
 			logrus.Debugf("PLAN GENERATING HANDLER: plan=%s/%s@%s, status=%+v", obj.Namespace, obj.Name, obj.ResourceVersion, status)
 			// return early without selecting nodes if the plan is not validated and resolved
-			complete := upgradeapiv1.PlanComplete
-			if !upgradeapiv1.PlanSpecValidated.IsTrue(obj) || !upgradeapiv1.PlanLatestResolved.IsTrue(obj) {
+			if !validated.IsTrue(obj) || !resolved.IsTrue(obj) {
 				complete.SetError(obj, "NotReady", ErrPlanNotReady)
 				return objects, status, nil
 			}

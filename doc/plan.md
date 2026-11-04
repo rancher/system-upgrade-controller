@@ -92,6 +92,40 @@ _Appears in:_
 | `status` _[PlanStatus](#planstatus)_ |  |  |  |
 
 
+#### PlanCondition
+
+
+
+
+
+
+
+_Appears in:_
+- [PlanStatus](#planstatus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `type` _[PlanConditionType](#planconditiontype)_ | Type of plan condition. |  |  |
+| `status` _[ConditionStatus](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#conditionstatus-v1-core)_ | Status of the condition, one of True, False, Unknown. |  |  |
+| `lastUpdateTime` _string_ | The last time this condition was updated. |  |  |
+| `lastTransitionTime` _string_ | Last time the condition transitioned from one status to another. |  |  |
+| `reason` _string_ | The reason for the condition's last transition. |  |  |
+| `message` _string_ | Human-readable message indicating details about last transition. |  |  |
+
+
+#### PlanConditionType
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [PlanCondition](#plancondition)
+
+
+
 
 
 #### PlanSpec
@@ -140,7 +174,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `conditions` _GenericCondition array_ | `LatestResolved` indicates that the latest version as per the spec has been determined.<br />`Validated` indicates that the plan spec has been validated.<br />`Complete` indicates that the latest version of the plan has completed on all selected nodes. If any Jobs for the Plan fail to complete, this condition will remain false, and the reason and message will reflect the source of the error. |  | Optional: \{\} <br /> |
+| `conditions` _[PlanCondition](#plancondition) array_ | `LatestResolved` indicates that the latest version as per the spec has been determined.<br />`Validated` indicates that the plan spec has been validated.<br />`Complete` indicates that the latest version of the plan has completed on all selected nodes. If any Jobs for the Plan fail to complete, this condition will remain false, and the reason and message will reflect the source of the error. |  |  |
 | `latestVersion` _string_ | The latest version, as resolved from .spec.version, or the channel server. |  |  |
 | `latestHash` _string_ | The hash of the most recently applied plan .spec. |  |  |
 | `applying` _string array_ | List of Node names that the Plan is currently being applied on. |  |  |
