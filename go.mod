@@ -25,7 +25,7 @@ require (
 	k8s.io/kubernetes v1.37.2
 	k8s.io/pod-security-admission v0.37.2
 	k8s.io/utils v0.0.0-20260626114624-be93311217bd
-	sigs.k8s.io/structured-merge-diff/v6 v6.4.2
+	sigs.k8s.io/structured-merge-diff/v7 v7.0.1
 )
 
 require (
