@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"strconv"
 	"time"
 
@@ -12,6 +12,7 @@ import (
 	upgradeapi "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io"
 	upgradeapiv1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	upgradejob "github.com/rancher/system-upgrade-controller/pkg/upgrade/job"
+	upgradenode "github.com/rancher/system-upgrade-controller/pkg/upgrade/node"
 	batchctlv1 "github.com/rancher/wrangler/v3/pkg/generated/controllers/batch/v1"
 	"github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
@@ -146,8 +147,7 @@ func (ctl *Controller) handleJobs(ctx context.Context) error {
 			return obj, enqueueOrDelete(jobs, obj, completeTime)
 		}
 		// if the job is hasn't failed or completed but the job Node is not on the applying list, consider it running out-of-turn and delete it
-		if i := sort.SearchStrings(plan.Status.Applying, nodeName); i == len(plan.Status.Applying) ||
-			(i < len(plan.Status.Applying) && plan.Status.Applying[i] != nodeName) {
+		if !slices.Contains(plan.Status.Applying, upgradenode.Hostname(node)) {
 			return obj, deleteJob(jobs, obj, metav1.DeletePropagationBackground)
 		}
 		return obj, nil
