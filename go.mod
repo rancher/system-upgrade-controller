@@ -9,7 +9,7 @@ replace github.com/rancher/system-upgrade-controller/pkg/apis => ./pkg/apis
 require (
 	github.com/distribution/reference v0.6.0
 	github.com/kubereboot/kured v1.13.1
-	github.com/onsi/ginkgo/v2 v2.33.1
+	github.com/onsi/ginkgo/v2 v2.34.0
 	github.com/onsi/gomega v1.44.0
 	github.com/rancher/lasso v0.2.10
 	github.com/rancher/system-upgrade-controller/pkg/apis v0.0.0
