@@ -1,12 +1,9 @@
 module github.com/rancher/system-upgrade-controller/pkg/apis
 
-go 1.26.0
-
-toolchain go1.26.10
+go 1.26.11
 
 require (
 	github.com/kubereboot/kured v1.13.1
-	github.com/rancher/wrangler/v3 v3.8.0-rc.3
 	github.com/sirupsen/logrus v1.10.2
 	k8s.io/api v0.37.2
 	k8s.io/apimachinery v0.37.2
