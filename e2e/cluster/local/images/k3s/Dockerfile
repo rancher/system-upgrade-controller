@@ -5,11 +5,11 @@ FROM ${BCI} AS k3s
 ARG ARCH
 # renovate: datasource=github-release-attachments depName=k3s-io/k3s
 ARG K3S_VERSION="v1.37.2+k3s1"
-# renovate: datasource=github-release-attachments depName=k3s-io/k3s digestVersion=v1.37.1+k3s1
+# renovate: datasource=github-release-attachments depName=k3s-io/k3s digestVersion=v1.37.2+k3s1
 ARG K3S_SUM_amd64="265b3ee6a3198ef14033c63ef46cbb32370d83795199fb6d1b01f21575eddbda"
-# renovate: datasource=github-release-attachments depName=k3s-io/k3s digestVersion=v1.37.1+k3s1
+# renovate: datasource=github-release-attachments depName=k3s-io/k3s digestVersion=v1.37.2+k3s1
 ARG K3S_SUM_arm64="a779ccf1e5e2e33a62f5a29c2f1c0bbf99431e100579d4c10f0aa0742a6aa84b"
-# renovate: datasource=github-release-attachments depName=k3s-io/k3s digestVersion=v1.37.1+k3s1
+# renovate: datasource=github-release-attachments depName=k3s-io/k3s digestVersion=v1.37.2+k3s1
 ARG K3S_SUM_arm="183a5e5cadee7ccfc192bb0e2633bbf1f4a1b16025e6a8e6620fc537cc2d3d9c"
 RUN set -x \
    && zypper -n in \
