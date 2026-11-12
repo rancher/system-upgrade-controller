@@ -1,5 +1,5 @@
 ARG BCI=registry.suse.com/bci/bci-base:16.1
-ARG GOLANG=registry.rancher.com/rancher/appco-go:1.26.10
+ARG GOLANG=registry.rancher.com/rancher/appco-go:1.27.4
 
 FROM --platform=$BUILDPLATFORM ${GOLANG} AS build-base
 ARG TARGETOS
