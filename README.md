@@ -163,7 +163,7 @@ spec:
 
 ## Building
 
-Go binaries are built with `registry.rancher.com/rancher/appco-go` in a multi-stage Dockerfile.
+Go binaries are built with `registry.suse.com/rancher/appco-go` in a multi-stage Dockerfile.
 The controller runtime image uses `scratch` to preserve support for all existing release platforms, including 32-bit ARM.
 
 ```shell script
