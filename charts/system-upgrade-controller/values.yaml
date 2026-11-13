@@ -1,0 +1,19 @@
+global:
+  cattle:
+    systemDefaultRegistry: ""
+    imagePullSecrets: []
+    # imagePullSecrets:
+    #   - name: secret1
+    # or
+    # imagePullSecrets:
+    #  - secret1
+
+systemUpgradeController:
+  image:
+    repository: rancher/system-upgrade-controller
+    tag: v0.20.1
+
+kubectl:
+  image:
+    repository: rancher/kuberlr-kubectl
+    tag: v8.1.1 # For compatibility and versioning, see https://github.com/rancher/kuberlr-kubectl

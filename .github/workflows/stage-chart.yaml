@@ -1,0 +1,71 @@
+name: Stage chart
+
+on:
+  workflow_dispatch:
+    inputs:
+      chart-version:
+        description: "Unused plain chart version for Rancher 2.16 (for example 111.0.0)"
+        required: true
+        type: string
+
+permissions: {}
+
+env:
+  CARGUEIRO_VERSION: v0.2.4
+
+# Serialize all SUC chart pushes, including different tags using the same version.
+concurrency:
+  group: stage-system-upgrade-controller
+  cancel-in-progress: false
+
+jobs:
+  stage-chart:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Require a stable tag and an explicit plain chart version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          CHART_VERSION: ${{ inputs.chart-version }}
+        run: |
+          if [ "$GITHUB_REF_TYPE" != tag ] ||
+             ! [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::Dispatch on a stable vX.Y.Z tag containing the imported chart and preparation script"
+            exit 1
+          fi
+          if ! [[ "$CHART_VERSION" =~ ^111\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::This chart targets Rancher 2.16 and requires a plain 111.Z.W chart version"
+            exit 1
+          fi
+
+      - name: Checkout the release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Require a published stable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --json isDraft,isPrerelease --jq 'select(.isDraft == false and .isPrerelease == false)' \
+            > "$RUNNER_TEMP/release.json"
+          if [ ! -s "$RUNNER_TEMP/release.json" ]; then
+            echo "::error::The existing Release workflow must publish this stable release before chart staging"
+            exit 1
+          fi
+
+      - name: Prepare the chart
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: bash .github/workflows/scripts/prepare-chart.sh "$RELEASE_TAG" "$RUNNER_TEMP/chart"
+
+      # This pushes an immutable artifact and triggers a downstream PR workflow.
+      - name: Stage the chart and notify rancher/charts
+        uses: rancher/charts/.github/actions/ship-staged@dcb7e8d0d9d0ce76847f751b7f224db5b192ae0d # chart-owners
+        with:
+          chart-dir: ${{ runner.temp }}/chart/system-upgrade-controller
+          version: ${{ inputs.chart-version }}
