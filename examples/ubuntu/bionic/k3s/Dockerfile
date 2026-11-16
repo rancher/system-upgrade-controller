@@ -1,4 +1,4 @@
-ARG UBUNTU=library/ubuntu@sha256:04d48df82c938587820d7b6006f5071dbbffceb7ca01d2814f81857c631d44df
+ARG UBUNTU=library/ubuntu@sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db
 FROM ${UBUNTU}
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
