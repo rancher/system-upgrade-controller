@@ -1,0 +1,87 @@
+name: Stage chart
+
+# Charts v2: stages the system-upgrade-controller chart as an OCI artifact in the
+# staging catalog registry with cargueiro, and starts its release in rancher/charts.
+#
+# It is started by hand, from the default branch, for a release that already exists:
+#
+#   gh workflow run stage-chart.yaml -f tag=v0.21.1
+#
+# The chart is the one in charts/ of the branch it runs from, and the release gives
+# only the version of the controller: its image tag and the appVersion. The release
+# must be published and stable, which the Release workflow does after the images are
+# pushed, so the chart is never staged for an image that is not there.
+# The ship-staged action of rancher/charts stamps, checks, packages and pushes the
+# chart, and then starts the chart-staged workflow of rancher/charts, which ships it
+# and opens a pull request that adds it to the index.yaml of its staging branch.
+# The chart version is plain (111.Z.W) and cargueiro works it out.
+#
+# The action is on the chart-owners branch of rancher/charts, which holds only the
+# shared actions.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Stable release whose controller is staged, e.g. v0.21.1"
+        required: true
+        type: string
+
+permissions: {}
+
+# Serialize all the pushes of this chart.
+concurrency:
+  group: stage-system-upgrade-controller
+  cancel-in-progress: false
+
+jobs:
+  stage-chart:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for vault
+    steps:
+      # The chart and the script are the ones of the branch this runs from, so it
+      # must be the default branch.
+      - name: Require the default branch and a stable tag
+        env:
+          DEFAULT_REF: refs/heads/${{ github.event.repository.default_branch }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          if [ "$GITHUB_REF" != "$DEFAULT_REF" ]; then
+            echo "::error::Run this workflow from the default branch, not from $GITHUB_REF"
+            exit 1
+          fi
+          if ! [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::The tag must be a stable release such as v0.21.1"
+            exit 1
+          fi
+
+      - name: Check out the branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Require a published stable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --json isDraft,isPrerelease --jq 'select(.isDraft == false and .isPrerelease == false)' \
+            > "$RUNNER_TEMP/release.json"
+          if [ ! -s "$RUNNER_TEMP/release.json" ]; then
+            echo "::error::The Release workflow must publish $RELEASE_TAG as a stable release before its chart is staged"
+            exit 1
+          fi
+
+      - name: Prepare the chart
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: bash .github/workflows/scripts/prepare-chart.sh "$RELEASE_TAG" "$RUNNER_TEMP/chart"
+
+      # This pushes an immutable artifact and triggers a downstream PR workflow.
+      - name: Stage the chart and notify rancher/charts
+        uses: rancher/charts/.github/actions/ship-staged@chart-owners # chart-owners
+        with:
+          chart-dir: ${{ runner.temp }}/chart/system-upgrade-controller
