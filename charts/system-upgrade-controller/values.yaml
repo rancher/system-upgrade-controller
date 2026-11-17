@@ -16,4 +16,4 @@ systemUpgradeController:
 kubectl:
   image:
     repository: rancher/kuberlr-kubectl
-    tag: v8.1.1 # For compatibility and versioning, see https://github.com/rancher/kuberlr-kubectl
+    tag: v9.0.1 # For compatibility and versioning, see https://github.com/rancher/kuberlr-kubectl

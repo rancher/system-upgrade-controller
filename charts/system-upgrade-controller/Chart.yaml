@@ -1,7 +1,7 @@
 annotations:
   catalog.cattle.io/certified: rancher
   catalog.cattle.io/hidden: "true"
-  catalog.cattle.io/kube-version: '>= 1.25.0-0 < 1.37.0-0'
+  catalog.cattle.io/kube-version: '>= 1.25.0-0 < 1.38.0-0'
   catalog.cattle.io/managed: "true"
   catalog.cattle.io/namespace: cattle-system
   catalog.cattle.io/os: linux
