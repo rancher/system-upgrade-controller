@@ -46,7 +46,7 @@ mkdir -p "$OUT_DIR"
 mkdir "$DEST"
 cp -R "$SOURCE/." "$DEST/"
 
-awk -v version="${TAG#v}" '
+awk -v version="$TAG" '
   /^appVersion:/ { $0 = "appVersion: \"" version "\""; updated++ }
   { print }
   END {
