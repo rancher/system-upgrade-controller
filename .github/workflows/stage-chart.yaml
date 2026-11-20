@@ -86,6 +86,6 @@ jobs:
         # The branch carries the checks that stop a faulty release, for example that the
         # images of the chart are pushed before the chart. A commit keeps only the checks
         # that existed when it was copied.
-        uses: rancher/charts/.github/actions/ship-staged@chart-owners # chart-owners
+        uses: rancher/charts/.github/actions/ship-staged@chart-owners # zizmor: ignore[unpinned-uses] rancher/charts is an internal trusted repository and its chart-owners branch carries the release checks
         with:
           chart-dir: ${{ runner.temp }}/chart/system-upgrade-controller
