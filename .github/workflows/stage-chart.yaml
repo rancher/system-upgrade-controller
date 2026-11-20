@@ -82,6 +82,10 @@ jobs:
 
       # This pushes an immutable artifact and triggers a downstream PR workflow.
       - name: Stage the chart and notify rancher/charts
+        # Please keep this action on the chart-owners branch and do not pin it to a commit.
+        # The branch carries the checks that stop a faulty release, for example that the
+        # images of the chart are pushed before the chart. A commit keeps only the checks
+        # that existed when it was copied.
         uses: rancher/charts/.github/actions/ship-staged@chart-owners # chart-owners
         with:
           chart-dir: ${{ runner.temp }}/chart/system-upgrade-controller
