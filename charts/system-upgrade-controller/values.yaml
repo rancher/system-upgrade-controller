@@ -11,7 +11,7 @@ global:
 systemUpgradeController:
   image:
     repository: rancher/system-upgrade-controller
-    tag: v0.20.1
+    tag: v0.21.1
 
 kubectl:
   image:
