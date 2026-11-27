@@ -314,6 +314,23 @@ func New(plan *upgradeapiv1.Plan, node *corev1.Node, controllerName string) *bat
 		})
 	}
 
+	// add volumes from prepare plan that the pod does not already have
+	if plan.Spec.Prepare != nil {
+		for _, v := range plan.Spec.Prepare.Volumes {
+			if slices.ContainsFunc(podTemplate.Spec.Volumes, func(vol corev1.Volume) bool { return vol.Name == v.Name }) {
+				continue
+			}
+			podTemplate.Spec.Volumes = append(podTemplate.Spec.Volumes, corev1.Volume{
+				Name: v.Name,
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: v.Source,
+					},
+				},
+			})
+		}
+	}
+
 	// Determine if the target node is Windows
 	isWindows := node.Labels["kubernetes.io/os"] == "windows"
 
