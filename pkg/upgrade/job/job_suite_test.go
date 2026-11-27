@@ -129,4 +129,35 @@ var _ = Describe("Jobs", func() {
 			})
 		})
 	})
+
+	Describe("Declaring the Pod volumes", func() {
+		Context("When the prepare and upgrade containers have volumes", func() {
+			It("Declares each volume once, including those only used by prepare", func() {
+				plan.Spec.Prepare = &upgradev1.ContainerSpec{
+					Image: "test-prepare:latest",
+					Volumes: []upgradev1.VolumeSpec{
+						{Name: "shared-data", Source: "/var/lib/shared", Destination: "/shared"},
+						{Name: "host-root", Source: "/", Destination: "/host"},
+						{Name: "prepare-data", Source: "/var/lib/prepare", Destination: "/prepare"},
+					},
+				}
+				plan.Spec.Upgrade.Volumes = []upgradev1.VolumeSpec{
+					{Name: "upgrade-data", Source: "/var/lib/upgrade", Destination: "/upgrade"},
+					{Name: "shared-data", Source: "/var/lib/shared", Destination: "/shared"},
+				}
+
+				job := sucjob.New(plan, node, "foo")
+				var names []string
+				paths := map[string]string{}
+				for _, volume := range job.Spec.Template.Spec.Volumes {
+					names = append(names, volume.Name)
+					if volume.HostPath != nil {
+						paths[volume.Name] = volume.HostPath.Path
+					}
+				}
+				Expect(names).To(ConsistOf("host-root", "pod-info", "upgrade-data", "shared-data", "prepare-data"))
+				Expect(paths).To(HaveKeyWithValue("prepare-data", "/var/lib/prepare"))
+			})
+		})
+	})
 })
